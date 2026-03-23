@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+requests
+mysql-connector-python
+httpx

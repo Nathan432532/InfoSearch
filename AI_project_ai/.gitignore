@@ -1,0 +1,5 @@
+__pycache__
+.env
+bedrijven_db.json
+vacature.json
+ollama_test_data

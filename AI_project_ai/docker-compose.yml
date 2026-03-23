@@ -1,0 +1,16 @@
+services:
+  ollama-test:
+    image: ollama/ollama:latest
+    container_name: ollama-hetzner-sim
+    volumes:
+      - ./ollama_test_data:/root/.ollama
+
+  ai-api-test:
+    build: .
+    container_name: ai-api-sim
+    depends_on:
+      - ollama-test
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env

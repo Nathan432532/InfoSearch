@@ -1,0 +1,13 @@
+#.venv moet je zelf ff aanmaken
+__pycache__/
+*.pyc
+.venv/
+
+
+node_modules/
+dist/
+
+.DS_Store
+Thumbs.db
+
+backend/.env
