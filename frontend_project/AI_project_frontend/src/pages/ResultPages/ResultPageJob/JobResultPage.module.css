@@ -1,0 +1,367 @@
+/* ===== MAIN ===== */
+.main {
+  background-color: rgb(164, 214, 195);
+  flex-grow: 1;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main > * {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ===== TITLE ===== */
+.title {
+  color: rgb(16, 191, 124);
+  font-size: 2.5em;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.actionBar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.btnSave {
+  background-color: rgb(16, 191, 124);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btnSave:hover { background-color: rgb(13, 153, 99); }
+
+.btnExport {
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btnExport:hover { background-color: #111; }
+
+.btnNew {
+  background-color: rgb(16, 191, 124);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btnNew:hover { background-color: rgb(13, 153, 99); }
+
+/* ===== RESULT COUNT ===== */
+.resultCount {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* ===== RESULTS LIST ===== */
+.resultsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* ===== RESULT CARD ===== */
+.result {
+  background-color: rgb(249, 249, 249);
+  padding: 22px 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: box-shadow 0.2s ease;
+}
+
+.result:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.13);
+}
+
+/* ===== CARD HEADER ===== */
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.resultIndex {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: rgb(16, 191, 124);
+  flex-shrink: 0;
+}
+
+.resultName {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resultSector {
+  font-size: 0.82em;
+  color: white;
+  background-color: rgb(16, 191, 124);
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Score badge */
+.scoreWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.scoreBadge {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
+  border-radius: 8px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+/* ===== JOB TITLE ROW ===== */
+.jobTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.jobTitle {
+  font-size: 1em;
+  font-weight: 600;
+  color: #444;
+}
+
+.urgencyBadge {
+  font-size: 0.78em;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+.urgencyHigh {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffd040;
+}
+
+.urgencyCritical {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+.urgencyMedium {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* ===== META ROW ===== */
+.metaRow {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.88em;
+  color: #666;
+}
+
+.metaIcon {
+  font-size: 1em;
+}
+
+/* ===== DESCRIPTION ===== */
+.resultDescription {
+  color: #555;
+  font-size: 0.95em;
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+/* ===== EXPANDED INFO ===== */
+.expandedInfo {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+}
+
+.infoRow {
+  font-size: 0.92em;
+  color: #555;
+  line-height: 1.5;
+}
+
+.infoRow strong {
+  color: #333;
+}
+
+.techChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.techChip {
+  background-color: #e8faf3;
+  border: 1px solid rgb(16, 191, 124);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.8em;
+  color: #333;
+}
+
+.keywordChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.keywordChip {
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.8em;
+  color: #555;
+}
+
+/* ===== CARD FOOTER ===== */
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.footerLeft {
+  display: flex;
+  gap: 8px;
+}
+
+.btnMore {
+  background-color: rgb(16, 191, 124);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+}
+.btnMore:hover { background-color: rgb(13, 153, 99); }
+
+.btnContact {
+  background-color: white;
+  color: rgb(16, 191, 124);
+  border: 2px solid rgb(16, 191, 124);
+  border-radius: 5px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.btnContact:hover {
+  background-color: rgb(16, 191, 124);
+  color: white;
+}
+
+/* ===== FEEDBACK ===== */
+.feedbackButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.thumbUp,
+.thumbDown {
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.thumbUp:hover,
+.thumbDown:hover {
+  background-color: #ccc;
+  transform: scale(1.1);
+}
+
+.thumbUp.active { background-color: #d4f5e9; }
+.thumbDown.active { background-color: #fde8ea; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .cardHeader { flex-wrap: wrap; }
+  .metaRow { gap: 10px; }
+  .cardFooter { flex-direction: column; align-items: flex-start; }
+}

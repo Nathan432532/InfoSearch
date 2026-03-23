@@ -1,0 +1,278 @@
+/* ===== MAIN ===== */
+.main {
+  background-color: rgb(164, 214, 195);
+  flex-grow: 1;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main > * {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ===== TITLE ===== */
+.title {
+  color: rgb(16, 191, 124);
+  font-size: 2.5em;
+  margin-top: 0;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* ===== CONTROL PANEL ===== */
+.controlPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px;
+  padding: 15px 20px;
+  background-color: rgb(249, 249, 249);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px;
+}
+
+/* ===== SEARCH BOX ===== */
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchInput {
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: #333;
+  background-color: white;
+}
+
+.searchInput:focus {
+  border-color: rgb(16, 191, 124);
+  box-shadow: 0 0 5px rgba(16, 191, 124, 0.4);
+}
+
+.searchIcon {
+  color: #666;
+  font-size: 1.2em;
+}
+
+/* ===== SORT CONTROLS ===== */
+.sortControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-end;
+}
+
+.sortLabel {
+  font-weight: bold;
+  color: #333;
+  font-size: 0.95em;
+  white-space: nowrap;
+}
+
+.sortSelect {
+  padding: 9px 32px 9px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.95em;
+  appearance: none;
+  min-width: 250px;
+  background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="292.4" height="292.4"><path fill="%23000000" d="M287 69.4a17.6 17.6 0 0 0-25.2 0L146.2 185.6 30.6 69.4a17.6 17.6 0 0 0-25.3 0 17.6 17.6 0 0 0 0 25.3l130 130a17.6 17.6 0 0 0 25.3 0l130-130a17.6 17.6 0 0 0-.1-25.3z"/></svg>') no-repeat right 10px center;
+  background-size: 10px;
+  background-color: white;
+  cursor: pointer;
+  color: #333;
+  outline: none;
+}
+
+.sortSelect:focus {
+  border-color: rgb(16, 191, 124);
+  box-shadow: 0 0 4px rgba(16, 191, 124, 0.4);
+}
+
+/* ===== RESULT COUNT ===== */
+.resultCount {
+  font-weight: bold;
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+/* ===== LIST ===== */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ===== SAVED ITEM ===== */
+.savedItem {
+  background-color: rgb(249, 249, 249);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: stretch;
+}
+
+.savedItem:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.13);
+  transform: translateY(-2px);
+}
+
+.itemLink {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  text-decoration: none;
+  color: inherit;
+  gap: 16px;
+}
+
+/* ===== TYPE BADGE ===== */
+.typeBadge {
+  font-size: 0.75em;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.typeBadgeJob {
+  background-color: #e8faf3;
+  color: rgb(13, 153, 99);
+  border: 1px solid rgb(16, 191, 124);
+}
+
+.typeBadgeCompany {
+  background-color: #e8f0ff;
+  color: #2356c7;
+  border: 1px solid #6699ff;
+}
+
+/* ===== ITEM CONTENT ===== */
+.itemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemQuery {
+  font-size: 0.85em;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemDate {
+  font-size: 0.88em;
+  color: rgb(16, 191, 124);
+  font-weight: bold;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ===== DELETE BUTTON ===== */
+.deleteBtn {
+  background: none;
+  border: none;
+  border-left: 1px solid #eee;
+  padding: 0 16px;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 1.1em;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+.deleteBtn:hover {
+  color: #e53e3e;
+  background-color: #fff5f5;
+}
+
+/* ===== EMPTY STATE ===== */
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+  background-color: rgb(249, 249, 249);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.emptyIcon {
+  font-size: 3em;
+  margin-bottom: 12px;
+}
+
+.emptyText {
+  font-size: 1.1em;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.emptySubText {
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+/* ===== LOADING / ERROR ===== */
+.statusMessage {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 1.05em;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .sortControls {
+    align-self: stretch;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .sortSelect {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .itemLink {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .itemDate {
+    width: 100%;
+  }
+}

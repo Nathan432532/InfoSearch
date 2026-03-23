@@ -1,0 +1,226 @@
+/* ===== LAYOUT ===== */
+.page {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 100vw;
+}
+
+/* ===== MAIN ===== */
+.main {
+  background-color: rgb(164, 214, 195);
+  flex-grow: 1;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* ===== DASHBOARD CARD ===== */
+.dashboard {
+  background-color: rgb(249, 249, 249);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 800px;
+}
+
+.dashboardTitle {
+  color: rgb(16, 191, 124);
+  font-size: 2em;
+  margin-top: 0;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* ===== FORM ===== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.label {
+  display: block;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  font-size: 1.1em;
+}
+
+/* ===== QUERY INPUT ===== */
+.queryInput {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: #333;
+  background-color: white;
+}
+
+.queryInput:focus {
+  border-color: rgb(16, 191, 124);
+  box-shadow: 0 0 5px rgba(16, 191, 124, 0.5);
+}
+
+/* ===== UPLOAD ZONE ===== */
+.uploadZone {
+  border: 2px dashed rgb(16, 191, 124);
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  background-color: #f7fffb;
+  transition: background-color 0.3s ease, border-color 0.3s;
+  cursor: pointer;
+}
+
+.uploadZone:hover {
+  background-color: #e6fff3;
+}
+
+.uploadZone.dragging {
+  background-color: #d4f5e9;
+  border-color: rgb(13, 153, 99);
+}
+
+.uploadZoneIcon {
+  font-size: 2.5em;
+  margin-bottom: 8px;
+}
+
+.uploadZoneText {
+  color: #666;
+  margin: 10px 0 0;
+  font-style: italic;
+}
+
+.uploadZoneSubText {
+  color: #999;
+  font-size: 0.8em;
+  margin-top: 4px;
+}
+
+/* ===== FILE CHIPS ===== */
+.fileList {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.fileChip {
+  background-color: #e6fff3;
+  border: 1px solid rgb(16, 191, 124);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.85em;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.removeFileBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 1em;
+  padding: 0;
+  line-height: 1;
+}
+
+.removeFileBtn:hover {
+  color: #e53e3e;
+}
+
+/* ===== FILTERS ===== */
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterToggleBtn {
+  background-color: #ddd;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.filterToggleBtn:hover,
+.filterToggleBtn.active {
+  background-color: #ccc;
+}
+
+.filterPanel {
+  margin-top: 15px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filterLabel {
+  font-weight: bold;
+  color: #444;
+  font-size: 0.95em;
+}
+
+.filterSelect,
+.filterInput {
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 0.95em;
+  background-color: white;
+  color: #333;
+}
+
+.filterSelect:focus,
+.filterInput:focus {
+  outline: none;
+  border-color: rgb(16, 191, 124);
+  box-shadow: 0 0 4px rgba(16, 191, 124, 0.4);
+}
+
+/* ===== SUBMIT BUTTON ===== */
+.submitBtn {
+  background-color: rgb(16, 191, 124);
+  color: white;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-top: 20px;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.submitBtn:hover {
+  background-color: rgb(13, 153, 99);
+}
