@@ -98,6 +98,87 @@ async def run_benchmark_endpoint(iterations: int = 20):
         
     return {"status": "benchmark voltooid", "results": results}
 
+
+# 4. Incrementele bedrijfsenrichment (startup + weekly cron)
+@app.post("/enrich-new")
+async def enrich_new_companies():
+    """Fetch unenriched companies from the backend, run Qwen extraction,
+    and push structured profiles back.  Processes only companies whose
+    ai_enriched_at IS NULL so it's safe to call repeatedly."""
+    import httpx
+
+    timeout = httpx.Timeout(120.0, connect=60.0)
+
+    # Step 1 – get unenriched companies from backend
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        res = await client.get(f"{BACKEND_URL}/companies/unenriched?limit=200")
+        if res.status_code != 200:
+            return {"status": "error", "detail": f"Backend returned {res.status_code}"}
+        data = res.json()
+        companies = data.get("companies", [])
+
+    if not companies:
+        return {"status": "ok", "enriched": 0, "message": "Geen unenriched bedrijven"}
+
+    enriched = 0
+    failed = 0
+
+    for company in companies:
+        bedrijf_id = company.get("bedrijf_id")
+        vacature_tekst = company.get("vacature_tekst", "")
+
+        if not vacature_tekst:
+            continue
+
+        # Step 2 – run Qwen extraction on the vacancy text
+        try:
+            profiel = await engine.extraheer_en_verrijk(vacature_tekst)
+        except Exception as e:
+            print(f"[enrich] Qwen extraction failed for bedrijf {bedrijf_id}: {e}")
+            failed += 1
+            continue
+
+        if not profiel:
+            print(f"[enrich] No valid profile for bedrijf {bedrijf_id}, skipping")
+            failed += 1
+            continue
+
+        # Step 3 – push enriched profile back to backend
+        payload = {
+            "bedrijf_id": bedrijf_id,
+            "sector": profiel.get("sector"),
+            "ai_beschrijving": profiel.get("business_trigger"),
+            "tech_stack": profiel.get("tech_stack", []),
+            "machine_park": profiel.get("machine_park", []),
+            "business_trigger": profiel.get("business_trigger"),
+            "keywords": profiel.get("keywords", []),
+            "locatie": profiel.get("locatie"),
+            "contactgegevens": profiel.get("contactgegevens"),
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                push_res = await client.post(
+                    f"{BACKEND_URL}/companies/upsert-profile",
+                    json=payload,
+                )
+                if push_res.status_code == 200:
+                    enriched += 1
+                    print(f"[enrich] ✓ bedrijf {bedrijf_id} enriched")
+                else:
+                    print(f"[enrich] ✗ bedrijf {bedrijf_id}: {push_res.text}")
+                    failed += 1
+        except Exception as e:
+            print(f"[enrich] Push failed for bedrijf {bedrijf_id}: {e}")
+            failed += 1
+
+    return {
+        "status": "ok",
+        "enriched": enriched,
+        "failed": failed,
+        "total": len(companies),
+    }
+
 # --- CLI COMMANDO'S ---
 if __name__ == "__main__":
     if len(sys.argv) > 1:

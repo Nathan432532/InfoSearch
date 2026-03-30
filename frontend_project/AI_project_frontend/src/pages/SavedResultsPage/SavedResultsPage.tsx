@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import styles from './SavedResultsPage.module.css';
 import { Building, CircuitBoard, Folder, Search } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface SavedResult {
   id: number;
   titel: string;
+  title?: string;
   query: string;
   datum: string;           // ISO string: "2026-03-09T14:16:00Z"
   type: 'job' | 'company';
@@ -90,27 +91,14 @@ export default function SavedResultsPage() {
   useEffect(() => {
     const fetchSaved = async () => {
       try {
-        const [jobRes, companyRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/saved/jobs`),
-          fetch(`${API_BASE_URL}/api/saved/companies`),
-        ]);
-
-        if (!jobRes.ok) throw new Error('Ophalen jobs mislukt');
-        if (!companyRes.ok) throw new Error('Ophalen bedrijven mislukt');
-
-        const jobs: SavedResult[] = (await jobRes.json()).map((r: SavedResult) => ({
+        const res = await fetch(`${API_BASE_URL}/searches/saved`);
+        if (!res.ok) throw new Error('Ophalen mislukt');
+        const data: SavedResult[] = await res.json();
+        setResults(data.map((r: SavedResult) => ({
           ...r,
-          type: 'job' as const,
-          resultUrl: '/results/job',
-        }));
-
-        const companies: SavedResult[] = (await companyRes.json()).map((r: SavedResult) => ({
-          ...r,
-          type: 'company' as const,
-          resultUrl: '/results/company',
-        }));
-
-        setResults([...jobs, ...companies]);
+          titel: r.titel || r.title || r.query,
+          resultUrl: r.resultUrl || `/results/${r.type}?query=${encodeURIComponent(r.query)}`,
+        })));
       } catch (err) {
         console.error('Fout bij ophalen, dummy data geladen:', err);
         setResults([...DUMMY_JOBS, ...DUMMY_COMPANIES]);
@@ -125,12 +113,9 @@ export default function SavedResultsPage() {
 
   const handleDelete = async (id: number, type: 'job' | 'company') => {
     if (!confirm('Weet je zeker dat je dit resultaat wilt verwijderen?')) return;
-    const endpoint = type === 'job'
-      ? `${API_BASE_URL}/api/saved/jobs/${id}`
-      : `${API_BASE_URL}/api/saved/companies/${id}`;
     try {
-      await fetch(endpoint, { method: 'DELETE' });
-      setResults((prev) => prev.filter((r) => !(r.id === id && r.type === type)));
+      await fetch(`${API_BASE_URL}/searches/saved/${id}`, { method: 'DELETE' });
+      setResults((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       console.error('Fout bij verwijderen:', err);
       alert('Verwijderen mislukt.');

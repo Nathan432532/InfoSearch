@@ -38,6 +38,26 @@
   gap: 15px;
 }
 
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navLink {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.navLink:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 .userName {
   font-weight: bold;
   font-size: 1.1em;

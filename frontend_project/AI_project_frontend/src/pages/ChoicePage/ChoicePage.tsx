@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styles from './ChoicePage.module.css';
-import { Briefcase, Building } from 'lucide-react';
+import { Briefcase, Building, Folder } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -77,6 +77,10 @@ export default function ChoicePage() {
           >
             Doorgaan
           </button>
+
+          <Link to="/saved" className={styles.savedLink}>
+            <Folder size={16} /> Opgeslagen zoekopdrachten bekijken
+          </Link>
         </div>
       </main>
     </div>

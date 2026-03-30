@@ -32,6 +32,9 @@ export default function Header({
             <h1 className={styles.logoTitle}>InfoSearch</h1>
           </Link>
         </div>
+        <nav className={styles.nav}>
+          <Link to="/saved" className={styles.navLink}>Opgeslagen</Link>
+        </nav>
         <div className={styles.profile}>
           <span className={styles.userName}>{userName}</span>
           <div className={styles.profileIcon}

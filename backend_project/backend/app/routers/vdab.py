@@ -328,6 +328,36 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
         if not bedrijven:
             raise HTTPException(status_code=404, detail="No companies in database")
 
+        # Apply filters to pre-filter the company list
+        filters = payload.filters or {}
+        locatie_filter = (filters.get("locatie") or "").strip().lower()
+        sector_filter = (filters.get("sector") or "").strip().lower()
+        regio_filter = (filters.get("regio") or "").strip().lower()
+
+        regio_map = {
+            "vlaanderen": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant"],
+            "wallonie": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant"],
+            "brussel": ["brussel"],
+        }
+
+        def matches_filters(c: dict) -> bool:
+            loc = (c.get("locatie") or "").lower()
+            if locatie_filter and locatie_filter not in loc:
+                return False
+            if sector_filter:
+                sec = (c.get("sector") or "").lower()
+                vacs = " ".join(c.get("vacatures", [])).lower()
+                if sector_filter not in sec and sector_filter not in vacs:
+                    return False
+            if regio_filter and regio_filter in regio_map:
+                if not any(prov in loc for prov in regio_map[regio_filter]):
+                    return False
+            return True
+
+        filtered_bedrijven = [c for c in bedrijven if matches_filters(c)]
+        if not filtered_bedrijven:
+            filtered_bedrijven = bedrijven  # fall back to all if filter too restrictive
+
         ai_results = None
 
         # Call AI service
@@ -340,11 +370,21 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                     )
                     if res.status_code == 200:
                         data = res.json()
-                        ai_results = data.get("rapport")
+                        rapport = data.get("rapport")
+                        # Validate: engine may return {"error": ...} on LLM failure
+                        if isinstance(rapport, list) and all(
+                            isinstance(r, dict) and r.get("bedrijfsnaam")
+                            for r in rapport
+                        ):
+                            ai_results = rapport
+                        elif isinstance(rapport, dict) and rapport.get("error"):
+                            print(f"AI returned error: {rapport['error']}, using fallback...")
+                        else:
+                            print(f"AI returned unexpected format, using fallback...")
             except Exception as e:
                 print(f"AI service unreachable ({e}), using fallback...")
 
-        # Fallback: heuristic scoring if AI service is unavailable
+        # Fallback: heuristic scoring if AI service is unavailable or returned errors
         if ai_results is None:
             ai_results = [
                 {
@@ -358,7 +398,7 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                     "contactgegevens": c.get("contactgegevens", "Niet beschikbaar"),
                     "techstack": c.get("tech_stack", []),
                 }
-                for c in bedrijven[:5]
+                for c in filtered_bedrijven[:5]
             ]
 
         return {
@@ -383,11 +423,15 @@ def update_vacancies(aantal: int = 100) -> dict[str, Any]:
         upserted = 0
         try:
             with conn.cursor() as cursor:
-                for item in raw_list:
+                total = len(raw_list)
+                for idx, item in enumerate(raw_list, 1):
                     ref = (item.get("vacatureReferentie") or {})
                     interne_id = ref.get("interneReferentie")
                     if not interne_id:
                         continue
+
+                    if idx % 50 == 0 or idx == total:
+                        print(f"[vacancies] Processing {idx}/{total} …")
 
                     raw = get_vacature_detail(interne_id)
                     if not raw:
@@ -501,3 +545,256 @@ def update_vacancies(aantal: int = 100) -> dict[str, Any]:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Company enrichment endpoints (AI profile generation)
+# ---------------------------------------------------------------------------
+
+@router.get("/companies/unenriched")
+def get_unenriched_companies(limit: int = 50) -> dict[str, Any]:
+    """Return companies that have NOT been AI-enriched yet.
+
+    For each company we include one representative vacancy text so the
+    AI service can extract a structured profile.
+    """
+    query = """
+        SELECT
+            b.id            AS bedrijf_id,
+            b.naam          AS bedrijfsnaam,
+            b.kbo_nummer,
+            b.adres_gemeente,
+            b.adres_provincie,
+            (
+                SELECT CONCAT_WS(' | ',
+                    COALESCE(v2.titel, ''),
+                    COALESCE(v2.beroep, ''),
+                    COALESCE(LEFT(v2.omschrijving, 2000), ''),
+                    COALESCE(LEFT(v2.vrije_vereiste, 1000), '')
+                )
+                FROM tblVacatures v2
+                WHERE v2.bedrijf_id = b.id
+                ORDER BY v2.publicatie_datum DESC
+                LIMIT 1
+            ) AS vacature_tekst
+        FROM tblBedrijven b
+        WHERE b.ai_enriched_at IS NULL
+        ORDER BY b.created_at DESC
+        LIMIT %s
+    """
+    conn = mysql.connector.connect(**_db_config())
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (limit,))
+            rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    # Only return companies that actually have vacancy text
+    results = [r for r in rows if r.get("vacature_tekst")]
+    return {"companies": results, "count": len(results)}
+
+
+class CompanyProfile(BaseModel):
+    bedrijf_id: int
+    sector: str | None = None
+    ai_beschrijving: str | None = None
+    tech_stack: list[str] | None = None
+    machine_park: list[str] | None = None
+    business_trigger: str | None = None
+    keywords: list[str] | None = None
+    locatie: str | None = None
+    contactgegevens: str | None = None
+
+
+@router.post("/companies/upsert-profile")
+def upsert_company_profile(payload: CompanyProfile) -> dict[str, Any]:
+    """Receive an AI-enriched profile and update the company record."""
+    conn = mysql.connector.connect(**_db_config())
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE tblBedrijven
+                SET sector          = COALESCE(%s, sector),
+                    ai_beschrijving = COALESCE(%s, ai_beschrijving),
+                    tech_stack_json = %s,
+                    machine_park_json = %s,
+                    business_trigger = COALESCE(%s, business_trigger),
+                    keywords_json   = %s,
+                    ai_enriched_at  = CURRENT_TIMESTAMP,
+                    updated_at      = CURRENT_TIMESTAMP
+                WHERE id = %s
+                """,
+                (
+                    payload.sector,
+                    payload.ai_beschrijving,
+                    json.dumps(payload.tech_stack) if payload.tech_stack else None,
+                    json.dumps(payload.machine_park) if payload.machine_park else None,
+                    payload.business_trigger,
+                    json.dumps(payload.keywords) if payload.keywords else None,
+                    payload.bedrijf_id,
+                ),
+            )
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Company not found")
+        return {"status": "ok", "bedrijf_id": payload.bedrijf_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.post("/sync")
+def full_sync(aantal: int = 100) -> dict[str, Any]:
+    """Convenience endpoint: import VDAB vacancies then trigger AI enrichment.
+
+    Useful for weekly cron jobs:  curl -X POST http://backend:8000/sync
+    """
+    # Step 1: import new vacancies from VDAB
+    import_result = update_vacancies(aantal=aantal)
+
+    # Step 2: trigger AI enrichment for unenriched companies
+    enrich_result: dict[str, Any] = {"status": "skipped"}
+    if AI_SERVICE_URL:
+        try:
+            with httpx.Client(timeout=300.0) as client:
+                res = client.post(f"{AI_SERVICE_URL}/enrich-new")
+                enrich_result = res.json() if res.status_code == 200 else {"error": res.text}
+        except Exception as e:
+            enrich_result = {"error": str(e)}
+
+    return {
+        "import": import_result,
+        "enrichment": enrich_result,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Saved searches endpoints
+# ---------------------------------------------------------------------------
+
+class SaveSearchRequest(BaseModel):
+    query: str
+    type: str = "company"  # "company" or "job"
+    title: str | None = None
+    filters: dict[str, Any] | None = None
+    results: list[dict[str, Any]] | None = None
+
+
+@router.post("/searches/save")
+def save_search(payload: SaveSearchRequest) -> dict[str, Any]:
+    """Save a search session + its results to the database."""
+    conn = mysql.connector.connect(**_db_config())
+    try:
+        with conn.cursor() as cursor:
+            title = payload.title or f"{payload.type}: {payload.query[:80]}"
+            cursor.execute(
+                """
+                INSERT INTO tblSearchSessions (user_id, type, title, input_text, filters_json)
+                VALUES (1, %s, %s, %s, %s)
+                """,
+                (
+                    payload.type,
+                    title,
+                    payload.query,
+                    json.dumps(payload.filters) if payload.filters else None,
+                ),
+            )
+            search_id = cursor.lastrowid
+
+            # Save individual results
+            result_type = "bedrijf" if payload.type == "company" else "vacature"
+            for i, r in enumerate(payload.results or []):
+                bedrijf_id = r.get("id") if result_type == "bedrijf" else None
+                vacature_id = r.get("id") if result_type == "vacature" else None
+                raw_score = r.get("score")
+                # ck_results_score: must be NULL or between 1.00 and 10.00
+                if raw_score is not None:
+                    try:
+                        raw_score = float(raw_score)
+                        if raw_score < 1.0 or raw_score > 10.0:
+                            raw_score = None
+                    except (ValueError, TypeError):
+                        raw_score = None
+                cursor.execute(
+                    """
+                    INSERT INTO tblSearchResults
+                        (search_id, result_type, vacature_id, bedrijf_id, `rank`, match_score, explanation_json)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        search_id,
+                        result_type,
+                        vacature_id,
+                        bedrijf_id,
+                        i + 1,
+                        raw_score,
+                        json.dumps(r, ensure_ascii=False, default=str),
+                    ),
+                )
+            conn.commit()
+        return {"status": "ok", "search_id": search_id}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.get("/searches/saved")
+def get_saved_searches() -> list[dict[str, Any]]:
+    """Return all saved search sessions with their results."""
+    conn = mysql.connector.connect(**_db_config())
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """
+                SELECT s.id, s.type, s.title, s.input_text AS query,
+                       s.filters_json, s.created_at
+                FROM tblSearchSessions s
+                WHERE s.user_id = 1
+                ORDER BY s.created_at DESC
+                """
+            )
+            sessions = cursor.fetchall()
+
+            for s in sessions:
+                s["datum"] = s.pop("created_at").isoformat() if s.get("created_at") else None
+                s["filters"] = json.loads(s.pop("filters_json")) if s.get("filters_json") else None
+                s["resultUrl"] = f"/results/{s['type']}?query={s['query']}"
+
+                cursor.execute(
+                    "SELECT explanation_json FROM tblSearchResults WHERE search_id = %s ORDER BY `rank`",
+                    (s["id"],),
+                )
+                s["results"] = [json.loads(row["explanation_json"]) for row in cursor.fetchall()]
+
+        return sessions
+    finally:
+        conn.close()
+
+
+@router.delete("/searches/saved/{search_id}")
+def delete_saved_search(search_id: int) -> dict[str, str]:
+    """Delete a saved search session and its results."""
+    conn = mysql.connector.connect(**_db_config())
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM tblSearchResults WHERE search_id = %s", (search_id,))
+            cursor.execute("DELETE FROM tblSearchSessions WHERE id = %s", (search_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Search not found")
+        return {"status": "deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()

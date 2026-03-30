@@ -8,7 +8,7 @@ import os
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999")
-model = "llama-3.3-70b-versatile"  # Of "llama3-8b-8192" voor nog meer snelheid
+model = "groq/compound"  # Of "llama3-8b-8192" voor nog meer snelheid
 
 PROFIEL_EXTRACTOR_PROMPT = """
 JE BENT EEN ENTITY RESOLUTION AGENT.

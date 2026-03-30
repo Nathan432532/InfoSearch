@@ -162,9 +162,13 @@ export default function CompanyResultPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchedQuery, setSearchedQuery] = useState<string>('');
 
+  const paramsString = searchParams.toString();
+
   useEffect(() => {
     const query = searchParams.get('query') || '';
     const locatie = searchParams.get('locatie') || '';
+    const sector = searchParams.get('sector') || '';
+    const regio = searchParams.get('regio') || '';
     setSearchedQuery(query);
 
     if (!query) {
@@ -179,6 +183,8 @@ export default function CompanyResultPage() {
         const body: Record<string, unknown> = { query };
         const filters: Record<string, string> = {};
         if (locatie) filters.locatie = locatie;
+        if (sector) filters.sector = sector;
+        if (regio) filters.regio = regio;
         if (Object.keys(filters).length > 0) body.filters = filters;
 
         const response = await fetch(`${API_BASE_URL}/companies/prospect`, {
@@ -222,7 +228,8 @@ export default function CompanyResultPage() {
       }
     };
     fetchResults();
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramsString]);
 
   if (loading) return <p style={{ textAlign: 'center', padding: '60px' }}>AI analyseert bedrijven…</p>;
 
@@ -235,7 +242,17 @@ export default function CompanyResultPage() {
 
       {/* ACTION BAR */}
       <div className={styles.actionBar}>
-        <button className={styles.btnSave} onClick={() => saveToDatabase(results)}>
+        <button className={styles.btnSave} onClick={() => {
+          const q = searchParams.get('query') || '';
+          const f: Record<string, string> = {};
+          const loc = searchParams.get('locatie');
+          const sec = searchParams.get('sector');
+          const reg = searchParams.get('regio');
+          if (loc) f.locatie = loc;
+          if (sec) f.sector = sec;
+          if (reg) f.regio = reg;
+          saveToDatabase(q, f, results);
+        }}>
           Opslaan
         </button>
         <button
@@ -267,15 +284,21 @@ export default function CompanyResultPage() {
 
 // ── Save helper ───────────────────────────────────────────────────────────────
 
-const saveToDatabase = async (data: CompanyResult | CompanyResult[]) => {
+const saveToDatabase = async (query: string, filters: Record<string, string>, data: CompanyResult[]) => {
   try {
-    const response = await fetch('/api/save', {
+    const response = await fetch(`${API_BASE_URL}/searches/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        query,
+        type: 'company',
+        title: `Bedrijven: ${query}`,
+        filters: Object.keys(filters).length > 0 ? filters : null,
+        results: data,
+      }),
     });
     if (!response.ok) throw new Error('Opslaan mislukt');
-    alert('Data succesvol opgeslagen!');
+    alert('Zoekopdracht succesvol opgeslagen!');
   } catch (error) {
     console.error('Fout bij opslaan:', error);
     alert('Er is een fout opgetreden bij het opslaan.');

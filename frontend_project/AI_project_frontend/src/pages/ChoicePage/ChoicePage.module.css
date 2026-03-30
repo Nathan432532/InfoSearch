@@ -169,6 +169,25 @@
   box-shadow: none;
 }
 
+/* ===== SAVED LINK ===== */
+.savedLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: rgb(16, 191, 124);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.savedLink:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 520px) {
   .card {
