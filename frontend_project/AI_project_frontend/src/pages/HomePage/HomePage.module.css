@@ -1,0 +1,145 @@
+.page {
+  min-height: calc(100vh - 68px);
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  background: linear-gradient(170deg, #f0faf5 0%, #e2f5ec 40%, #d4f0e4 100%);
+  padding: 60px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  max-width: 640px;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(16, 191, 124, 0.1);
+  color: rgb(13, 153, 99);
+  font-size: 0.82em;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid rgba(16, 191, 124, 0.2);
+}
+
+.heroTitle {
+  font-size: 2.6em;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 16px;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.brandAccent {
+  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroSubtitle {
+  color: #555;
+  font-size: 1.1em;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Action cards grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 960px;
+}
+
+.actionCard {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 28px;
+  background: white;
+  border: 1px solid #e8ede9;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.actionCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(16, 191, 124, 0.12);
+  border-color: rgba(16, 191, 124, 0.3);
+}
+
+.actionIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(16, 191, 124, 0.12), rgba(16, 191, 124, 0.06));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(16, 191, 124);
+  flex-shrink: 0;
+}
+
+.actionText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.actionLabel {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #111;
+}
+
+.actionDesc {
+  font-size: 0.88em;
+  color: #777;
+  line-height: 1.4;
+}
+
+.actionArrow {
+  color: #ccc;
+  transition: color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.actionCard:hover .actionArrow {
+  color: rgb(16, 191, 124);
+  transform: translateX(3px);
+}
+
+/* ── Responsive ── */
+@media (max-width: 680px) {
+  .main {
+    padding: 40px 16px 60px;
+    gap: 36px;
+  }
+
+  .heroTitle {
+    font-size: 2em;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

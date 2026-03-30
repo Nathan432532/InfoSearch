@@ -1,20 +1,19 @@
 /* ===== LAYOUT ===== */
 .page {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
+  min-height: calc(100vh - 68px);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-width: 100vw;
 }
 
 /* ===== MAIN ===== */
 .main {
-  background-color: rgb(164, 214, 195);
+  background: linear-gradient(170deg, #f0faf5 0%, #e2f5ec 40%, #d4f0e4 100%);
   flex-grow: 1;
-  padding: 40px 20px;
+  padding: 48px 20px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -22,20 +21,23 @@
 
 /* ===== DASHBOARD CARD ===== */
 .dashboard {
-  background-color: rgb(249, 249, 249);
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 36px;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8ede9;
   width: 100%;
   max-width: 800px;
 }
 
 .dashboardTitle {
-  color: rgb(16, 191, 124);
+  color: var(--accent, rgb(16, 191, 124));
   font-size: 2em;
+  font-weight: 800;
   margin-top: 0;
   margin-bottom: 30px;
   text-align: center;
+  letter-spacing: -0.02em;
 }
 
 /* ===== FORM ===== */

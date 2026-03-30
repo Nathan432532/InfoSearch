@@ -1,0 +1,172 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d2b1a 0%, #14533a 50%, #0a3d2a 100%);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 600px at 20% 30%, rgba(16, 191, 124, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 400px at 80% 70%, rgba(16, 191, 124, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 20px;
+  padding: 48px 44px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+.logoArea {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logoCircle {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(16, 191, 124, 0.3);
+}
+
+.logoImage {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.title {
+  font-size: 1.8em;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 0.95em;
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  color: #aaa;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.inputGroup:focus-within .inputIcon {
+  color: rgb(16, 191, 124);
+}
+
+.input {
+  width: 100%;
+  padding: 14px 14px 14px 44px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  font-size: 1em;
+  color: #222;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: rgb(16, 191, 124);
+  box-shadow: 0 0 0 3px rgba(16, 191, 124, 0.12);
+  background: #fff;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.eyeBtn:hover {
+  color: #555;
+}
+
+.error {
+  color: #e53e3e;
+  font-size: 0.9em;
+  text-align: center;
+  margin: 0;
+  padding: 8px 12px;
+  background: #fff5f5;
+  border-radius: 8px;
+  border: 1px solid #fed7d7;
+}
+
+.submitBtn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 16px rgba(16, 191, 124, 0.3);
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 191, 124, 0.4);
+}
+
+.submitBtn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .card {
+    margin: 16px;
+    padding: 36px 24px 32px;
+  }
+}

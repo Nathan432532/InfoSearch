@@ -1,50 +1,70 @@
 import styles from './Header.module.css';
-import { Link } from 'react-router-dom';
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { Home, Folder, LogOut, User, ChevronDown } from 'lucide-react';
+import logoImg from '../../assets/infofarm.png';
 
-interface HeaderProps {
-    userName?: string;
+export default function Header() {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { userName, logout } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <header className={styles.header}>
+      <Link to="/home" className={styles.logoLink}>
+        <img src={logoImg} alt="Infofarm" className={styles.logoImg} />
+        <span className={styles.logoText}>InfoSearch</span>
+      </Link>
+
+      <nav className={styles.nav}>
+        <Link to="/home" className={`${styles.navLink} ${isActive('/home') ? styles.navLinkActive : ''}`}>
+          <Home size={16} />
+          <span>Home</span>
+        </Link>
+        <Link to="/saved" className={`${styles.navLink} ${isActive('/saved') ? styles.navLinkActive : ''}`}>
+          <Folder size={16} />
+          <span>Opgeslagen</span>
+        </Link>
+      </nav>
+
+      <div className={styles.profile} ref={dropdownRef}>
+        <button className={styles.profileBtn} onClick={() => setOpen(!open)}>
+          <div className={styles.avatar}>
+            <User size={16} />
+          </div>
+          <span className={styles.userName}>{userName || 'Admin'}</span>
+          <ChevronDown size={14} className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} />
+        </button>
+        {open && (
+          <div className={styles.dropdown}>
+            <button onClick={handleLogout} className={styles.dropdownItem}>
+              <LogOut size={15} />
+              <span>Uitloggen</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
 }
-export default function Header({
-    userName = 'Voornaam Achternaam'}: HeaderProps) {
-        const [open, setopen] = useState(false)
-        const navigate = useNavigate()
-
-        const handleLogout = () => {
-            // Hier kun je de logica voor het uitloggen implementeren, zoals het verwijderen van tokens of het resetten van de gebruikersstatus.
-            // Na het uitloggen kun je de gebruiker terug naar de loginpagina navigeren.
-            console.log('User logged out');
-            navigate('/login');
-        }
-        return (
-        
-
-<div className={styles.page}>
-
-      {/* HEADER */}
-      <header className={styles.header}>
-        <div className={styles.logo}>
-          <Link to="/" className={styles.logoTitle}>
-          <img src="/src/assets/infofarm.png" alt="InfoSearch Logo" className={styles.logoIcon} />
-          </Link>
-          <Link to="/" className={styles.logoTitle}>
-            <h1 className={styles.logoTitle}>InfoSearch</h1>
-          </Link>
-        </div>
-        <nav className={styles.nav}>
-          <Link to="/saved" className={styles.navLink}>Opgeslagen</Link>
-        </nav>
-        <div className={styles.profile}>
-          <span className={styles.userName}>{userName}</span>
-          <div className={styles.profileIcon}
-            onClick={() => setopen(!open)}
-          >👤</div>
-            {open && (
-                <div className={styles.dropdown}>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
-                </div>
-            )}
-        </div>
-      </header>
-</div>)}

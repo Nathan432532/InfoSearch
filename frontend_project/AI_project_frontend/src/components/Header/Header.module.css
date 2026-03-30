@@ -1,77 +1,168 @@
 /* ===== HEADER ===== */
 .header {
-  background-color: rgb(16, 191, 124);
+  background: linear-gradient(135deg, rgb(16, 191, 124) 0%, rgb(13, 160, 104) 100%);
   color: white;
-  padding: 15px 20px;
+  padding: 0 28px;
+  height: 68px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.logo {
+/* ── Logo ── */
+.logoLink {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.logoIcon {
-  width: 40px;
-  height: 40px;
-  background-color: white;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4em;
-}
-
-.logoTitle {
+  gap: 10px;
+  text-decoration: none;
   color: white;
-  font-size: 1.5em;
-  font-weight: bold;
-  margin: 0;
 }
 
-.profile {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+.logoImg {
+  height: 34px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  object-fit: contain;
 }
 
+.logoText {
+  font-size: 1.3em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ── Nav ── */
 .nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 4px;
 }
 
 .navLink {
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   font-weight: 500;
-  font-size: 1rem;
-  opacity: 0.9;
-  transition: opacity 0.2s;
+  font-size: 0.92em;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
 }
 
 .navLink:hover {
-  opacity: 1;
-  text-decoration: underline;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.navLinkActive {
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+}
+
+/* ── Profile ── */
+.profile {
+  position: relative;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 6px 14px 6px 8px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.92em;
+  font-weight: 500;
+}
+
+.profileBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .userName {
-  font-weight: bold;
-  font-size: 1.1em;
+  font-weight: 600;
 }
 
-.profileIcon {
-  background-color: white;
-  color: rgb(16, 191, 124);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+.chevron {
+  transition: transform 0.2s;
+  opacity: 0.7;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown ── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  padding: 6px;
+  z-index: 200;
+  animation: dropIn 0.15s ease-out;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-size: 1.4em;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: #333;
+  font-size: 0.92em;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdownItem:hover {
+  background: #f5f5f5;
+  color: #e53e3e;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .logoText {
+    display: none;
+  }
+
+  .userName {
+    display: none;
+  }
 }
