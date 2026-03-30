@@ -199,7 +199,7 @@ export default function CompanyResultPage() {
         // Map AI-scored results to CompanyResult format
         const mapped: CompanyResult[] = (data.results || []).map(
           (r: Record<string, unknown>, index: number) => ({
-            id: (r.id as number) || index + 1,
+            id: index + 1,
             bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
             sector: (r.sector as string) || 'Niet opgegeven',
             locatie: (r.locatie as string) || 'Niet opgegeven',

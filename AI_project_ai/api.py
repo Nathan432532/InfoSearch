@@ -44,17 +44,34 @@ async def sync_and_enrich(background_tasks: BackgroundTasks):
 # 2. De Prospectie Engine
 @app.post("/generate-prospect")
 async def generate_prospect(product: str):
-    # Haal bedrijven + vacatures op bij de backend
+    # Haal bedrijven + vacatures op bij de backend — stuur product als query mee
     import httpx
     timeout = httpx.Timeout(120.0, connect=60.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
+        # Haal eerst gefilterde resultaten op basis van product
         res = await client.post(
             f"{engine.BACKEND_URL}/companies/search",
-            json={"query": ""},
+            json={"query": product},
         )
-        print("bedrijven opgehaald van backend")
         data = res.json()
         raw_bedrijven = data.get("results", [])
+
+        # Als de gefilterde set te klein is, vul aan met alle bedrijven
+        if len(raw_bedrijven) < 10:
+            res_all = await client.post(
+                f"{engine.BACKEND_URL}/companies/search",
+                json={"query": ""},
+            )
+            all_data = res_all.json()
+            all_bedrijven = all_data.get("results", [])
+            seen_ids = {b.get("id") for b in raw_bedrijven}
+            for b in all_bedrijven:
+                if b.get("id") not in seen_ids:
+                    raw_bedrijven.append(b)
+                if len(raw_bedrijven) >= 50:
+                    break
+
+        print(f"bedrijven opgehaald van backend: {len(raw_bedrijven)} stuks")
 
     # Slim data down for Groq token limits — only essential fields
     bedrijven = []

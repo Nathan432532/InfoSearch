@@ -8,7 +8,7 @@ import os
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999")
-model = "groq/compound"  # Of "llama3-8b-8192" voor nog meer snelheid
+model = "llama-3.3-70b-versatile"  # Snel, deterministisch, geen agentic overhead
 
 PROFIEL_EXTRACTOR_PROMPT = """
 JE BENT EEN ENTITY RESOLUTION AGENT.
@@ -75,6 +75,9 @@ async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: 
 
 async def genereer_prospectie_rapport(product, bedrijven_data):
     """Genereer de TOP 3 matches via Groq."""
+    # Cap het aantal bedrijven om token-overflow te voorkomen
+    bedrijven_data = bedrijven_data[:50]
+    
     prompt = f"""
             JE BENT EEN STRATEGISCHE B2B ANALYST. 
             Je doel is om een 'Product-Market Fit' te bepalen tussen een PRODUCT en een BEDRIJFSDATABASE.
@@ -117,11 +120,17 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             - Antwoord in professioneel Nederlands.
             """
     
-    chat_completion = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model=model
-    )
-    content = chat_completion.choices[0].message.content or ""
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model=model,
+            temperature=0,
+            max_tokens=2048,
+        )
+        content = chat_completion.choices[0].message.content or ""
+    except Exception as e:
+        print(f"[Groq] LLM call mislukt: {e}")
+        return {"error": str(e), "raw": ""}
 
     try:
         match = re.search(r"(\[.*\]|\{.*\})", content, re.DOTALL)
