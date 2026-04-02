@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
+import gsap from 'gsap';
 import styles from './CompanyResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
 import { Pin, Building } from 'lucide-react';
@@ -156,6 +157,15 @@ function CompanyCard({ result }: { result: CompanyResult }) {
 
 export default function CompanyResultPage() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const listRef = useRef<HTMLUListElement>(null);
+  const savedState = (location.state || {}) as {
+    isSavedView?: boolean;
+    results?: CompanyResult[];
+    savedTitle?: string;
+    savedQuery?: string;
+  };
+
   const [results, setResults] = useState<CompanyResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiPowered, setAiPowered] = useState(false);
@@ -164,7 +174,45 @@ export default function CompanyResultPage() {
 
   const paramsString = searchParams.toString();
 
+  // animate cards in after they render
   useEffect(() => {
+    if (!loading && listRef.current) {
+      const cards = Array.from(listRef.current.children);
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 32 },
+        { opacity: 1, y: 0, duration: 0.45, stagger: 0.08, ease: 'power3.out', clearProps: 'transform' }
+      );
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    // If coming from saved history, skip API call — show stored data directly
+    if (savedState?.isSavedView && savedState.results) {
+      const mapped: CompanyResult[] = (savedState.results as Record<string, unknown>[]).map(
+        (r, index) => ({
+          id: (r.id as number) || index + 1,
+          bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
+          sector: (r.sector as string) || 'Niet opgegeven',
+          locatie: (r.locatie as string) || 'Niet opgegeven',
+          beschrijving: (r.beschrijving as string) || '',
+          waarom: (r.waarom as string) || '',
+          score: (r.score as number) || 0,
+          contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
+          techstack: (r.techstack as string[]) || [],
+          matchKwaliteit:
+            (r.score as number) >= 8 ? 'Sterke match'
+            : (r.score as number) >= 5 ? 'Goede match'
+            : 'Gedeeltelijke match',
+        }),
+      );
+      setResults(mapped);
+      setSearchedQuery(savedState.savedTitle || savedState.savedQuery || '');
+      setAiPowered(true);
+      setLoading(false);
+      return;
+    }
+
     const query = searchParams.get('query') || '';
     const locatie = searchParams.get('locatie') || '';
     const sector = searchParams.get('sector') || '';
@@ -273,7 +321,7 @@ export default function CompanyResultPage() {
       </p>
 
       {/* LIST */}
-      <ul className={styles.resultsList}>
+      <ul className={styles.resultsList} ref={listRef}>
         {results.map((result) => (
           <CompanyCard key={`${result.id}-${result.bedrijfsnaam}`} result={result} />
         ))}

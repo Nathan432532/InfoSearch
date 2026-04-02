@@ -125,14 +125,17 @@
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #e8ede9;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition: box-shadow 0.26s ease,
+              transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.2s ease;
   display: flex;
   align-items: stretch;
 }
 
 .savedItem:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.13);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(16, 191, 124, 0.14);
+  transform: translateX(5px);
+  border-color: rgba(16, 191, 124, 0.32);
 }
 
 .itemLink {

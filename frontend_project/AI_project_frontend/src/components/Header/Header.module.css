@@ -144,13 +144,164 @@
   font-size: 0.92em;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .dropdownItem:hover {
   background: #f5f5f5;
+  color: #111;
+}
+
+.dropdownItemDanger:hover {
+  background: #fff5f5;
   color: #e53e3e;
 }
+
+.dropdownDivider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 4px 8px;
+}
+
+/* ── Settings Modal ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: scale(0.94) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modalTitle {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.modalClose:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settingsLabel {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settingsInput {
+  padding: 10px 14px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: 0.95em;
+  color: #222;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-top: 4px;
+}
+
+.settingsInput:focus {
+  border-color: rgb(16, 191, 124);
+}
+
+.settingsValue {
+  margin: 4px 0 0;
+  color: #555;
+  font-size: 0.9em;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.modalCancel {
+  padding: 9px 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: white;
+  color: #555;
+  font-size: 0.92em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.modalCancel:hover { background: #f5f5f5; }
+
+.modalSave {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
+  color: white;
+  font-size: 0.92em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  box-shadow: 0 4px 12px rgba(16, 191, 124, 0.3);
+}
+
+.modalSave:hover { opacity: 0.9; }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {

@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import gsap from 'gsap';
 import styles from './SavedResultsPage.module.css';
 import { Building, CircuitBoard, Folder, Search } from 'lucide-react';
 
@@ -15,6 +16,7 @@ interface SavedResult {
   datum: string;           // ISO string: "2026-03-09T14:16:00Z"
   type: 'job' | 'company';
   resultUrl?: string;      // optionele link naar de resultaten
+  results?: Record<string, unknown>[];
 }
 
 type SortOption = 'newest' | 'oldest' | 'alphabetic';
@@ -81,6 +83,8 @@ function formatDate(isoString: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SavedResultsPage() {
+  const navigate = useNavigate();
+  const listRef = useRef<HTMLUListElement>(null);
   const [results, setResults] = useState<SavedResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,7 +101,6 @@ export default function SavedResultsPage() {
         setResults(data.map((r: SavedResult) => ({
           ...r,
           titel: r.titel || r.title || r.query,
-          resultUrl: r.resultUrl || `/results/${r.type}?query=${encodeURIComponent(r.query)}`,
         })));
       } catch (err) {
         console.error('Fout bij ophalen, dummy data geladen:', err);
@@ -108,6 +111,17 @@ export default function SavedResultsPage() {
     };
     fetchSaved();
   }, []);
+
+  // animate list in after data loads
+  useEffect(() => {
+    if (!loading && listRef.current) {
+      gsap.fromTo(
+        Array.from(listRef.current.children),
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.38, stagger: 0.06, ease: 'power2.out', clearProps: 'transform' }
+      );
+    }
+  }, [loading]);
 
   // ── Delete ───────────────────────────────────────────────────────────────────
 
@@ -190,12 +204,20 @@ export default function SavedResultsPage() {
           </p>
         </div>
       ) : (
-        <ul className={styles.list}>
+        <ul className={styles.list} ref={listRef}>
           {filtered.map((result) => (
             <li key={result.id} className={styles.savedItem}>
-              <Link
-                to={result.resultUrl ?? '/results'}
+              <div
                 className={styles.itemLink}
+                onClick={() => navigate(`/results/${result.type}`, {
+                  state: {
+                    isSavedView: true,
+                    results: result.results || [],
+                    savedTitle: result.titel,
+                    savedQuery: result.query,
+                  },
+                })}
+                style={{ cursor: 'pointer' }}
               >
                 <span
                   className={`${styles.typeBadge} ${
@@ -211,7 +233,7 @@ export default function SavedResultsPage() {
                 </div>
 
                 <span className={styles.itemDate}>{formatDate(result.datum)}</span>
-              </Link>
+              </div>
 
               <button
                 className={styles.deleteBtn}

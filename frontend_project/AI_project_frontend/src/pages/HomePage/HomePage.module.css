@@ -1,3 +1,6 @@
+/* ─────────────────────────────────────────────
+   HomePage — high-end layout
+───────────────────────────────────────────── */
 .page {
   min-height: calc(100vh - 68px);
   display: flex;
@@ -6,140 +9,337 @@
 
 .main {
   flex: 1;
-  background: linear-gradient(170deg, #f0faf5 0%, #e2f5ec 40%, #d4f0e4 100%);
-  padding: 60px 24px 80px;
+  background: linear-gradient(170deg, #f0faf5 0%, #e2f5ec 45%, #d4f0e4 100%);
+  padding: 72px 24px 96px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 48px;
+  gap: 60px;
 }
 
-/* ── Hero ── */
+/* ─── Hero ─── */
 .hero {
   text-align: center;
-  max-width: 640px;
+  max-width: 560px;
 }
 
 .heroBadge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-radius: 20px;
   background: rgba(16, 191, 124, 0.1);
   color: rgb(13, 153, 99);
-  font-size: 0.82em;
+  font-size: 0.8em;
   font-weight: 600;
   margin-bottom: 20px;
   border: 1px solid rgba(16, 191, 124, 0.2);
+  letter-spacing: 0.02em;
 }
 
 .heroTitle {
-  font-size: 2.6em;
+  font-size: 2.9em;
   font-weight: 800;
   color: #111;
-  margin: 0 0 16px;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  margin: 0 0 14px;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
 }
 
 .brandAccent {
-  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
+  background: linear-gradient(135deg, rgb(16, 191, 124) 0%, rgb(10, 155, 95) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .heroSubtitle {
-  color: #555;
+  color: #667;
   font-size: 1.1em;
-  line-height: 1.6;
   margin: 0;
+  line-height: 1.5;
 }
 
-/* ── Action cards grid ── */
-.grid {
+/* ─── CTA Grid ─── */
+.ctaGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
   width: 100%;
-  max-width: 960px;
+  max-width: 880px;
 }
 
-.actionCard {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 24px 28px;
-  background: white;
-  border: 1px solid #e8ede9;
-  border-radius: 16px;
+.ctaCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 44px 38px;
   cursor: pointer;
+  border: none;
   text-align: left;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.actionCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(16, 191, 124, 0.12);
-  border-color: rgba(16, 191, 124, 0.3);
-}
-
-.actionIcon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(16, 191, 124, 0.12), rgba(16, 191, 124, 0.06));
+  min-height: 230px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgb(16, 191, 124);
-  flex-shrink: 0;
+  align-items: stretch;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.32s ease;
 }
 
-.actionText {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* shimmer overlay on hover */
+.ctaShine {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.32s ease;
+  pointer-events: none;
 }
 
-.actionLabel {
-  font-size: 1.1em;
-  font-weight: 700;
+.ctaCard:hover .ctaShine {
+  opacity: 1;
+}
+
+.ctaCard:hover {
+  transform: translateY(-7px) scale(1.015);
+}
+
+/* PRIMARY (green gradient) */
+.ctaCardPrimary {
+  background: linear-gradient(140deg, rgb(16, 191, 124) 0%, rgb(9, 155, 95) 100%);
+  box-shadow: 0 8px 32px rgba(16, 191, 124, 0.28);
+  color: white;
+}
+
+.ctaCardPrimary .ctaShine {
+  background: linear-gradient(140deg, rgba(255,255,255,0.18) 0%, transparent 55%);
+}
+
+.ctaCardPrimary:hover {
+  box-shadow: 0 22px 56px rgba(16, 191, 124, 0.42);
+}
+
+/* SECONDARY (white card) */
+.ctaCardSecondary {
+  background: white;
+  border: 2px solid #e4ede8;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
   color: #111;
 }
 
-.actionDesc {
-  font-size: 0.88em;
-  color: #777;
-  line-height: 1.4;
+.ctaCardSecondary .ctaShine {
+  background: linear-gradient(140deg, rgba(16,191,124,0.05) 0%, transparent 55%);
 }
 
-.actionArrow {
-  color: #ccc;
-  transition: color 0.2s, transform 0.2s;
+.ctaCardSecondary:hover {
+  border-color: rgba(16, 191, 124, 0.38);
+  box-shadow: 0 18px 44px rgba(16, 191, 124, 0.18);
+}
+
+/* Card inner layout */
+.ctaCardContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+}
+
+.ctaIcon {
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ctaCard:hover .ctaIcon {
+  transform: scale(1.1);
+}
+
+.ctaCardPrimary .ctaIcon {
+  background: rgba(255, 255, 255, 0.22);
+  color: white;
+}
+
+.ctaCardSecondary .ctaIcon {
+  background: rgba(16, 191, 124, 0.1);
+  color: rgb(16, 191, 124);
+}
+
+.ctaText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ctaLabel {
+  font-size: 1.38em;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.ctaDesc {
+  font-size: 0.9em;
+  line-height: 1.55;
+  opacity: 0.78;
+}
+
+.ctaCardSecondary .ctaDesc { color: #666; }
+.ctaCardSecondary .ctaLabel { color: #111; }
+
+.ctaArrow {
+  align-self: flex-end;
+  opacity: 0.55;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.ctaCard:hover .ctaArrow {
+  transform: translateX(6px);
+  opacity: 1;
+}
+
+/* ─── History section ─── */
+.historySection {
+  width: 100%;
+  max-width: 880px;
+}
+
+.historySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.historyHeading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78em;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.viewAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: rgb(16, 191, 124);
+  font-size: 0.88em;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.viewAllBtn:hover {
+  background: rgba(16, 191, 124, 0.08);
+}
+
+.emptyHistory {
+  color: #bbb;
+  font-size: 0.9em;
+  padding: 12px 0;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 20px;
+  background: white;
+  border: 1px solid #e8ede9;
+  border-radius: 13px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.historyItem:hover {
+  box-shadow: 0 6px 20px rgba(16, 191, 124, 0.1);
+  border-color: rgba(16, 191, 124, 0.28);
+  transform: translateX(4px);
+}
+
+.historyTypeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
-.actionCard:hover .actionArrow {
-  color: rgb(16, 191, 124);
-  transform: translateX(3px);
+.dotCompany { background: rgb(16, 191, 124); }
+.dotJob     { background: #6366f1; }
+
+.historyTitle {
+  font-weight: 600;
+  color: #222;
+  font-size: 0.95em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── Responsive ── */
-@media (max-width: 680px) {
+.historyQuery {
+  color: #aaa;
+  font-size: 0.84em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  flex-shrink: 0;
+}
+
+.historyArrow {
+  color: #ccc;
+  flex-shrink: 0;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.historyItem:hover .historyArrow {
+  color: rgb(16, 191, 124);
+  transform: translateX(2px);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 700px) {
   .main {
-    padding: 40px 16px 60px;
-    gap: 36px;
+    padding: 48px 16px 72px;
+    gap: 44px;
   }
 
   .heroTitle {
-    font-size: 2em;
+    font-size: 2.2em;
   }
 
-  .grid {
+  .ctaGrid {
     grid-template-columns: 1fr;
+  }
+
+  .ctaCard {
+    min-height: 180px;
+    padding: 32px 28px;
+  }
+
+  .historyQuery {
+    display: none;
   }
 }

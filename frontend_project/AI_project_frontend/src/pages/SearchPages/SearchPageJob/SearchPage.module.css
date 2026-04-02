@@ -210,19 +210,26 @@
 
 /* ===== SUBMIT BUTTON ===== */
 .submitBtn {
-  background-color: rgb(16, 191, 124);
+  background: linear-gradient(135deg, rgb(16, 191, 124), rgb(13, 153, 99));
   color: white;
   padding: 15px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 1.2em;
   font-weight: bold;
   margin-top: 20px;
   width: 100%;
-  transition: background-color 0.3s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.22s ease;
+  box-shadow: 0 4px 14px rgba(16, 191, 124, 0.25);
 }
 
 .submitBtn:hover {
-  background-color: rgb(13, 153, 99);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 10px 28px rgba(16, 191, 124, 0.38);
+}
+
+.submitBtn:active {
+  transform: scale(0.98);
 }

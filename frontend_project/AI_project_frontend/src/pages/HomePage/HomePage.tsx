@@ -1,56 +1,61 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import styles from './HomePage.module.css';
-import { Briefcase, Building, Folder, Sparkles, ArrowRight } from 'lucide-react';
+import { Building, Briefcase, ArrowRight, Clock, Sparkles, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-interface QuickAction {
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-  route: string;
-  accent: string;
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+
+interface RecentSearch {
+  id: number;
+  titel: string;
+  title?: string;
+  query: string;
+  datum: string;
+  type: 'job' | 'company';
+  results?: Record<string, unknown>[];
 }
-
-const ACTIONS: QuickAction[] = [
-  {
-    icon: <Briefcase size={26} />,
-    label: 'Vacatures zoeken',
-    description: 'Vind relevante vacatures op basis van je criteria',
-    route: '/search/job',
-    accent: 'var(--accent)',
-  },
-  {
-    icon: <Building size={26} />,
-    label: 'Bedrijven prospecteren',
-    description: 'AI-gestuurde bedrijfsmatching voor je product',
-    route: '/search/company',
-    accent: 'var(--accent)',
-  },
-  {
-    icon: <Folder size={26} />,
-    label: 'Opgeslagen resultaten',
-    description: 'Bekijk je eerder opgeslagen zoekopdrachten',
-    route: '/saved',
-    accent: 'var(--accent)',
-  },
-];
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { userName } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<HTMLElement>(null);
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.fromTo(heroRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 });
+    tl.fromTo(heroRef.current, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5 });
     tl.fromTo(
-      cardsRef.current?.children ? Array.from(cardsRef.current.children) : [],
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, duration: 0.4, stagger: 0.1 },
-      '-=0.2'
+      ctaRef.current?.children ? Array.from(ctaRef.current.children) : [],
+      { opacity: 0, y: 36, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.13 },
+      '-=0.3'
     );
+    tl.fromTo(historyRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, '-=0.15');
   }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/searches/saved`)
+      .then((r) => r.json())
+      .then((data: RecentSearch[]) =>
+        setRecentSearches(
+          data.slice(0, 5).map((r) => ({ ...r, titel: r.titel || r.title || r.query }))
+        )
+      )
+      .catch(() => setRecentSearches([]));
+  }, []);
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Goedemorgen';
+    if (h < 18) return 'Goedemiddag';
+    return 'Goedenavond';
+  };
+
+  const shownName = sessionStorage.getItem('infosearch_display') || userName || 'Admin';
 
   return (
     <div className={styles.page}>
@@ -58,34 +63,96 @@ export default function HomePage() {
         {/* Hero */}
         <div className={styles.hero} ref={heroRef}>
           <div className={styles.heroBadge}>
-            <Sparkles size={14} />
+            <Sparkles size={13} />
             <span>AI-gestuurd platform</span>
           </div>
           <h1 className={styles.heroTitle}>
-            Welkom bij <span className={styles.brandAccent}>InfoSearch</span>
+            {greeting()}, <span className={styles.brandAccent}>{shownName}</span>
           </h1>
-          <p className={styles.heroSubtitle}>
-            Vind de perfecte match tussen vacatures, bedrijven en jouw product — aangedreven door kunstmatige intelligentie.
-          </p>
+          <p className={styles.heroSubtitle}>Wat wil je vandaag ontdekken?</p>
         </div>
 
-        {/* Quick actions grid */}
-        <div className={styles.grid} ref={cardsRef}>
-          {ACTIONS.map((action) => (
-            <button
-              key={action.route}
-              className={styles.actionCard}
-              onClick={() => navigate(action.route)}
-            >
-              <div className={styles.actionIcon}>{action.icon}</div>
-              <div className={styles.actionText}>
-                <span className={styles.actionLabel}>{action.label}</span>
-                <span className={styles.actionDesc}>{action.description}</span>
+        {/* Two primary CTA cards */}
+        <div className={styles.ctaGrid} ref={ctaRef}>
+          <button
+            className={`${styles.ctaCard} ${styles.ctaCardPrimary}`}
+            onClick={() => navigate('/search/company')}
+          >
+            <div className={styles.ctaShine} />
+            <div className={styles.ctaCardContent}>
+              <div className={styles.ctaIcon}><Building size={30} /></div>
+              <div className={styles.ctaText}>
+                <span className={styles.ctaLabel}>Bedrijven prospecteren</span>
+                <span className={styles.ctaDesc}>
+                  AI-gestuurde bedrijfsmatching voor jouw product of dienst
+                </span>
               </div>
-              <ArrowRight size={18} className={styles.actionArrow} />
-            </button>
-          ))}
+              <ArrowRight size={22} className={styles.ctaArrow} />
+            </div>
+          </button>
+
+          <button
+            className={`${styles.ctaCard} ${styles.ctaCardSecondary}`}
+            onClick={() => navigate('/search/job')}
+          >
+            <div className={styles.ctaShine} />
+            <div className={styles.ctaCardContent}>
+              <div className={styles.ctaIcon}><Briefcase size={30} /></div>
+              <div className={styles.ctaText}>
+                <span className={styles.ctaLabel}>Vacatures zoeken</span>
+                <span className={styles.ctaDesc}>
+                  Doorzoek actuele vacatures op basis van profiel en criteria
+                </span>
+              </div>
+              <ArrowRight size={22} className={styles.ctaArrow} />
+            </div>
+          </button>
         </div>
+
+        {/* Recent history */}
+        <section className={styles.historySection} ref={historyRef}>
+          <div className={styles.historySectionHeader}>
+            <div className={styles.historyHeading}>
+              <Clock size={15} />
+              <span>Recente zoekopdrachten</span>
+            </div>
+            <button className={styles.viewAllBtn} onClick={() => navigate('/saved')}>
+              Alles bekijken <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {recentSearches.length === 0 ? (
+            <p className={styles.emptyHistory}>Nog geen zoekopdrachten opgeslagen.</p>
+          ) : (
+            <div className={styles.historyList}>
+              {recentSearches.map((item) => (
+                <button
+                  key={item.id}
+                  className={styles.historyItem}
+                  onClick={() =>
+                    navigate(`/results/${item.type}`, {
+                      state: {
+                        isSavedView: true,
+                        results: item.results || [],
+                        savedTitle: item.titel,
+                        savedQuery: item.query,
+                      },
+                    })
+                  }
+                >
+                  <span
+                    className={`${styles.historyTypeDot} ${
+                      item.type === 'company' ? styles.dotCompany : styles.dotJob
+                    }`}
+                  />
+                  <span className={styles.historyTitle}>{item.titel}</span>
+                  <span className={styles.historyQuery}>"{item.query}"</span>
+                  <ChevronRight size={14} className={styles.historyArrow} />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

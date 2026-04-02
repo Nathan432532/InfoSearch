@@ -5,6 +5,18 @@ services:
     volumes:
       - ./ollama_test_data:/root/.ollama
 
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-model-init
+    depends_on:
+      - ollama-test
+    environment:
+      - OLLAMA_HOST=http://ollama-test:11434
+    entrypoint: ["/bin/sh", "-c", "sleep 5 && ollama pull qwen2.5:3b"]
+    restart: "no"
+    volumes:
+      - ./ollama_test_data:/root/.ollama
+
   ai-api-test:
     build: .
     container_name: ai-api-sim

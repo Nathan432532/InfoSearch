@@ -7,7 +7,7 @@ import os
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY)
-BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
 model = "llama-3.3-70b-versatile"  # Snel, deterministisch, geen agentic overhead
 
 PROFIEL_EXTRACTOR_PROMPT = """

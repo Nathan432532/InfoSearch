@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import styles from './JobResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
@@ -220,8 +220,40 @@ export default function JobResultPage() {
   const [results, setResults] = useState<JobResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchedTitle, setSearchedTitle] = useState<string>('');
+  const location = useLocation();
+  const savedState = (location.state || {}) as {
+    isSavedView?: boolean;
+    results?: Record<string, unknown>[];
+    savedTitle?: string;
+    savedQuery?: string;
+  };
 
   useEffect(() => {
+    // If coming from saved results, display stored data directly without re-fetching
+    if (savedState?.isSavedView && savedState.results && savedState.results.length > 0) {
+      const mapped: JobResult[] = savedState.results.map((r, index) => ({
+        id: (r.id as number) || index + 1,
+        bedrijfsnaam: (r.bedrijfsnaam as string) || (r.titel as string) || 'Onbekend',
+        sector: (r.sector as string) || 'Niet opgegeven',
+        locatie: (r.locatie as string) || (r.gemeente as string) || 'Niet opgegeven',
+        beschrijving: (r.beschrijving as string) || (r.omschrijving as string) || '',
+        waarom: (r.waarom as string) || '',
+        score: (r.score as number) || 0,
+        contactgegevens: (r.contactgegevens as string) || (r.sollicitatie_email as string) || 'Niet beschikbaar',
+        techstack: (r.techstack as string[]) || [],
+        vacatureTitel: (r.vacatureTitel as string) || (r.titel as string) || '',
+        vacatureReferentie: (r.vacatureReferentie as string) || (r.interne_referentie as string) || undefined,
+        urgentie: (r.urgentie as string) || undefined,
+        keywords: (r.keywords as string[]) || undefined,
+        businessTrigger: (r.businessTrigger as string) || undefined,
+      }));
+      setResults(mapped);
+      setSearchedTitle(savedState.savedTitle || savedState.savedQuery || '');
+      setLoading(false);
+      return;
+    }
+
     const fetchResults = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/job-results`);
@@ -236,14 +268,17 @@ export default function JobResultPage() {
       }
     };
     fetchResults();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedState?.isSavedView]);
 
   if (loading) return <p style={{ textAlign: 'center', padding: '60px' }}>Laden…</p>;
-  if (results.length === 0) setResults(DUMMY_RESULTS);
+  if (results.length === 0 && !savedState?.isSavedView) setResults(DUMMY_RESULTS);
 
   return (
     <main className={styles.main}>
-      <h1 className={styles.title}>Vacature Resultaten</h1>
+      <h1 className={styles.title}>
+        Vacature Resultaten{searchedTitle ? ` voor "${searchedTitle}"` : ''}
+      </h1>
 
       {/* ACTION BAR */}
       <div className={styles.actionBar}>

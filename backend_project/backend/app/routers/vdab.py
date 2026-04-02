@@ -710,8 +710,10 @@ def save_search(payload: SaveSearchRequest) -> dict[str, Any]:
             # Save individual results
             result_type = "bedrijf" if payload.type == "company" else "vacature"
             for i, r in enumerate(payload.results or []):
-                bedrijf_id = r.get("id") if result_type == "bedrijf" else None
-                vacature_id = r.get("id") if result_type == "vacature" else None
+                # For AI prospect results, `id` is a ranking index (1,2,3), not a real FK.
+                # Store everything in explanation_json; leave FK columns NULL.
+                bedrijf_id = None
+                vacature_id = None
                 raw_score = r.get("score")
                 # ck_results_score: must be NULL or between 1.00 and 10.00
                 if raw_score is not None:

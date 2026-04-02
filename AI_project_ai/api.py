@@ -7,7 +7,7 @@ import json
 import os
 
 # Gebruik de servicenaam van Docker, of val terug op localhost voor lokale tests
-BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 # Cruciaal voor de Ollama library:
 os.environ["OLLAMA_HOST"] = os.getenv("OLLAMA_HOST", "localhost:11434")
