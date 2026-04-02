@@ -12,7 +12,7 @@ from app.services.json_cleaner import clean_vacature
 
 router = APIRouter(tags=["vacancies"])
 
-AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "")
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "").rstrip("/")
 
 
 class SearchRequest(BaseModel):

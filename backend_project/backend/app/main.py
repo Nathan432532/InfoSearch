@@ -23,7 +23,7 @@ async def _startup_sync() -> None:
     import httpx
     from app.routers.vdab import update_vacancies
 
-    ai_url = os.getenv("AI_SERVICE_URL", "")
+    ai_url = os.getenv("AI_SERVICE_URL", "").rstrip("/")
 
     # Small delay so the server is fully ready before heavy work
     await asyncio.sleep(5)
