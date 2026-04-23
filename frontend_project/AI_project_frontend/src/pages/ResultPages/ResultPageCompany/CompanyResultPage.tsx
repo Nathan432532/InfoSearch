@@ -161,7 +161,7 @@ export default function CompanyResultPage() {
   const listRef = useRef<HTMLUListElement>(null);
   const savedState = (location.state || {}) as {
     isSavedView?: boolean;
-    results?: CompanyResult[];
+    results?: Array<Record<string, unknown>>;
     savedTitle?: string;
     savedQuery?: string;
   };
@@ -189,7 +189,7 @@ export default function CompanyResultPage() {
   useEffect(() => {
     // If coming from saved history, skip API call — show stored data directly
     if (savedState?.isSavedView && savedState.results) {
-      const mapped: CompanyResult[] = (savedState.results as Record<string, unknown>[]).map(
+      const mapped: CompanyResult[] = savedState.results.map(
         (r, index) => ({
           id: (r.id as number) || index + 1,
           bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',

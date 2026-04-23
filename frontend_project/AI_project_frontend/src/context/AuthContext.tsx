@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 interface AuthContextType {
   isAuthenticated: boolean;
   userName: string;
+  isAdmin: boolean;
   login: (username: string, password: string) => boolean;
   logout: () => void;
 }
@@ -16,11 +17,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState(() => {
     return sessionStorage.getItem('infosearch_user') || '';
   });
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return sessionStorage.getItem('infosearch_is_admin') === 'true';
+  });
 
   useEffect(() => {
     sessionStorage.setItem('infosearch_auth', String(isAuthenticated));
     sessionStorage.setItem('infosearch_user', userName);
-  }, [isAuthenticated, userName]);
+    sessionStorage.setItem('infosearch_is_admin', String(isAdmin));
+  }, [isAuthenticated, userName, isAdmin]);
 
   const login = (username: string, password: string): boolean => {
     const validUser = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
@@ -28,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (username === validUser && password === validPass) {
       setIsAuthenticated(true);
       setUserName(username);
+      setIsAdmin(true);
       return true;
     }
     return false;
@@ -36,12 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setIsAuthenticated(false);
     setUserName('');
+    setIsAdmin(false);
     sessionStorage.removeItem('infosearch_auth');
     sessionStorage.removeItem('infosearch_user');
+    sessionStorage.removeItem('infosearch_is_admin');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userName, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, userName, isAdmin, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -651,14 +651,9 @@ def upsert_company_profile(payload: CompanyProfile) -> dict[str, Any]:
 
 @router.post("/sync")
 def full_sync(aantal: int = 100) -> dict[str, Any]:
-    """Convenience endpoint: import VDAB vacancies then trigger AI enrichment.
-
-    Useful for weekly cron jobs:  curl -X POST http://backend:8000/sync
-    """
-    # Step 1: import new vacancies from VDAB
+    """Convenience endpoint: import VDAB vacancies then trigger AI enrichment."""
     import_result = update_vacancies(aantal=aantal)
 
-    # Step 2: trigger AI enrichment for unenriched companies
     enrich_result: dict[str, Any] = {"status": "skipped"}
     if AI_SERVICE_URL:
         try:

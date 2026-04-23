@@ -219,7 +219,6 @@ function JobCard({ result }: { result: JobResult }) {
 export default function JobResultPage() {
   const [results, setResults] = useState<JobResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchedTitle, setSearchedTitle] = useState<string>('');
   const location = useLocation();
   const savedState = (location.state || {}) as {
@@ -261,7 +260,7 @@ export default function JobResultPage() {
         const data = await response.json();
         setResults(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Onbekende fout');
+        console.error('Fout bij ophalen vacatures:', err);
         setResults(DUMMY_RESULTS);
       } finally {
         setLoading(false);

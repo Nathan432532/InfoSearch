@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import styles from './HomePage.module.css';
 import { Building, Briefcase, ArrowRight, Clock, Sparkles, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { runVdabSync } from '../../api/jobs';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
@@ -19,11 +20,13 @@ interface RecentSearch {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { userName } = useAuth();
+  const { userName, isAdmin } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLElement>(null);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
@@ -57,6 +60,22 @@ export default function HomePage() {
 
   const shownName = sessionStorage.getItem('infosearch_display') || userName || 'Admin';
 
+  const handleManualVdabSync = async () => {
+    try {
+      setIsSyncing(true);
+      setSyncMessage('VDAB sync loopt...');
+      const result = await runVdabSync(100);
+      const upserted = result?.import?.upserted ?? 0;
+      const fetched = result?.import?.fetched ?? 0;
+      setSyncMessage(`VDAB sync klaar. ${upserted} vacatures verwerkt, ${fetched} opgehaald.`);
+    } catch (error) {
+      console.error(error);
+      setSyncMessage('VDAB sync mislukt. Check backend logs.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -75,23 +94,6 @@ export default function HomePage() {
         {/* Two primary CTA cards */}
         <div className={styles.ctaGrid} ref={ctaRef}>
           <button
-            className={`${styles.ctaCard} ${styles.ctaCardPrimary}`}
-            onClick={() => navigate('/search/company')}
-          >
-            <div className={styles.ctaShine} />
-            <div className={styles.ctaCardContent}>
-              <div className={styles.ctaIcon}><Building size={30} /></div>
-              <div className={styles.ctaText}>
-                <span className={styles.ctaLabel}>Bedrijven prospecteren</span>
-                <span className={styles.ctaDesc}>
-                  AI-gestuurde bedrijfsmatching voor jouw product of dienst
-                </span>
-              </div>
-              <ArrowRight size={22} className={styles.ctaArrow} />
-            </div>
-          </button>
-
-          <button
             className={`${styles.ctaCard} ${styles.ctaCardSecondary}`}
             onClick={() => navigate('/search/job')}
           >
@@ -107,7 +109,46 @@ export default function HomePage() {
               <ArrowRight size={22} className={styles.ctaArrow} />
             </div>
           </button>
+
+          <button
+            className={`${styles.ctaCard} ${styles.ctaCardSecondary}`}
+            onClick={() => navigate('/search/company')}
+          >
+            <div className={styles.ctaShine} />
+            <div className={styles.ctaCardContent}>
+              <div className={styles.ctaIcon}><Building size={30} /></div>
+              <div className={styles.ctaText}>
+                <span className={styles.ctaLabel}>Bedrijven prospecteren</span>
+                <span className={styles.ctaDesc}>
+                  AI-gestuurde bedrijfsmatching voor jouw product of dienst
+                </span>
+              </div>
+              <ArrowRight size={22} className={styles.ctaArrow} />
+            </div>
+          </button>
+
+          {isAdmin && (
+            <button
+              className={`${styles.ctaCard} ${styles.ctaCardSecondary} ${styles.ctaCardFullWidth}`}
+              onClick={handleManualVdabSync}
+              disabled={isSyncing}
+            >
+              <div className={styles.ctaShine} />
+              <div className={styles.ctaCardContent}>
+                <div className={styles.ctaIcon}><Sparkles size={30} /></div>
+                <div className={styles.ctaText}>
+                  <span className={styles.ctaLabel}>VDAB handmatig verversen</span>
+                  <span className={styles.ctaDesc}>
+                    Trek nu handmatig de VDAB data binnen
+                  </span>
+                </div>
+                <ArrowRight size={22} className={styles.ctaArrow} />
+              </div>
+            </button>
+          )}
         </div>
+
+        {syncMessage ? <p className={styles.emptyHistory}>{syncMessage}</p> : null}
 
         {/* Recent history */}
         <section className={styles.historySection} ref={historyRef}>

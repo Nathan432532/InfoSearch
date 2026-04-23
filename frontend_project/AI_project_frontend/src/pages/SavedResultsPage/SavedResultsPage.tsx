@@ -125,7 +125,7 @@ export default function SavedResultsPage() {
 
   // ── Delete ───────────────────────────────────────────────────────────────────
 
-  const handleDelete = async (id: number, type: 'job' | 'company') => {
+  const handleDelete = async (id: number) => {
     if (!confirm('Weet je zeker dat je dit resultaat wilt verwijderen?')) return;
     try {
       await fetch(`${API_BASE_URL}/searches/saved/${id}`, { method: 'DELETE' });
@@ -237,7 +237,7 @@ export default function SavedResultsPage() {
 
               <button
                 className={styles.deleteBtn}
-                onClick={() => handleDelete(result.id, result.type)}
+                onClick={() => handleDelete(result.id)}
                 title="Verwijder"
               >
                 🗑
