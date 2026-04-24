@@ -1,0 +1,104 @@
+services:
+  # MySQL: Beperk geheugen want hij heeft geen 1GB nodig voor dit project
+  mysql:
+    image: mysql:8.0
+    container_name: infos_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-InfoSearch}
+    ports:
+      - "127.0.0.1:3307:3306" # Alleen intern!
+    volumes:
+      - mysql_data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      retries: 30
+
+  # Backend: Praat intern met 'mysql'
+  backend:
+    build:
+      context: ./backend_project/backend
+    container_name: backend
+    restart: always
+    ports:
+      - "127.0.0.1:8000:8000" # Alleen intern voor Caddy!
+    environment:
+      MYSQL_HOST: mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # AI Engine (Ollama)
+  ollama-test:
+    image: ollama/ollama:latest
+    container_name: ollama-hetzner-sim
+    restart: always
+    volumes:
+      - ./AI_project_ai/ollama_test_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 2G # Geef de meeste ruimte aan de AI
+
+  # AI API: De brug tussen backend en Ollama
+  ai-api-test:
+    build: 
+      context: ./AI_project_ai # Zorg dat dit pad klopt!
+    container_name: ai-api-sim
+    depends_on:
+      - ollama-test
+    ports:
+      - "127.0.0.1:8001:8000" # Alleen intern!
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Init: Trekt het model binnen en stopt dan
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-model-init
+    depends_on:
+      - ollama-test
+    environment:
+      - OLLAMA_HOST=http://ollama-test:11434
+    entrypoint: ["/bin/sh", "-c", "sleep 5 && ollama pull qwen2.5:0.5b"] # Gebruik 0.5b voor 4GB RAM!
+    restart: "no"
+    volumes:
+      - ./AI_project_ai/ollama_test_data:/root/.ollama
+
+  # Migrator: Draait één keer en stopt
+  migrator:
+    build:
+      context: ./backend_project/migrator
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+    volumes:
+      - ./backend_project/backend/db/migrations:/migrations:ro
+
+
+  #frontend app
+  frontend:
+    image: nginx:alpine
+    container_name: frontend-live
+    volumes:
+      # We koppelen de vers gebouwde dist map aan Nginx
+      - ./frontend_project/AI_project_frontend/dist:/usr/share/nginx/html:ro
+    ports:
+      - "80:80"
+    restart: always
+
+volumes:
+  mysql_data:
