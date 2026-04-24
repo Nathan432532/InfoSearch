@@ -23,10 +23,10 @@ export default function LoginPage() {
     tl.fromTo(titleRef.current, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '-=0.3');
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (login(username, password)) {
+    if (await login(username, password)) {
       navigate('/home');
     } else {
       setError('Ongeldige gebruikersnaam of wachtwoord');

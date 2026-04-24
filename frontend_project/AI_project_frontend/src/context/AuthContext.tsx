@@ -1,55 +1,75 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import client from '../api/client';
+
+interface AuthUser {
+  id: number;
+  username: string;
+  display_name?: string | null;
+  role: string;
+  is_admin: boolean;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
   userName: string;
   isAdmin: boolean;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
+  login: (username: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem('infosearch_auth') === 'true';
-  });
-  const [userName, setUserName] = useState(() => {
-    return sessionStorage.getItem('infosearch_user') || '';
-  });
-  const [isAdmin, setIsAdmin] = useState(() => {
-    return sessionStorage.getItem('infosearch_is_admin') === 'true';
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    sessionStorage.setItem('infosearch_auth', String(isAuthenticated));
-    sessionStorage.setItem('infosearch_user', userName);
-    sessionStorage.setItem('infosearch_is_admin', String(isAdmin));
-  }, [isAuthenticated, userName, isAdmin]);
+    const bootstrapAuth = async () => {
+      try {
+        const { data } = await client.get<AuthUser>('/auth/me');
+        setUser(data);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const login = (username: string, password: string): boolean => {
-    const validUser = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-    const validPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin';
-    if (username === validUser && password === validPass) {
-      setIsAuthenticated(true);
-      setUserName(username);
-      setIsAdmin(true);
+    bootstrapAuth();
+  }, []);
+
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const { data } = await client.post<{ user: AuthUser }>('/auth/login', { username, password });
+      setUser(data.user);
       return true;
+    } catch {
+      setUser(null);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUserName('');
-    setIsAdmin(false);
-    sessionStorage.removeItem('infosearch_auth');
-    sessionStorage.removeItem('infosearch_user');
-    sessionStorage.removeItem('infosearch_is_admin');
+  const logout = async () => {
+    try {
+      await client.post('/auth/logout');
+    } finally {
+      setUser(null);
+      sessionStorage.removeItem('infosearch_display');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userName, isAdmin, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: Boolean(user),
+        userName: user?.display_name || user?.username || '',
+        isAdmin: Boolean(user?.is_admin),
+        login,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

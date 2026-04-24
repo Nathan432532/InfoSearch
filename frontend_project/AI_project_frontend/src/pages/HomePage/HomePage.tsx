@@ -41,7 +41,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/searches/saved`)
+    fetch(`${API_BASE_URL}/searches/saved`, { credentials: 'include' })
       .then((r) => {
         if (!r.ok) throw new Error('Ophalen opgeslagen zoekopdrachten mislukt');
         return r.json();
