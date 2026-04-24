@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import styles from './JobResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
@@ -11,6 +11,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').r
 
 export interface JobResult {
   id: number;
+  displayRank?: number;
   bedrijfsnaam: string;
   sector: string;
   locatie: string;
@@ -26,65 +27,6 @@ export interface JobResult {
   businessTrigger?: string;
 }
 
-// ── Dummy data ────────────────────────────────────────────────────────────────
-
-const DUMMY_RESULTS: JobResult[] = [
-  {
-    id: 1,
-    bedrijfsnaam: 'METAL-FORMING BELGIUM',
-    sector: 'Zware Metaalindustrie',
-    locatie: 'Staalweg 88, 3600 Genk, Limburg',
-    beschrijving:
-      'Metal-Forming Belgium heeft een technische infrastructuur die perfect aansluit. Ze gebruiken Siemens S7-1500 systemen en Profinet, wat direct in lijn is met het gevraagde profiel.',
-    waarom:
-      'De tech-stack van Metal-Forming Belgium bevat exact dezelfde componenten als vereist. Dit zorgt voor een optimale match met jouw profiel.',
-    score: 10,
-    contactgegevens: 'Luc Mertens, Plant Manager — l.mertens@metalforming.be — +32 89 77 88 99',
-    techstack: ['Siemens S7-1500', 'Sinamics Drives', 'Profinet', 'Safety PLC'],
-    vacatureTitel: 'PLC & Drive Specialist',
-    vacatureReferentie: 'VDAB-2024-4455',
-    urgentie: 'Kritiek',
-    keywords: ['PLC', 'drives', 'Siemens', 'industriële elektriciteit', 'storingstechnieker'],
-    businessTrigger: 'Aanleg van een compleet nieuwe productielijn voor chassis-onderdelen van elektrische voertuigen.',
-  },
-  {
-    id: 2,
-    bedrijfsnaam: 'AGRO-BOTICS NV',
-    sector: 'Landbouwmechanisatie & Robotica',
-    locatie: 'Kouterstraat 15, 8500 Kortrijk, West-Vlaanderen',
-    beschrijving:
-      'AGRO-BOTICS NV heeft een sterke focus op robotica en autonome systemen. Ze gebruiken CAN-bus en Linux-based controllers, wat goed aansluit bij het technische profiel.',
-    waarom:
-      'De tech-stack en het machinepark passen goed aan voor het gevraagde profiel, zeker voor buitendienst en elektrotechnische taken.',
-    score: 8,
-    contactgegevens: 'Dirk Vanhecke, Technisch Directeur — d.vanhecke@agrobotics.be — +32 56 12 34 56',
-    techstack: ['CODESYS', 'CAN-bus', 'Linux-based controllers', 'Python (scripting)'],
-    vacatureTitel: 'Field Service Engineer - Autonome Maaiers',
-    vacatureReferentie: 'VDAB-2024-9988',
-    urgentie: 'Hoog',
-    keywords: ['service engineer', 'robotica', 'CAN-bus', 'buitendienst', 'elektrotechniek'],
-    businessTrigger: 'Lancering van een nieuwe generatie zelfrijdende oogstmachines en internationale expansie naar de Franse markt.',
-  },
-  {
-    id: 3,
-    bedrijfsnaam: 'BREW-TECH AUTOMATION',
-    sector: 'Voedingsmiddelenindustrie (Brouwerijen)',
-    locatie: 'Brouwerijstraat 1, 3080 Tervuren, Vlaams-Brabant',
-    beschrijving:
-      'Brew-Tech Automation is bezig met een modernisering van hun PLC-sturingen. Ze werken met Schneider Electric en SCADA-systemen in een productieomgeving.',
-    waarom:
-      'Hoewel er geen directe Siemens-ervaring vereist is, biedt de omgeving een interessante uitdaging voor iemand met brede PLC-kennis en interesse in de voedingssector.',
-    score: 5,
-    contactgegevens: 'Sarah Janssens, Maintenance Manager — maintenance@brewtech.com — +32 2 444 55 66',
-    techstack: ['Schneider Electric (EcoStruxure)', 'Wonderware InTouch (SCADA)', 'Modbus TCP'],
-    vacatureTitel: 'Automatisatie Technieker (Shift)',
-    vacatureReferentie: 'VDAB-2024-3322',
-    urgentie: 'Gemiddeld',
-    keywords: ['onderhoud', 'storingen', 'Schneider', 'voeding', 'HMI'],
-    businessTrigger: 'Modernisering van de bestaande PLC-sturingen van S5 naar de nieuwste standaarden en uitbreiding van de productiecapaciteit met 20%.',
-  },
-];
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function urgencyClass(urgentie?: string): string {
@@ -97,16 +39,85 @@ function urgencyClass(urgentie?: string): string {
 
 // ── Sub-component: JobCard ────────────────────────────────────────────────────
 
-function JobCard({ result }: { result: JobResult }) {
+async function readErrorMessage(response: Response, fallback: string) {
+  try {
+    const data = await response.json();
+    return data?.detail || data?.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function saveWholeSearch(query: string, filters: Record<string, string>, results: JobResult[]) {
+  const response = await fetch(`${API_BASE_URL}/searches/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      type: 'job',
+      title: `Vacatures: ${query}`,
+      filters: Object.keys(filters).length > 0 ? filters : null,
+      results,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Opslaan mislukt'));
+  }
+}
+
+async function saveSingleResult(query: string, filters: Record<string, string>, result: JobResult) {
+  const response = await fetch(`${API_BASE_URL}/searches/save-item`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      type: 'job',
+      title: `Vacature: ${result.vacatureTitel || result.bedrijfsnaam}`,
+      filters: Object.keys(filters).length > 0 ? filters : null,
+      result,
+      rank: result.displayRank || result.id,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Opslaan mislukt'));
+  }
+}
+
+function JobCard({
+  result,
+  searchQuery,
+  filters,
+  onSaved,
+}: {
+  result: JobResult;
+  searchQuery: string;
+  filters: Record<string, string>;
+  onSaved: () => void;
+}) {
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await saveSingleResult(searchQuery, filters, result);
+      onSaved();
+      alert('Vacature opgeslagen.');
+    } catch (error) {
+      console.error('Fout bij opslaan van vacature:', error);
+      alert(error instanceof Error ? error.message : 'Opslaan mislukt.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <li className={styles.result}>
       {/* HEADER */}
       <div className={styles.cardHeader}>
         <div className={styles.headerLeft}>
-          <span className={styles.resultIndex}>{result.id}.</span>
+          <span className={styles.resultIndex}>{result.displayRank ?? result.id}.</span>
           <h2 className={styles.resultName}>{result.bedrijfsnaam}</h2>
           <span className={styles.resultSector}>{result.sector}</span>
         </div>
@@ -186,6 +197,9 @@ function JobCard({ result }: { result: JobResult }) {
           <button className={styles.btnMore} onClick={() => setExpanded(!expanded)}>
             {expanded ? 'Toon minder' : 'Lees meer'}
           </button>
+          <button className={styles.btnSaveItem} onClick={handleSave} disabled={saving}>
+            {saving ? 'Bezig...' : 'Bewaar deze vacature'}
+          </button>
           {expanded && (
             <button className={styles.btnContact} onClick={() => alert(`Contact: ${result.contactgegevens}`)}>
               ✉ Contacteer
@@ -217,22 +231,40 @@ function JobCard({ result }: { result: JobResult }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function JobResultPage() {
+  const [searchParams] = useSearchParams();
   const [results, setResults] = useState<JobResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchedTitle, setSearchedTitle] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+  const [savingWholeSearch, setSavingWholeSearch] = useState(false);
   const location = useLocation();
+  const lastRequestKeyRef = useRef<string | null>(null);
   const savedState = (location.state || {}) as {
     isSavedView?: boolean;
     results?: Record<string, unknown>[];
     savedTitle?: string;
     savedQuery?: string;
   };
+  const isSavedView = Boolean(savedState?.isSavedView);
+  const savedResults = savedState?.results;
+  const savedTitle = savedState?.savedTitle || '';
+  const savedQuery = savedState?.savedQuery || '';
+
+  const paramsString = searchParams.toString();
+  const requestKey = useMemo(
+    () => `${paramsString}::saved=${isSavedView ? 1 : 0}::count=${savedResults?.length || 0}::title=${savedTitle}::query=${savedQuery}`,
+    [paramsString, isSavedView, savedResults, savedTitle, savedQuery]
+  );
 
   useEffect(() => {
+    if (lastRequestKeyRef.current === requestKey) return;
+    lastRequestKeyRef.current = requestKey;
+
     // If coming from saved results, display stored data directly without re-fetching
-    if (savedState?.isSavedView && savedState.results && savedState.results.length > 0) {
-      const mapped: JobResult[] = savedState.results.map((r, index) => ({
-        id: (r.id as number) || index + 1,
+    if (isSavedView && savedResults && savedResults.length > 0) {
+      const mapped: JobResult[] = savedResults.map((r, index) => ({
+        id: Number(r.saved_result_id || r.id) || index + 1,
+        displayRank: index + 1,
         bedrijfsnaam: (r.bedrijfsnaam as string) || (r.titel as string) || 'Onbekend',
         sector: (r.sector as string) || 'Niet opgegeven',
         locatie: (r.locatie as string) || (r.gemeente as string) || 'Niet opgegeven',
@@ -248,30 +280,106 @@ export default function JobResultPage() {
         businessTrigger: (r.businessTrigger as string) || undefined,
       }));
       setResults(mapped);
-      setSearchedTitle(savedState.savedTitle || savedState.savedQuery || '');
+      setSearchedTitle(savedTitle || savedQuery || '');
+      setLoading(false);
+      return;
+    }
+
+    const query = searchParams.get('query') || '';
+    const locatie = searchParams.get('locatie') || '';
+    const contractType = searchParams.get('contract_type') || '';
+    const sector = searchParams.get('sector') || '';
+    const ervaring = searchParams.get('ervaring') || '';
+
+    setSearchedTitle(query);
+
+    if (!query) {
+      setError('Voer een zoekopdracht in om vacatures te zoeken.');
+      setResults([]);
       setLoading(false);
       return;
     }
 
     const fetchResults = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/job-results`);
+        const filters: Record<string, string> = {};
+        if (locatie) filters.gemeente = locatie;
+        if (contractType) filters.contract_type = contractType;
+        if (ervaring) filters.ervaring = ervaring;
+
+        const response = await fetch(`${API_BASE_URL}/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, filters }),
+        });
         if (!response.ok) throw new Error('Failed to fetch results');
         const data = await response.json();
-        setResults(data);
+
+        const mapped: JobResult[] = (data.results || []).map((r: Record<string, unknown>, index: number) => ({
+          id: index + 1,
+          displayRank: index + 1,
+          bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
+          sector: (r.beroep as string) || (sector || 'Niet opgegeven'),
+          locatie: [r.gemeente, r.provincie].filter(Boolean).join(', ') || 'Niet opgegeven',
+          beschrijving: (r.omschrijving as string) || '',
+          waarom: (r.vrije_vereiste as string) || 'Match gebaseerd op vacature-inhoud en filters.',
+          score: 0,
+          contactgegevens:
+            (r.sollicitatie_email as string) ||
+            (r.sollicitatie_telefoon as string) ||
+            (r.sollicitatie_webformulier as string) ||
+            'Niet beschikbaar',
+          techstack: [],
+          vacatureTitel: (r.titel as string) || 'Vacature',
+          vacatureReferentie: (r.interne_referentie as string) || undefined,
+          urgentie: (r.status as string) || undefined,
+          keywords: [],
+          businessTrigger: undefined,
+        }));
+
+        setResults(mapped);
+        if (mapped.length === 0) {
+          setError('Geen vacatures gevonden voor deze zoekopdracht.');
+        } else {
+          setError(null);
+        }
       } catch (err) {
         console.error('Fout bij ophalen vacatures:', err);
-        setResults(DUMMY_RESULTS);
+        setError('Fout bij het ophalen van vacatures. Controleer of de backend draait.');
+        setResults([]);
       } finally {
         setLoading(false);
       }
     };
     fetchResults();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedState?.isSavedView]);
+  }, [requestKey, isSavedView, savedResults, savedTitle, savedQuery, searchParams]);
+
+  const activeFilters = useMemo(() => {
+    const filters: Record<string, string> = {};
+    const locatie = searchParams.get('locatie');
+    const contractType = searchParams.get('contract_type');
+    const ervaring = searchParams.get('ervaring');
+    if (locatie) filters.locatie = locatie;
+    if (contractType) filters.contract_type = contractType;
+    if (ervaring) filters.ervaring = ervaring;
+    return filters;
+  }, [searchParams]);
+
+  const handleSaveWholeSearch = async () => {
+    try {
+      setSavingWholeSearch(true);
+      await saveWholeSearch(searchParams.get('query') || searchedTitle, activeFilters, results);
+      alert('Zoekopdracht succesvol opgeslagen.');
+    } catch (error) {
+      console.error('Fout bij opslaan van zoekopdracht:', error);
+      alert(error instanceof Error ? error.message : 'Er is een fout opgetreden bij het opslaan.');
+    } finally {
+      setSavingWholeSearch(false);
+    }
+  };
 
   if (loading) return <p style={{ textAlign: 'center', padding: '60px' }}>Laden…</p>;
-  if (results.length === 0 && !savedState?.isSavedView) setResults(DUMMY_RESULTS);
 
   return (
     <main className={styles.main}>
@@ -281,8 +389,8 @@ export default function JobResultPage() {
 
       {/* ACTION BAR */}
       <div className={styles.actionBar}>
-        <button className={styles.btnSave} onClick={() => saveToDatabase(results)}>
-          Opslaan
+        <button className={styles.btnSave} onClick={handleSaveWholeSearch} disabled={savingWholeSearch || results.length === 0}>
+          {savingWholeSearch ? 'Bezig...' : 'Opslaan'}
         </button>
         <button className={styles.btnExport} onClick={() => downloadAsExcel(results, 'vacature-resultaten.xlsx')}>
           Exporteren
@@ -292,32 +400,23 @@ export default function JobResultPage() {
         </Link>
       </div>
 
+      {error && <p style={{ color: '#ef4444', padding: '8px 0' }}>{error}</p>}
+
       {/* COUNT */}
       <p className={styles.resultCount}>{results.length} vacature{results.length !== 1 ? 's' : ''} gevonden</p>
 
       {/* LIST */}
       <ul className={styles.resultsList}>
         {results.map((result) => (
-          <JobCard key={`${result.id}-${result.bedrijfsnaam}`} result={result} />
+          <JobCard
+            key={`${result.vacatureReferentie || result.id}-${result.bedrijfsnaam}`}
+            result={result}
+            searchQuery={searchParams.get('query') || searchedTitle}
+            filters={activeFilters}
+            onSaved={() => undefined}
+          />
         ))}
       </ul>
     </main>
   );
 }
-
-// ── Save helper ───────────────────────────────────────────────────────────────
-
-const saveToDatabase = async (data: JobResult | JobResult[]) => {
-  try {
-    const response = await fetch('/api/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Opslaan mislukt');
-    alert('Data succesvol opgeslagen!');
-  } catch (error) {
-    console.error('Fout bij opslaan:', error);
-    alert('Er is een fout opgetreden bij het opslaan.');
-  }
-};

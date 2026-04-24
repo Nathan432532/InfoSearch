@@ -11,10 +11,9 @@
 
 .main > * {
   width: 100%;
-  max-width: 900px;
+  max-width: 980px;
 }
 
-/* ===== TITLE ===== */
 .title {
   color: rgb(16, 191, 124);
   font-size: 2.5em;
@@ -23,7 +22,6 @@
   text-align: center;
 }
 
-/* ===== CONTROL PANEL ===== */
 .controlPanel {
   display: flex;
   flex-direction: column;
@@ -37,7 +35,6 @@
   margin-bottom: 25px;
 }
 
-/* ===== SEARCH BOX ===== */
 .searchBox {
   display: flex;
   align-items: center;
@@ -66,12 +63,42 @@
   font-size: 1.2em;
 }
 
-/* ===== SORT CONTROLS ===== */
+.toolbarRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.segmentedControl {
+  display: inline-flex;
+  background: #f4f7f5;
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid #dfe7e2;
+}
+
+.segmentButton {
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.segmentButtonActive {
+  background: white;
+  color: rgb(16, 191, 124);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
 .sortControls {
   display: flex;
   align-items: center;
   gap: 10px;
-  align-self: flex-end;
 }
 
 .sortLabel {
@@ -96,12 +123,6 @@
   outline: none;
 }
 
-.sortSelect:focus {
-  border-color: rgb(16, 191, 124);
-  box-shadow: 0 0 4px rgba(16, 191, 124, 0.4);
-}
-
-/* ===== RESULT COUNT ===== */
 .resultCount {
   font-weight: bold;
   font-size: 1em;
@@ -109,7 +130,60 @@
   margin-bottom: 15px;
 }
 
-/* ===== LIST ===== */
+.groupContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.groupSection {
+  background: rgba(255,255,255,0.82);
+  border: 1px solid #e8ede9;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: 1.25em;
+  color: #111;
+}
+
+.groupMeta {
+  margin: 4px 0 0;
+  color: #7b8794;
+  font-size: 0.9em;
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+}
+
+.typeBadgeJob {
+  background-color: #e8faf3;
+  color: rgb(13, 153, 99);
+  border: 1px solid rgb(16, 191, 124);
+}
+
+.typeBadgeCompany {
+  background-color: #e8f0ff;
+  color: #2356c7;
+  border: 1px solid #6699ff;
+}
+
 .list {
   list-style: none;
   padding: 0;
@@ -119,15 +193,12 @@
   gap: 12px;
 }
 
-/* ===== SAVED ITEM ===== */
 .savedItem {
   background: white;
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #e8ede9;
-  transition: box-shadow 0.26s ease,
-              transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1),
-              border-color 0.2s ease;
+  transition: box-shadow 0.26s ease, transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease;
   display: flex;
   align-items: stretch;
 }
@@ -149,29 +220,6 @@
   gap: 16px;
 }
 
-/* ===== TYPE BADGE ===== */
-.typeBadge {
-  font-size: 0.75em;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 3px 10px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.typeBadgeJob {
-  background-color: #e8faf3;
-  color: rgb(13, 153, 99);
-  border: 1px solid rgb(16, 191, 124);
-}
-
-.typeBadgeCompany {
-  background-color: #e8f0ff;
-  color: #2356c7;
-  border: 1px solid #6699ff;
-}
-
-/* ===== ITEM CONTENT ===== */
 .itemContent {
   flex: 1;
   display: flex;
@@ -181,7 +229,7 @@
 }
 
 .itemTitle {
-  font-size: 1.15em;
+  font-size: 1.05em;
   font-weight: 700;
   color: #111;
   white-space: nowrap;
@@ -197,15 +245,35 @@
   text-overflow: ellipsis;
 }
 
+.itemMetaBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .itemDate {
   font-size: 0.88em;
   color: rgb(16, 191, 124);
   font-weight: bold;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-/* ===== DELETE BUTTON ===== */
+.scorePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e8faf3;
+  color: rgb(13, 153, 99);
+  border: 1px solid rgba(16, 191, 124, 0.25);
+  font-weight: 700;
+  font-size: 0.85em;
+}
+
 .deleteBtn {
   background: none;
   border: none;
@@ -225,14 +293,21 @@
   background-color: #fff5f5;
 }
 
-/* ===== EMPTY STATE ===== */
-.emptyState {
+.emptyState,
+.emptyStateSmall {
   text-align: center;
-  padding: 60px 20px;
   color: #888;
   background-color: rgb(249, 249, 249);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+}
+
+.emptyState {
+  padding: 60px 20px;
+  margin-top: 20px;
+}
+
+.emptyStateSmall {
+  padding: 24px 18px;
 }
 
 .emptyIcon {
@@ -251,7 +326,6 @@
   color: #aaa;
 }
 
-/* ===== LOADING / ERROR ===== */
 .statusMessage {
   text-align: center;
   padding: 60px 20px;
@@ -259,13 +333,23 @@
   font-size: 1.05em;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
+  .toolbarRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .segmentedControl {
+    width: 100%;
+  }
+
+  .segmentButton {
+    flex: 1;
+  }
+
   .sortControls {
-    align-self: stretch;
     flex-direction: column;
     align-items: flex-start;
-    gap: 5px;
   }
 
   .sortSelect {
@@ -275,10 +359,12 @@
 
   .itemLink {
     flex-wrap: wrap;
-    gap: 8px;
   }
 
-  .itemDate {
+  .itemMetaBlock {
     width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 }

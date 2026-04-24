@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './SearchPage.module.css';
 import { FolderOpen, File, Search } from 'lucide-react';
 
@@ -20,6 +21,7 @@ interface SearchPageProps {
 export default function SearchPageJob({
     onSearch,
 }: SearchPageProps) {
+    const navigate = useNavigate();
     const [query, setQuery] = useState<string>('');
     const [files, setFiles] = useState<File[]>([]);
     const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -70,9 +72,18 @@ export default function SearchPageJob({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    onSearch?.(query, files, filters);
-    console.log('Zoekopdracht ingediend:', { query, files, filters });
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    onSearch?.(trimmedQuery, files, filters);
+
+    const params = new URLSearchParams({ query: trimmedQuery });
+    if (filters.locatie) params.set('locatie', filters.locatie);
+    if (filters.contract) params.set('contract_type', filters.contract);
+    if (filters.sector) params.set('sector', filters.sector);
+    if (filters.ervaringsniveau) params.set('ervaring', filters.ervaringsniveau);
+
+    navigate(`/results/job?${params.toString()}`);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────

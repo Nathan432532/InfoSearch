@@ -342,6 +342,29 @@
   color: white;
 }
 
+.btnSaveItem {
+  background-color: white;
+  color: rgb(16, 191, 124);
+  border: 2px solid rgba(16, 191, 124, 0.35);
+  border-radius: 5px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btnSaveItem:hover {
+  background-color: #e8faf3;
+  border-color: rgb(16, 191, 124);
+}
+
+.btnSaveItem:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===== FEEDBACK ===== */
 .feedbackButtons {
   display: flex;

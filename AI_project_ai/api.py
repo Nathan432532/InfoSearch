@@ -1,5 +1,5 @@
 import sys
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import engine
 import database
@@ -90,8 +90,15 @@ async def generate_prospect(product: str):
         })
 
     rapport = await engine.genereer_prospectie_rapport(product, bedrijven)
-    print("rapport gegenereerd")
 
+    if isinstance(rapport, dict) and rapport.get("error"):
+        detail = str(rapport.get("error"))
+        print(f"rapport generatie mislukt: {detail}")
+        if "rate_limit_exceeded" in detail or "Rate limit reached" in detail:
+            raise HTTPException(status_code=429, detail=detail)
+        raise HTTPException(status_code=503, detail=detail)
+
+    print("rapport gegenereerd")
     return {"status": "success", "rapport": rapport}
 
 @app.post("/run-benchmark")

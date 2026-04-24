@@ -57,7 +57,7 @@ services:
       MYSQL_CREATE_DATABASE: "true"
     volumes:
       - ./backend/db/migrations:/migrations:ro
-    command: ["python", "/app/migrate.py", "--migrations-dir", "/migrations", "--files", "init.sql,indexes.sql,003_optimize.sql,004_ai_enrichment.sql,005_widen_interne_referentie.sql"]
+    command: ["python", "/app/migrate.py", "--migrations-dir", "/migrations", "--files", "init.sql,indexes.sql,003_optimize.sql,004_ai_enrichment.sql,005_widen_interne_referentie.sql,006_fix_search_type.sql,007_fix_results_nullable.sql,008_default_user.sql"]
     restart: "no"
 
 volumes:

@@ -1,17 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams, useLocation } from 'react-router-dom';
-import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { FaThumbsDown, FaThumbsUp } from 'react-icons/fa';
 import gsap from 'gsap';
 import styles from './CompanyResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
-import { Pin, Building } from 'lucide-react';
+import { Building, Pin } from 'lucide-react';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface CompanyResult {
   id: number;
+  displayRank?: number;
   bedrijfsnaam: string;
   sector: string;
   locatie: string;
@@ -23,9 +22,9 @@ export interface CompanyResult {
   machinepark?: string[];
   businessTrigger?: string;
   matchKwaliteit?: 'Sterke match' | 'Goede match' | 'Gedeeltelijke match';
+  saved_result_id?: number;
+  saved_search_id?: number;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function matchClass(kwaliteit?: string): string {
   if (!kwaliteit) return '';
@@ -34,18 +33,84 @@ function matchClass(kwaliteit?: string): string {
   return styles.matchPartial;
 }
 
-// ── Sub-component: CompanyCard ────────────────────────────────────────────────
+async function readErrorMessage(response: Response, fallback: string) {
+  try {
+    const data = await response.json();
+    return data?.detail || data?.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
-function CompanyCard({ result }: { result: CompanyResult }) {
+async function saveWholeSearch(query: string, filters: Record<string, string>, results: CompanyResult[]) {
+  const response = await fetch(`${API_BASE_URL}/searches/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      type: 'company',
+      title: `Bedrijven: ${query}`,
+      filters: Object.keys(filters).length > 0 ? filters : null,
+      results,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Opslaan mislukt'));
+  }
+}
+
+async function saveSingleResult(query: string, filters: Record<string, string>, result: CompanyResult) {
+  const response = await fetch(`${API_BASE_URL}/searches/save-item`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      type: 'company',
+      title: `Bedrijf: ${result.bedrijfsnaam}`,
+      filters: Object.keys(filters).length > 0 ? filters : null,
+      result,
+      rank: result.displayRank || result.id,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Opslaan mislukt'));
+  }
+}
+
+function CompanyCard({
+  result,
+  searchQuery,
+  filters,
+  onSaved,
+}: {
+  result: CompanyResult;
+  searchQuery: string;
+  filters: Record<string, string>;
+  onSaved: () => void;
+}) {
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await saveSingleResult(searchQuery, filters, result);
+      onSaved();
+      alert('Bedrijf opgeslagen.');
+    } catch (error) {
+      console.error('Fout bij opslaan van bedrijf:', error);
+      alert(error instanceof Error ? error.message : 'Opslaan mislukt.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <li className={styles.result}>
-      {/* HEADER */}
       <div className={styles.cardHeader}>
         <div className={styles.headerLeft}>
-          <span className={styles.resultIndex}>{result.id}.</span>
+          <span className={styles.resultIndex}>{result.displayRank ?? result.id}.</span>
           <h2 className={styles.resultName}>{result.bedrijfsnaam}</h2>
           <span className={styles.resultSector}>{result.sector}</span>
         </div>
@@ -54,7 +119,6 @@ function CompanyCard({ result }: { result: CompanyResult }) {
         </div>
       </div>
 
-      {/* PROJECT TYPE ROW */}
       <div className={styles.projectTypeRow}>
         <span className={styles.projectType}><Building /> Bedrijf voor samenwerking</span>
         {result.matchKwaliteit && (
@@ -64,7 +128,6 @@ function CompanyCard({ result }: { result: CompanyResult }) {
         )}
       </div>
 
-      {/* META */}
       <div className={styles.metaRow}>
         <div className={styles.metaItem}>
           <span className={styles.metaIcon}><Pin /></span>
@@ -72,12 +135,10 @@ function CompanyCard({ result }: { result: CompanyResult }) {
         </div>
       </div>
 
-      {/* BESCHRIJVING */}
       <p className={styles.resultDescription}>
         {expanded ? result.beschrijving : result.beschrijving.slice(0, 130) + '…'}
       </p>
 
-      {/* EXPANDED */}
       {expanded && (
         <div className={styles.expandedInfo}>
           <div className={styles.infoRow}>
@@ -116,11 +177,13 @@ function CompanyCard({ result }: { result: CompanyResult }) {
         </div>
       )}
 
-      {/* FOOTER */}
       <div className={styles.cardFooter}>
         <div className={styles.footerLeft}>
           <button className={styles.btnMore} onClick={() => setExpanded(!expanded)}>
             {expanded ? 'Toon minder' : 'Lees meer'}
+          </button>
+          <button className={styles.btnSaveItem} onClick={handleSave} disabled={saving}>
+            {saving ? 'Bezig...' : 'Bewaar dit bedrijf'}
           </button>
           {expanded && (
             <button
@@ -153,28 +216,33 @@ function CompanyCard({ result }: { result: CompanyResult }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
 export default function CompanyResultPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const listRef = useRef<HTMLUListElement>(null);
+  const lastRequestKeyRef = useRef<string | null>(null);
   const savedState = (location.state || {}) as {
     isSavedView?: boolean;
     results?: Array<Record<string, unknown>>;
     savedTitle?: string;
     savedQuery?: string;
   };
+  const isSavedView = Boolean(savedState?.isSavedView);
+  const savedResults = savedState?.results;
+  const savedTitle = savedState?.savedTitle || '';
+  const savedQuery = savedState?.savedQuery || '';
 
   const [results, setResults] = useState<CompanyResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiPowered, setAiPowered] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchedQuery, setSearchedQuery] = useState<string>('');
+  const [savingWholeSearch, setSavingWholeSearch] = useState(false);
 
   const paramsString = searchParams.toString();
+  const requestKey = useMemo(() => `${paramsString}::saved=${isSavedView ? 1 : 0}::count=${savedResults?.length || 0}::title=${savedTitle}::query=${savedQuery}`,
+    [paramsString, isSavedView, savedResults, savedTitle, savedQuery]);
 
-  // animate cards in after they render
   useEffect(() => {
     if (!loading && listRef.current) {
       const cards = Array.from(listRef.current.children);
@@ -184,30 +252,35 @@ export default function CompanyResultPage() {
         { opacity: 1, y: 0, duration: 0.45, stagger: 0.08, ease: 'power3.out', clearProps: 'transform' }
       );
     }
-  }, [loading]);
+  }, [loading, results.length]);
 
   useEffect(() => {
-    // If coming from saved history, skip API call — show stored data directly
-    if (savedState?.isSavedView && savedState.results) {
-      const mapped: CompanyResult[] = savedState.results.map(
-        (r, index) => ({
-          id: (r.id as number) || index + 1,
-          bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
-          sector: (r.sector as string) || 'Niet opgegeven',
-          locatie: (r.locatie as string) || 'Niet opgegeven',
-          beschrijving: (r.beschrijving as string) || '',
-          waarom: (r.waarom as string) || '',
-          score: (r.score as number) || 0,
-          contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
-          techstack: (r.techstack as string[]) || [],
-          matchKwaliteit:
-            (r.score as number) >= 8 ? 'Sterke match'
+    if (lastRequestKeyRef.current === requestKey) return;
+    lastRequestKeyRef.current = requestKey;
+
+    if (isSavedView && savedResults) {
+      const mapped: CompanyResult[] = savedResults.map((r, index) => ({
+        id: Number(r.bedrijf_id || r.id) || index + 1,
+        displayRank: index + 1,
+        bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
+        sector: (r.sector as string) || 'Niet opgegeven',
+        locatie: (r.locatie as string) || 'Niet opgegeven',
+        beschrijving: (r.beschrijving as string) || '',
+        waarom: (r.waarom as string) || '',
+        score: (r.score as number) || 0,
+        contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
+        techstack: (r.techstack as string[]) || [],
+        machinepark: (r.machinepark as string[]) || undefined,
+        businessTrigger: (r.businessTrigger as string) || undefined,
+        saved_result_id: (r.saved_result_id as number) || undefined,
+        saved_search_id: (r.saved_search_id as number) || undefined,
+        matchKwaliteit:
+          (r.score as number) >= 8 ? 'Sterke match'
             : (r.score as number) >= 5 ? 'Goede match'
-            : 'Gedeeltelijke match',
-        }),
-      );
+              : 'Gedeeltelijke match',
+      }));
       setResults(mapped);
-      setSearchedQuery(savedState.savedTitle || savedState.savedQuery || '');
+      setSearchedQuery(savedTitle || savedQuery || '');
       setAiPowered(true);
       setLoading(false);
       return;
@@ -244,26 +317,24 @@ export default function CompanyResultPage() {
         const data = await response.json();
         setAiPowered(data.ai_powered || false);
 
-        // Map AI-scored results to CompanyResult format
-        const mapped: CompanyResult[] = (data.results || []).map(
-          (r: Record<string, unknown>, index: number) => ({
-            id: index + 1,
-            bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
-            sector: (r.sector as string) || 'Niet opgegeven',
-            locatie: (r.locatie as string) || 'Niet opgegeven',
-            beschrijving: (r.beschrijving as string) || '',
-            waarom: (r.waarom as string) || '',
-            score: (r.score as number) || 0,
-            contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
-            techstack: (r.techstack as string[]) || [],
-            matchKwaliteit:
-              (r.score as number) >= 8
-                ? 'Sterke match'
-                : (r.score as number) >= 5
-                  ? 'Goede match'
-                  : 'Gedeeltelijke match',
-          }),
-        );
+        const mapped: CompanyResult[] = (data.results || []).map((r: Record<string, unknown>, index: number) => ({
+          id: Number(r.id) || index + 1,
+          displayRank: index + 1,
+          bedrijfsnaam: (r.bedrijfsnaam as string) || 'Onbekend bedrijf',
+          sector: (r.sector as string) || 'Niet opgegeven',
+          locatie: (r.locatie as string) || 'Niet opgegeven',
+          beschrijving: (r.beschrijving as string) || '',
+          waarom: (r.waarom as string) || '',
+          score: (r.score as number) || 0,
+          contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
+          techstack: (r.techstack as string[]) || [],
+          machinepark: (r.machinepark as string[]) || undefined,
+          businessTrigger: (r.businessTrigger as string) || undefined,
+          matchKwaliteit:
+            (r.score as number) >= 8 ? 'Sterke match'
+              : (r.score as number) >= 5 ? 'Goede match'
+                : 'Gedeeltelijke match',
+        }));
 
         setResults(mapped.length > 0 ? mapped : []);
         if (mapped.length === 0) setError('Geen bedrijven gevonden voor deze zoekopdracht.');
@@ -275,9 +346,34 @@ export default function CompanyResultPage() {
         setLoading(false);
       }
     };
+
     fetchResults();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsString]);
+  }, [requestKey, isSavedView, savedResults, savedTitle, savedQuery, searchParams]);
+
+  const activeFilters = useMemo(() => {
+    const filters: Record<string, string> = {};
+    const loc = searchParams.get('locatie');
+    const sec = searchParams.get('sector');
+    const reg = searchParams.get('regio');
+    if (loc) filters.locatie = loc;
+    if (sec) filters.sector = sec;
+    if (reg) filters.regio = reg;
+    return filters;
+  }, [searchParams]);
+
+  const handleSaveWholeSearch = async () => {
+    try {
+      setSavingWholeSearch(true);
+      const query = searchParams.get('query') || searchedQuery;
+      await saveWholeSearch(query, activeFilters, results);
+      alert('Zoekopdracht succesvol opgeslagen.');
+    } catch (error) {
+      console.error('Fout bij opslaan van zoekopdracht:', error);
+      alert(error instanceof Error ? error.message : 'Er is een fout opgetreden bij het opslaan.');
+    } finally {
+      setSavingWholeSearch(false);
+    }
+  };
 
   if (loading) return <p style={{ textAlign: 'center', padding: '60px' }}>AI analyseert bedrijven…</p>;
 
@@ -288,20 +384,9 @@ export default function CompanyResultPage() {
         {aiPowered && <span style={{ fontSize: '0.6em', marginLeft: '12px', color: '#22c55e' }}>AI-gescoord</span>}
       </h1>
 
-      {/* ACTION BAR */}
       <div className={styles.actionBar}>
-        <button className={styles.btnSave} onClick={() => {
-          const q = searchParams.get('query') || '';
-          const f: Record<string, string> = {};
-          const loc = searchParams.get('locatie');
-          const sec = searchParams.get('sector');
-          const reg = searchParams.get('regio');
-          if (loc) f.locatie = loc;
-          if (sec) f.sector = sec;
-          if (reg) f.regio = reg;
-          saveToDatabase(q, f, results);
-        }}>
-          Opslaan
+        <button className={styles.btnSave} onClick={handleSaveWholeSearch} disabled={savingWholeSearch || results.length === 0}>
+          {savingWholeSearch ? 'Bezig...' : 'Hele zoekopdracht opslaan'}
         </button>
         <button
           className={styles.btnExport}
@@ -314,41 +399,22 @@ export default function CompanyResultPage() {
         </Link>
       </div>
 
-      {/* COUNT */}
       {error && <p style={{ color: '#ef4444', padding: '8px 0' }}>{error}</p>}
       <p className={styles.resultCount}>
         {results.length} bedrijf{results.length !== 1 ? 'en' : ''} gevonden
       </p>
 
-      {/* LIST */}
       <ul className={styles.resultsList} ref={listRef}>
         {results.map((result) => (
-          <CompanyCard key={`${result.id}-${result.bedrijfsnaam}`} result={result} />
+          <CompanyCard
+            key={`${result.id}-${result.bedrijfsnaam}`}
+            result={result}
+            searchQuery={searchParams.get('query') || searchedQuery}
+            filters={activeFilters}
+            onSaved={() => undefined}
+          />
         ))}
       </ul>
     </main>
   );
 }
-
-// ── Save helper ───────────────────────────────────────────────────────────────
-
-const saveToDatabase = async (query: string, filters: Record<string, string>, data: CompanyResult[]) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/searches/save`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query,
-        type: 'company',
-        title: `Bedrijven: ${query}`,
-        filters: Object.keys(filters).length > 0 ? filters : null,
-        results: data,
-      }),
-    });
-    if (!response.ok) throw new Error('Opslaan mislukt');
-    alert('Zoekopdracht succesvol opgeslagen!');
-  } catch (error) {
-    console.error('Fout bij opslaan:', error);
-    alert('Er is een fout opgetreden bij het opslaan.');
-  }
-};

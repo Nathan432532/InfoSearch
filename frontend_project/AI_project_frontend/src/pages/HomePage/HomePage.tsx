@@ -42,12 +42,21 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/searches/saved`)
-      .then((r) => r.json())
-      .then((data: RecentSearch[]) =>
-        setRecentSearches(
-          data.slice(0, 5).map((r) => ({ ...r, titel: r.titel || r.title || r.query }))
-        )
-      )
+      .then((r) => {
+        if (!r.ok) throw new Error('Ophalen opgeslagen zoekopdrachten mislukt');
+        return r.json();
+      })
+      .then((data: { searches?: { company?: RecentSearch[]; job?: RecentSearch[] } }) => {
+        const combined = [
+          ...(data.searches?.company || []),
+          ...(data.searches?.job || []),
+        ]
+          .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())
+          .slice(0, 5)
+          .map((r) => ({ ...r, titel: r.titel || r.title || r.query }));
+
+        setRecentSearches(combined);
+      })
       .catch(() => setRecentSearches([]));
   }, []);
 

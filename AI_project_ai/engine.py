@@ -56,6 +56,26 @@ async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: 
 
 # ... (Houd je PROFIEL_EXTRACTOR_PROMPT hetzelfde als in) ...
 
+
+def _compact_bedrijven_data(bedrijven_data):
+    """Hou de prompt klein genoeg voor Groq TPM limieten."""
+    compacte_bedrijven = []
+
+    for b in bedrijven_data[:15]:
+        vacature_titels = [str(t).strip() for t in (b.get("vacature_titels") or []) if str(t).strip()][:3]
+        beroepen = [str(r).strip() for r in (b.get("beroepen") or []) if str(r).strip()][:3]
+
+        compacte_bedrijven.append({
+            "id": b.get("id"),
+            "naam": b.get("naam", ""),
+            "sector": b.get("sector", "Onbekend"),
+            "locatie": b.get("locatie", ""),
+            "vacature_titels": vacature_titels,
+            "beroepen": beroepen,
+        })
+
+    return compacte_bedrijven
+
 # async def extraheer_en_verrijk(vacature_tekst):
 #     """Gebruik Groq voor razendsnelle extractie."""
 #     chat_completion = client.chat.completions.create(
@@ -75,16 +95,15 @@ async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: 
 
 async def genereer_prospectie_rapport(product, bedrijven_data):
     """Genereer de TOP 3 matches via Groq."""
-    # Cap het aantal bedrijven om token-overflow te voorkomen
-    bedrijven_data = bedrijven_data[:50]
-    
+    bedrijven_data = _compact_bedrijven_data(bedrijven_data)
+
     prompt = f"""
             JE BENT EEN STRATEGISCHE B2B ANALYST. 
             Je doel is om een 'Product-Market Fit' te bepalen tussen een PRODUCT en een BEDRIJFSDATABASE.
 
             ANALYSE-METHODIEK:
-            1. COMMERCIËLE SYNERGIE: Match de groei-triggers van het bedrijf (expansie, nieuw personeel, investeringen) met de waarde die het product levert.
-            2. OPERATIONELE RELEVANTIE: Sluit de tech-stack of het machinepark aan op het gebruik van het product?
+            1. COMMERCIËLE SYNERGIE: Match productwaarde aan sector, vacatures en jobtitels.
+            2. OPERATIONELE RELEVANTIE: Gebruik alleen signalen die expliciet in de dataset staan.
             3. SEGMENTATIE: Is de sector van het bedrijf een logische afnemer voor dit type product?
 
             STRIKTE LOGICA:
@@ -96,8 +115,9 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             OUTPUT: Een JSON-lijst van unieke matches.
 
             PRODUCT: {product}
-            DATABASE: {json.dumps(bedrijven_data)}
-            GEEF EEN TOP 3
+            DATABASE: {json.dumps(bedrijven_data, ensure_ascii=False, separators=(',', ':'))}
+            GEEF MAXIMAAL 10 MATCHES.
+            GEEF ZOVEEL MATCHES ALS ZINVOL ZIJN OP BASIS VAN DE DATA, MAAR NOOIT MEER DAN 10.
 
             ANTWOORD UITSLUITEND IN DIT JSON FORMAAT (EEN LIJST VAN OBJECTEN!):
             [
@@ -113,6 +133,10 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
                     sector: string;
                 }}
             ]
+
+            Gebruik alleen velden uit de database. Als contactgegevens of techstack niet aanwezig zijn, geef respectievelijk een lege string en een lege lijst terug.
+            Retourneer geen dubbele bedrijven.
+            Retourneer een lege lijst als er geen zinvolle matches zijn.
 
             STRIKTE REGELS:
             - Geen tekst voor of na de JSON.
