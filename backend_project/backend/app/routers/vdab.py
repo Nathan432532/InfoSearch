@@ -4,9 +4,10 @@ from typing import Any
 
 import httpx
 import mysql.connector
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel
 
+from app.routers.auth import UserResponse, get_current_user_from_token
 from app.services.json_cleaner import clean_vacature
 from app.services.vdab_service import get_vacature_detail, get_vacatures
 
@@ -59,6 +60,10 @@ SEARCH_SESSION_TYPE_MAP = {
     "company": "company",
     "job": "job",
 }
+
+
+def _require_user(session_token: str | None) -> UserResponse:
+    return get_current_user_from_token(session_token)
 
 
 def _db_config() -> dict[str, Any]:
@@ -794,7 +799,8 @@ def _raise_save_error(error: Exception) -> None:
 
 
 @router.post("/searches/save")
-def save_search(payload: SaveSearchRequest) -> dict[str, Any]:
+def save_search(payload: SaveSearchRequest, infosearch_session: str | None = Cookie(default=None)) -> dict[str, Any]:
+    user = _require_user(infosearch_session)
     item_type = _normalize_type(payload.type)
     session_type = SEARCH_SESSION_TYPE_MAP[item_type]
     conn = mysql.connector.connect(**_db_config())
@@ -803,10 +809,11 @@ def save_search(payload: SaveSearchRequest) -> dict[str, Any]:
             title = payload.title or f"{item_type}: {payload.query[:80]}"
             cursor.execute(
                 """
-                INSERT INTO tblSearchSessions (user_id, type, title, input_text, filters_json)
-                VALUES (1, %s, %s, %s, %s)
+                INSERT INTO tblSearchSessions (user_id, type, title, input_text, filters_json, save_mode)
+                VALUES (%s, %s, %s, %s, %s, 'whole')
                 """,
                 (
+                    user.id,
                     session_type,
                     title,
                     payload.query,
@@ -825,7 +832,8 @@ def save_search(payload: SaveSearchRequest) -> dict[str, Any]:
 
 
 @router.post("/searches/save-item")
-def save_search_item(payload: SaveResultItemRequest) -> dict[str, Any]:
+def save_search_item(payload: SaveResultItemRequest, infosearch_session: str | None = Cookie(default=None)) -> dict[str, Any]:
+    user = _require_user(infosearch_session)
     item_type = _normalize_type(payload.type)
     session_type = SEARCH_SESSION_TYPE_MAP[item_type]
     conn = mysql.connector.connect(**_db_config())
@@ -834,10 +842,11 @@ def save_search_item(payload: SaveResultItemRequest) -> dict[str, Any]:
             title = payload.title or f"{item_type}: {payload.query[:80]}"
             cursor.execute(
                 """
-                INSERT INTO tblSearchSessions (user_id, type, title, input_text, filters_json)
-                VALUES (1, %s, %s, %s, %s)
+                INSERT INTO tblSearchSessions (user_id, type, title, input_text, filters_json, save_mode)
+                VALUES (%s, %s, %s, %s, %s, 'single')
                 """,
                 (
+                    user.id,
                     session_type,
                     title,
                     payload.query,
@@ -856,17 +865,21 @@ def save_search_item(payload: SaveResultItemRequest) -> dict[str, Any]:
 
 
 @router.get("/searches/saved")
-def get_saved_searches() -> dict[str, Any]:
+def get_saved_searches(infosearch_session: str | None = Cookie(default=None)) -> dict[str, Any]:
+    user = _require_user(infosearch_session)
     conn = mysql.connector.connect(**_db_config())
     try:
         with conn.cursor(dictionary=True) as cursor:
             cursor.execute(
                 """
-                SELECT s.id, s.type, s.title, s.input_text AS query, s.filters_json, s.created_at
+                SELECT s.id, s.type, s.title, s.input_text AS query, s.filters_json, s.created_at, s.save_mode
                 FROM tblSearchSessions s
-                WHERE s.user_id = 1 AND s.type IN ('company', 'job', 'bedrijf', 'vacature')
+                WHERE s.user_id = %s
+                  AND s.type IN ('company', 'job', 'bedrijf', 'vacature')
+                  AND COALESCE(s.save_mode, 'whole') = 'whole'
                 ORDER BY s.created_at DESC
-                """
+                """,
+                (user.id,),
             )
             sessions = cursor.fetchall()
 
@@ -903,11 +916,12 @@ def get_saved_searches() -> dict[str, Any]:
                        s.title AS search_title, s.input_text AS query
                 FROM tblSearchResults r
                 JOIN tblSearchSessions s ON s.id = r.search_id
-                WHERE s.user_id = 1
+                WHERE s.user_id = %s
                   AND s.type IN ('company', 'job', 'bedrijf', 'vacature')
-                  AND (s.title NOT LIKE 'Bedrijven: %' AND s.title NOT LIKE 'Vacatures: %')
+                  AND COALESCE(s.save_mode, 'whole') = 'single'
                 ORDER BY r.created_at DESC, r.`rank` ASC
-                """
+                """,
+                (user.id,),
             )
             saved_result_rows = cursor.fetchall()
 
@@ -928,15 +942,17 @@ def get_saved_searches() -> dict[str, Any]:
 
 
 @router.delete("/searches/saved/{search_id}")
-def delete_saved_search(search_id: int) -> dict[str, str]:
+def delete_saved_search(search_id: int, infosearch_session: str | None = Cookie(default=None)) -> dict[str, str]:
+    user = _require_user(infosearch_session)
     conn = mysql.connector.connect(**_db_config())
     try:
         with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM tblSearchResults WHERE search_id = %s", (search_id,))
-            cursor.execute("DELETE FROM tblSearchSessions WHERE id = %s", (search_id,))
-            conn.commit()
-            if cursor.rowcount == 0:
+            cursor.execute("SELECT id FROM tblSearchSessions WHERE id = %s AND user_id = %s", (search_id, user.id))
+            if not cursor.fetchone():
                 raise HTTPException(status_code=404, detail="Search not found")
+            cursor.execute("DELETE FROM tblSearchResults WHERE search_id = %s", (search_id,))
+            cursor.execute("DELETE FROM tblSearchSessions WHERE id = %s AND user_id = %s", (search_id, user.id))
+            conn.commit()
         return {"status": "deleted"}
     except HTTPException:
         raise
@@ -948,11 +964,20 @@ def delete_saved_search(search_id: int) -> dict[str, str]:
 
 
 @router.delete("/searches/saved-item/{saved_result_id}")
-def delete_saved_result(saved_result_id: int) -> dict[str, str]:
+def delete_saved_result(saved_result_id: int, infosearch_session: str | None = Cookie(default=None)) -> dict[str, str]:
+    user = _require_user(infosearch_session)
     conn = mysql.connector.connect(**_db_config())
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT search_id FROM tblSearchResults WHERE id = %s", (saved_result_id,))
+            cursor.execute(
+                """
+                SELECT r.search_id
+                FROM tblSearchResults r
+                JOIN tblSearchSessions s ON s.id = r.search_id
+                WHERE r.id = %s AND s.user_id = %s
+                """,
+                (saved_result_id, user.id),
+            )
             row = cursor.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Saved result not found")
@@ -962,7 +987,7 @@ def delete_saved_result(saved_result_id: int) -> dict[str, str]:
             cursor.execute("SELECT COUNT(*) FROM tblSearchResults WHERE search_id = %s", (search_id,))
             remaining = cursor.fetchone()[0]
             if remaining == 0:
-                cursor.execute("DELETE FROM tblSearchSessions WHERE id = %s", (search_id,))
+                cursor.execute("DELETE FROM tblSearchSessions WHERE id = %s AND user_id = %s", (search_id, user.id))
             conn.commit()
         return {"status": "deleted"}
     except HTTPException:

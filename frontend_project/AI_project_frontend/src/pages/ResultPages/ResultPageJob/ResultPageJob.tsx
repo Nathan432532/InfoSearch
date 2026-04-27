@@ -51,6 +51,7 @@ async function readErrorMessage(response: Response, fallback: string) {
 async function saveWholeSearch(query: string, filters: Record<string, string>, results: JobResult[]) {
   const response = await fetch(`${API_BASE_URL}/searches/save`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query,
@@ -68,6 +69,7 @@ async function saveWholeSearch(query: string, filters: Record<string, string>, r
 async function saveSingleResult(query: string, filters: Record<string, string>, result: JobResult) {
   const response = await fetch(`${API_BASE_URL}/searches/save-item`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query,
@@ -309,6 +311,7 @@ export default function JobResultPage() {
 
         const response = await fetch(`${API_BASE_URL}/search`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, filters }),
         });

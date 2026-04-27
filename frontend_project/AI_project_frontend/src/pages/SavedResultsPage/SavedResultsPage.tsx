@@ -68,7 +68,7 @@ export default function SavedResultsPage() {
   useEffect(() => {
     const fetchSaved = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/searches/saved`);
+        const res = await fetch(`${API_BASE_URL}/searches/saved`, { credentials: 'include' });
         if (!res.ok) throw new Error('Ophalen mislukt');
         const data: SavedPayload = await res.json();
 
@@ -111,7 +111,7 @@ export default function SavedResultsPage() {
   const handleDeleteSearch = async (id: number, type: SavedKind) => {
     if (!confirm('Weet je zeker dat je deze zoekopdracht wilt verwijderen?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/searches/saved/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/searches/saved/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) throw new Error('Verwijderen mislukt');
 
       setPayload((prev) => ({
@@ -134,7 +134,7 @@ export default function SavedResultsPage() {
   const handleDeleteResult = async (id: number, type: SavedKind) => {
     if (!confirm('Weet je zeker dat je dit opgeslagen resultaat wilt verwijderen?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/searches/saved-item/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/searches/saved-item/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) throw new Error('Verwijderen mislukt');
 
       setPayload((prev) => ({
