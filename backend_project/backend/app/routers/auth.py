@@ -12,6 +12,7 @@ router = APIRouter(tags=["auth"])
 
 SESSION_COOKIE_NAME = "infosearch_session"
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").strip().lower() in {"1", "true", "yes", "on"}
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "lax").strip().lower()
 SESSION_MAX_AGE = int(os.getenv("SESSION_MAX_AGE", "604800"))
 
 
@@ -123,7 +124,7 @@ def login(payload: LoginRequest, response: Response) -> LoginResponse:
             value=session_token,
             httponly=True,
             secure=SESSION_COOKIE_SECURE,
-            samesite="lax",
+            samesite=SESSION_COOKIE_SAMESITE,
             max_age=SESSION_MAX_AGE,
             path="/",
         )
