@@ -4,6 +4,8 @@ services:
     image: mysql:8.0
     container_name: infos_mysql
     restart: always
+    env_file:
+      - ./backend_project/.env
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-InfoSearch}
@@ -28,6 +30,8 @@ services:
     restart: always
     ports:
       - "127.0.0.1:8000:8000" # Alleen intern voor Caddy!
+    env_file:
+      - ./backend_project/.env
     environment:
       MYSQL_HOST: mysql
     depends_on:
@@ -43,6 +47,8 @@ services:
     image: ollama/ollama:latest
     container_name: ollama-hetzner-sim
     restart: always
+    env_file:
+      - ./AI_project_ai/.env
     volumes:
       - ./AI_project_ai/ollama_test_data:/root/.ollama
     deploy:
@@ -55,6 +61,8 @@ services:
     build: 
       context: ./AI_project_ai # Zorg dat dit pad klopt!
     container_name: ai-api-sim
+    env_file:
+      - ./AI_project_ai/.env
     depends_on:
       - ollama-test
     ports:
@@ -70,6 +78,8 @@ services:
     container_name: ollama-model-init
     depends_on:
       - ollama-test
+    env_file:
+      - ./AI_project_ai/.env
     environment:
       - OLLAMA_HOST=http://ollama-test:11434
     entrypoint: ["/bin/sh", "-c", "sleep 5 && ollama pull qwen2.5:0.5b"] # Gebruik 0.5b voor 4GB RAM!
@@ -84,6 +94,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    env_file:
+      - ./backend_project/.env
     restart: "no"
     volumes:
       - ./backend_project/backend/db/migrations:/migrations:ro
