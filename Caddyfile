@@ -1,0 +1,6 @@
+{
+    email jouw-email@gmail.com
+}
+infosearch.duckdns.org {
+    reverse_proxy backend:8000
+}
