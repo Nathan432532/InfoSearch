@@ -58,12 +58,16 @@ async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: 
 
 
 def _compact_bedrijven_data(bedrijven_data):
-    """Hou de prompt klein genoeg voor Groq TPM limieten."""
+    """Hou de prompt compact maar informatief genoeg voor ranking."""
     compacte_bedrijven = []
 
-    for b in bedrijven_data[:15]:
-        vacature_titels = [str(t).strip() for t in (b.get("vacature_titels") or []) if str(t).strip()][:3]
-        beroepen = [str(r).strip() for r in (b.get("beroepen") or []) if str(r).strip()][:3]
+    for b in bedrijven_data[:20]:
+        vacature_titels = [str(t).strip() for t in (b.get("vacature_titels") or []) if str(t).strip()][:4]
+        beroepen = [str(r).strip() for r in (b.get("beroepen") or []) if str(r).strip()][:4]
+        tech_stack = [str(t).strip() for t in (b.get("tech_stack") or []) if str(t).strip()][:6]
+        machine_park = [str(m).strip() for m in (b.get("machine_park") or []) if str(m).strip()][:6]
+        keywords = [str(k).strip() for k in (b.get("keywords") or []) if str(k).strip()][:8]
+        vacature_samenvattingen = [str(v).strip() for v in (b.get("vacature_samenvattingen") or []) if str(v).strip()][:3]
 
         compacte_bedrijven.append({
             "id": b.get("id"),
@@ -72,6 +76,12 @@ def _compact_bedrijven_data(bedrijven_data):
             "locatie": b.get("locatie", ""),
             "vacature_titels": vacature_titels,
             "beroepen": beroepen,
+            "tech_stack": tech_stack,
+            "machine_park": machine_park,
+            "keywords": keywords,
+            "business_trigger": (b.get("business_trigger") or "")[:240],
+            "ai_beschrijving": (b.get("ai_beschrijving") or "")[:280],
+            "vacature_samenvattingen": vacature_samenvattingen,
         })
 
     return compacte_bedrijven

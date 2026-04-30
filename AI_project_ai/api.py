@@ -73,20 +73,35 @@ async def generate_prospect(product: str):
 
         print(f"bedrijven opgehaald van backend: {len(raw_bedrijven)} stuks")
 
-    # Slim data down for Groq token limits — only essential fields
+    # Keep the candidate payload compact but materially useful for matching.
     bedrijven = []
     for b in raw_bedrijven:
         vacatures = b.get("vacatures", [])
-        titels = [v.get("titel", "") for v in vacatures][:5]
-        beroepen = list({v.get("beroep", "") for v in vacatures if v.get("beroep")})
+        titels = [v.get("titel", "") if isinstance(v, dict) else str(v) for v in vacatures][:5]
+        beroepen = []
+        for v in vacatures:
+            if isinstance(v, dict):
+                beroep = (v.get("beroep") or "").strip()
+                if beroep and beroep not in beroepen:
+                    beroepen.append(beroep)
+        techstack = [str(x).strip() for x in (b.get("tech_stack") or b.get("techstack") or []) if str(x).strip()][:8]
+        machinepark = [str(x).strip() for x in (b.get("machine_park") or b.get("machinepark") or []) if str(x).strip()][:8]
+        keywords = [str(x).strip() for x in (b.get("keywords") or []) if str(x).strip()][:10]
+        vacature_samenvattingen = [str(x).strip() for x in (b.get("vacature_samenvattingen") or []) if str(x).strip()][:3]
         bedrijven.append({
             "id": b.get("id"),
-            "naam": b.get("bedrijfsnaam", ""),
+            "naam": b.get("bedrijfsnaam") or b.get("naam", ""),
             "locatie": b.get("locatie", ""),
             "contactgegevens": b.get("contactgegevens", ""),
-            "sector": beroepen[0] if beroepen else "Onbekend",
+            "sector": b.get("sector") or (beroepen[0] if beroepen else "Onbekend"),
             "vacature_titels": titels,
             "beroepen": beroepen,
+            "tech_stack": techstack,
+            "machine_park": machinepark,
+            "keywords": keywords,
+            "business_trigger": b.get("business_trigger", ""),
+            "ai_beschrijving": b.get("ai_beschrijving", ""),
+            "vacature_samenvattingen": vacature_samenvattingen,
         })
 
     rapport = await engine.genereer_prospectie_rapport(product, bedrijven)

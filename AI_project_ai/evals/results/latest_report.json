@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-04-30T14:15:19.960514+00:00",
+  "generated_at": "2026-04-30T14:31:03.563952+00:00",
   "api_url": "https://infosearch.duckdns.org",
   "endpoint": "/companies/prospect",
   "gold_path": "C:\\Users\\nterh\\OneDrive\\Bureaublad\\ai_project\\AI_project\\AI_project_ai\\evals\\prospect_ranking_gold.jsonl",
   "summary": {
     "cases": 15,
     "metrics": {
-      "ndcg@5": 0.3218,
-      "ndcg@10": 0.3218,
-      "precision@3": 0.2,
-      "precision@5": 0.12
+      "ndcg@5": 0.301,
+      "ndcg@10": 0.301,
+      "precision@3": 0.1778,
+      "precision@5": 0.1067
     }
   },
   "cases": [
@@ -28,7 +28,7 @@
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 7.0,
           "gold_label": 1
         }
       ],
@@ -43,9 +43,9 @@
       "calibration": {
         "1": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 7.0,
+          "min_model_score": 7.0,
+          "max_model_score": 7.0
         }
       }
     },
@@ -55,32 +55,25 @@
       "top_k": 10,
       "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
       "metrics": {
-        "ndcg@5": 0.351,
-        "ndcg@10": 0.351,
-        "precision@3": 0.3333,
-        "precision@5": 0.2
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0
       },
       "top_predictions": [
         {
-          "bedrijf_id": 21,
-          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
-          "score": 8.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 7.0,
-          "gold_label": 2
-        },
-        {
           "bedrijf_id": 33,
           "bedrijfsnaam": "ELKO FRUIT SORTERING",
-          "score": 6.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
       "missed_relevant": [
+        {
+          "bedrijf_id": 2,
+          "gold_label": 2,
+          "reason": "Food production with automation; packaging likely but no vision evidence"
+        },
         {
           "bedrijf_id": 3,
           "gold_label": 2,
@@ -89,26 +82,13 @@
       ],
       "unlabeled_top_predictions": [
         {
-          "bedrijf_id": 21,
-          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
-          "score": 8.0,
-          "gold_label": 0
-        },
-        {
           "bedrijf_id": 33,
           "bedrijfsnaam": "ELKO FRUIT SORTERING",
-          "score": 6.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
-      "calibration": {
-        "2": {
-          "count": 1,
-          "avg_model_score": 7.0,
-          "min_model_score": 7.0,
-          "max_model_score": 7.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "starter_003",
@@ -125,31 +105,19 @@
         {
           "bedrijf_id": 35,
           "bedrijfsnaam": "AWL TUINDERIJ",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         },
         {
           "bedrijf_id": 45,
           "bedrijfsnaam": "BERKENRIJS",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         },
         {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "score": 7.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 48,
+          "bedrijf_id": 47,
           "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "score": 7.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 33,
-          "bedrijfsnaam": "ELKO FRUIT SORTERING",
-          "score": 6.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
@@ -164,31 +132,19 @@
         {
           "bedrijf_id": 35,
           "bedrijfsnaam": "AWL TUINDERIJ",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         },
         {
           "bedrijf_id": 45,
           "bedrijfsnaam": "BERKENRIJS",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         },
         {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "score": 7.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 48,
+          "bedrijf_id": 47,
           "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "score": 7.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 33,
-          "bedrijfsnaam": "ELKO FRUIT SORTERING",
-          "score": 6.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
@@ -200,23 +156,23 @@
       "top_k": 10,
       "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
       "metrics": {
-        "ndcg@5": 1.0,
-        "ndcg@10": 1.0,
+        "ndcg@5": 0.6309,
+        "ndcg@10": 0.6309,
         "precision@3": 0.3333,
         "precision@5": 0.2
       },
       "top_predictions": [
         {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
-          "gold_label": 3
-        },
-        {
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
-          "score": 7.0,
+          "score": 5.0,
           "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 5.0,
+          "gold_label": 3
         }
       ],
       "missed_relevant": [],
@@ -224,16 +180,16 @@
         {
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
-          "score": 7.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
       "calibration": {
         "3": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 5.0,
+          "min_model_score": 5.0,
+          "max_model_score": 5.0
         }
       }
     },
@@ -243,23 +199,23 @@
       "top_k": 10,
       "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
       "metrics": {
-        "ndcg@5": 0.2015,
-        "ndcg@10": 0.2015,
+        "ndcg@5": 0.3194,
+        "ndcg@10": 0.3194,
         "precision@3": 0.3333,
         "precision@5": 0.2
       },
       "top_predictions": [
         {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 8.0,
-          "gold_label": 0
-        },
-        {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 9.0,
+          "score": 8.0,
           "gold_label": 2
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 6.0,
+          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -273,16 +229,16 @@
         {
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
-          "score": 8.0,
+          "score": 6.0,
           "gold_label": 0
         }
       ],
       "calibration": {
         "2": {
           "count": 1,
-          "avg_model_score": 9.0,
-          "min_model_score": 9.0,
-          "max_model_score": 9.0
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
         }
       }
     },
@@ -337,14 +293,8 @@
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 7.0,
           "gold_label": 2
-        },
-        {
-          "bedrijf_id": 21,
-          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
-          "score": 6.0,
-          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -354,20 +304,13 @@
           "reason": "PLC-heavy environment but no SCADA mentioned"
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 21,
-          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
-          "score": 6.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "calibration": {
         "2": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 7.0,
+          "min_model_score": 7.0,
+          "max_model_score": 7.0
         }
       }
     },
@@ -386,7 +329,7 @@
         {
           "bedrijf_id": 21,
           "bedrijfsnaam": "DEVOOGHT LOGISTICS",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
@@ -401,7 +344,7 @@
         {
           "bedrijf_id": 21,
           "bedrijfsnaam": "DEVOOGHT LOGISTICS",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
@@ -422,44 +365,14 @@
         {
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         },
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 3
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 33,
-          "bedrijfsnaam": "ELKO FRUIT SORTERING",
-          "score": 6.0,
-          "gold_label": 0
         }
       ],
       "missed_relevant": [],
@@ -467,46 +380,16 @@
         {
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
-          "score": 8.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "score": 6.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 33,
-          "bedrijfsnaam": "ELKO FRUIT SORTERING",
-          "score": 6.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
       "calibration": {
         "3": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 5.0,
+          "min_model_score": 5.0,
+          "max_model_score": 5.0
         }
       }
     },
@@ -516,41 +399,17 @@
       "top_k": 10,
       "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
       "metrics": {
-        "ndcg@5": 0.2961,
-        "ndcg@10": 0.2961,
+        "ndcg@5": 0.4693,
+        "ndcg@10": 0.4693,
         "precision@3": 0.3333,
         "precision@5": 0.2
       },
       "top_predictions": [
         {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 5.0,
-          "gold_label": 0
-        },
-        {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 9.0,
+          "score": 8.0,
           "gold_label": 2
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "score": 5.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "score": 5.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "score": 10.0,
-          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -565,38 +424,13 @@
           "reason": "Specialist hiring suggests staffing needs"
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 5.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "score": 5.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "score": 5.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "score": 10.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "calibration": {
         "2": {
           "count": 1,
-          "avg_model_score": 9.0,
-          "min_model_score": 9.0,
-          "max_model_score": 9.0
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
         }
       }
     },
@@ -615,14 +449,8 @@
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 7.0,
           "gold_label": 3
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 6.0,
-          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -632,20 +460,13 @@
           "reason": "Siemens present but no legacy retrofit trigger"
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 6.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "calibration": {
         "3": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 7.0,
+          "min_model_score": 7.0,
+          "max_model_score": 7.0
         }
       }
     },
@@ -655,23 +476,23 @@
       "top_k": 10,
       "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
       "metrics": {
-        "ndcg@5": 0.2015,
-        "ndcg@10": 0.2015,
+        "ndcg@5": 0.3194,
+        "ndcg@10": 0.3194,
         "precision@3": 0.3333,
         "precision@5": 0.2
       },
       "top_predictions": [
         {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 8.0,
-          "gold_label": 0
-        },
-        {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 9.0,
+          "score": 8.0,
           "gold_label": 2
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 7.0,
+          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -685,16 +506,16 @@
         {
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
-          "score": 8.0,
+          "score": 7.0,
           "gold_label": 0
         }
       ],
       "calibration": {
         "2": {
           "count": 1,
-          "avg_model_score": 9.0,
-          "min_model_score": 9.0,
-          "max_model_score": 9.0
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
         }
       }
     },
@@ -713,7 +534,7 @@
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 7.0,
           "gold_label": 1
         }
       ],
@@ -728,9 +549,9 @@
       "calibration": {
         "1": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 7.0,
+          "min_model_score": 7.0,
+          "max_model_score": 7.0
         }
       }
     },
@@ -749,7 +570,7 @@
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 5.0,
           "gold_label": 0
         }
       ],
@@ -764,9 +585,9 @@
       "calibration": {
         "0": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 5.0,
+          "min_model_score": 5.0,
+          "max_model_score": 5.0
         }
       }
     },
@@ -785,14 +606,8 @@
         {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
-          "score": 8.0,
+          "score": 7.0,
           "gold_label": 2
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 6.0,
-          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -807,20 +622,13 @@
           "reason": "Industrial automation environment suggests CRM need"
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "score": 6.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "calibration": {
         "2": {
           "count": 1,
-          "avg_model_score": 8.0,
-          "min_model_score": 8.0,
-          "max_model_score": 8.0
+          "avg_model_score": 7.0,
+          "min_model_score": 7.0,
+          "max_model_score": 7.0
         }
       }
     }
