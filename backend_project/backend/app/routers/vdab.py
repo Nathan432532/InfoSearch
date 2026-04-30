@@ -409,18 +409,52 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _parse_json_list(raw: Any) -> list[str]:
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return [str(item).strip() for item in raw if str(item).strip()]
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+        except Exception:
+            return [raw.strip()] if raw.strip() else []
+    return []
+
+
 def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
     query = """
         SELECT
-            b.id AS bedrijf_id, b.naam AS bedrijfsnaam, b.kbo_nummer,
-            b.adres_gemeente, b.adres_provincie,
-            b.email AS bedrijf_email, b.telefoon AS bedrijf_telefoon, b.website,
-            v.interne_referentie, v.titel, v.beroep, v.omschrijving,
-            v.vrije_vereiste, v.gemeente, v.provincie, v.contract_type,
-            v.ervaring, v.sollicitatie_email, v.sollicitatie_telefoon
+            b.id AS bedrijf_id,
+            b.naam AS bedrijfsnaam,
+            b.kbo_nummer,
+            b.adres_gemeente,
+            b.adres_provincie,
+            b.email AS bedrijf_email,
+            b.telefoon AS bedrijf_telefoon,
+            b.website,
+            b.sector AS bedrijf_sector,
+            b.ai_beschrijving,
+            b.tech_stack_json,
+            b.machine_park_json,
+            b.business_trigger,
+            b.keywords_json,
+            v.interne_referentie,
+            v.titel,
+            v.beroep,
+            v.omschrijving,
+            v.vrije_vereiste,
+            v.gemeente,
+            v.provincie,
+            v.contract_type,
+            v.ervaring,
+            v.sollicitatie_email,
+            v.sollicitatie_telefoon
         FROM tblVacatures v
         JOIN tblBedrijven b ON v.bedrijf_id = b.id
-        ORDER BY b.naam
+        ORDER BY b.naam, v.interne_referentie
     """
     conn = mysql.connector.connect(**_db_config())
     try:
@@ -437,20 +471,41 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
             companies[bid] = {
                 "id": bid,
                 "naam": row["bedrijfsnaam"],
-                "sector": row.get("beroep") or "Onbekend",
+                "sector": row.get("bedrijf_sector") or row.get("beroep") or "Onbekend",
                 "locatie": ", ".join(
                     p for p in [row.get("adres_gemeente") or row.get("gemeente"), row.get("adres_provincie") or row.get("provincie")] if p
                 ),
                 "contactgegevens": " - ".join(
                     p for p in [row.get("bedrijf_email") or row.get("sollicitatie_email"), row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon"), row.get("website")] if p
                 ),
-                "tech_stack": [],
+                "ai_beschrijving": row.get("ai_beschrijving") or "",
+                "business_trigger": row.get("business_trigger") or "",
+                "tech_stack": _parse_json_list(row.get("tech_stack_json")),
+                "machine_park": _parse_json_list(row.get("machine_park_json")),
+                "keywords": _parse_json_list(row.get("keywords_json")),
                 "vacatures": [],
+                "beroepen": [],
+                "vacature_samenvattingen": [],
             }
-        companies[bid]["vacatures"].append(row.get("titel", ""))
-        beroep = row.get("beroep")
+        titel = (row.get("titel") or "").strip()
+        if titel:
+            companies[bid]["vacatures"].append(titel)
+
+        beroep = (row.get("beroep") or "").strip()
+        if beroep and beroep not in companies[bid]["beroepen"]:
+            companies[bid]["beroepen"].append(beroep)
         if beroep and beroep not in companies[bid]["tech_stack"]:
             companies[bid]["tech_stack"].append(beroep)
+
+        summary_parts = [
+            titel,
+            beroep,
+            (row.get("omschrijving") or "")[:220].strip(),
+            (row.get("vrije_vereiste") or "")[:160].strip(),
+        ]
+        summary = " | ".join(part for part in summary_parts if part)
+        if summary and len(companies[bid]["vacature_samenvattingen"]) < 3:
+            companies[bid]["vacature_samenvattingen"].append(summary)
     return list(companies.values())
 
 
