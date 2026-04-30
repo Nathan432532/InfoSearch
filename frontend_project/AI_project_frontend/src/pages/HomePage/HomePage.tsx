@@ -4,9 +4,8 @@ import gsap from 'gsap';
 import styles from './HomePage.module.css';
 import { Building, Briefcase, ArrowRight, Clock, Sparkles, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../api/client';
 import { runVdabSync } from '../../api/jobs';
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 interface RecentSearch {
   id: number;
