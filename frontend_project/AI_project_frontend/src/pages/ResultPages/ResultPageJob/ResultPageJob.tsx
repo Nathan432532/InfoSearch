@@ -4,9 +4,7 @@ import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import styles from './JobResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
 import { Pin, CircuitBoard } from 'lucide-react';
-
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+import { API_BASE_URL } from '../../../api/client';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface JobResult {

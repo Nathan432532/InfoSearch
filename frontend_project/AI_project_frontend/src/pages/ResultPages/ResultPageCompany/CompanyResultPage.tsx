@@ -5,8 +5,7 @@ import gsap from 'gsap';
 import styles from './CompanyResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
 import { Building, Pin } from 'lucide-react';
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+import { API_BASE_URL } from '../../../api/client';
 
 export interface CompanyResult {
   id: number;

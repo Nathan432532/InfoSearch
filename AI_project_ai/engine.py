@@ -94,54 +94,65 @@ def _compact_bedrijven_data(bedrijven_data):
 #     return json.loads(clean_json)
 
 async def genereer_prospectie_rapport(product, bedrijven_data):
-    """Genereer de TOP 3 matches via Groq."""
+    """Genereer ranked company matches via Groq."""
     bedrijven_data = _compact_bedrijven_data(bedrijven_data)
 
     prompt = f"""
-            JE BENT EEN STRATEGISCHE B2B ANALYST. 
-            Je doel is om een 'Product-Market Fit' te bepalen tussen een PRODUCT en een BEDRIJFSDATABASE.
+            JE BENT EEN KRITISCHE B2B MATCHING ENGINE.
+            Jouw taak is om PRODUCT-MARKET FIT te beoordelen tussen één PRODUCT en een BEDRIJFSDATABASE.
 
-            ANALYSE-METHODIEK:
-            1. COMMERCIËLE SYNERGIE: Match productwaarde aan sector, vacatures en jobtitels.
-            2. OPERATIONELE RELEVANTIE: Gebruik alleen signalen die expliciet in de dataset staan.
-            3. SEGMENTATIE: Is de sector van het bedrijf een logische afnemer voor dit type product?
+            DOEL:
+            - Zoek alleen bedrijven waarvoor er expliciete signalen in de dataset staan.
+            - Wees streng. Liever te weinig resultaten dan zwakke of verzonnen matches.
+            - Gebruik alleen bewijs uit sector, vacaturetitels, beroepen en locatie.
 
-            STRIKTE LOGICA:
-            - Filter op unieke bedrijfsnamen; elk bedrijf mag slechts één keer in de lijst verschijnen.
-            - Gebruik uitsluitend de verstrekte database.
-            - Scores moeten de werkelijke match-kwaliteit reflecteren (0-10). Wees meedogenloos objectief.
-            - Taal: Zakelijk Nederlands, zonder AI-clichés of herhalingen.
+            BESLISREGELS:
+            1. Een hoge score vereist concrete technische of operationele overlap.
+            2. Algemene woorden zoals "industrie", "onderhoud", "productie" of "techniek" zijn op zichzelf NIET genoeg voor een hoge score.
+            3. Als het product specifieke technologie noemt (bv. Siemens S7-1500, Profinet, SCADA, machine vision, field service), dan moeten die signalen duidelijk of redelijk direct terugkomen in de data voor een sterke match.
+            4. Als de match speculatief of indirect is, geef een lage score.
+            5. Als er geen duidelijke fit is, laat het bedrijf weg.
+            6. Geen dubbele bedrijven.
+            7. Gebruik uitsluitend de verstrekte database; verzin geen capabilities, installaties, use cases of contactgegevens.
 
-            OUTPUT: Een JSON-lijst van unieke matches.
+            SCORE-RUBRIEK:
+            - 9-10: bijna directe match, sterke expliciete overlap
+            - 7-8: duidelijke relevante fit, maar niet perfect
+            - 5-6: plausibele maar beperkte fit
+            - 3-4: zwakke of indirecte fit
+            - 0-2: geen zinvolle fit -> normaal niet teruggeven
+
+            OUTPUTVEREISTEN:
+            - Retourneer MAXIMAAL 10 matches.
+            - Retourneer ZO WEINIG MATCHES ALS NODIG. Een lege lijst is toegestaan.
+            - Sorteer aflopend op echte matchkwaliteit, niet op algemeenheid.
+            - `waarom` moet kort en concreet verwijzen naar signalen uit de dataset.
+            - `beschrijving` moet feitelijk blijven en niet marketingachtig worden.
+            - `techstack` mag alleen elementen bevatten die echt in de dataset zitten.
 
             PRODUCT: {product}
             DATABASE: {json.dumps(bedrijven_data, ensure_ascii=False, separators=(',', ':'))}
-            GEEF MAXIMAAL 10 MATCHES.
-            GEEF ZOVEEL MATCHES ALS ZINVOL ZIJN OP BASIS VAN DE DATA, MAAR NOOIT MEER DAN 10.
 
-            ANTWOORD UITSLUITEND IN DIT JSON FORMAAT (EEN LIJST VAN OBJECTEN!):
+            ANTWOORD UITSLUITEND IN GELDIGE JSON, ALS EEN LIJST VAN OBJECTEN:
             [
                 {{
-                    id: number;
-                    bedrijfsnaam: string;
-                    beschrijving: string;
-                    waarom: string;
-                    score: number;
-                    contactgegevens: string;
-                    techstack: string[];
-                    locatie: string;
-                    sector: string;
+                    "id": number,
+                    "bedrijfsnaam": string,
+                    "beschrijving": string,
+                    "waarom": string,
+                    "score": number,
+                    "contactgegevens": string,
+                    "techstack": string[],
+                    "locatie": string,
+                    "sector": string
                 }}
             ]
 
-            Gebruik alleen velden uit de database. Als contactgegevens of techstack niet aanwezig zijn, geef respectievelijk een lege string en een lege lijst terug.
-            Retourneer geen dubbele bedrijven.
-            Retourneer een lege lijst als er geen zinvolle matches zijn.
-
-            STRIKTE REGELS:
+            EXTRA REGELS:
             - Geen tekst voor of na de JSON.
             - Geen Markdown code blocks.
-            - Antwoord in professioneel Nederlands.
+            - Professioneel Nederlands.
+            - Als bewijs zwak is, geef liever geen resultaat dan een mooie gok.
             """
     
     try:

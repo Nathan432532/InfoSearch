@@ -1,0 +1,828 @@
+{
+  "generated_at": "2026-04-30T14:15:19.960514+00:00",
+  "api_url": "https://infosearch.duckdns.org",
+  "endpoint": "/companies/prospect",
+  "gold_path": "C:\\Users\\nterh\\OneDrive\\Bureaublad\\ai_project\\AI_project\\AI_project_ai\\evals\\prospect_ranking_gold.jsonl",
+  "summary": {
+    "cases": 15,
+    "metrics": {
+      "ndcg@5": 0.3218,
+      "ndcg@10": 0.3218,
+      "precision@3": 0.2,
+      "precision@5": 0.12
+    }
+  },
+  "cases": [
+    {
+      "case_id": "starter_001",
+      "product": "Predictive maintenance software for Siemens S7-1500 production lines with automatic fault alerts via Profinet.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.131,
+        "ndcg@10": 0.131,
+        "precision@3": 0.0,
+        "precision@5": 0.0
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 1
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 3,
+          "reason": "Direct match: Siemens S7-1500 and Profinet production line"
+        }
+      ],
+      "unlabeled_top_predictions": [],
+      "calibration": {
+        "1": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_002",
+      "product": "Machine vision quality inspection system for automated packaging lines.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.351,
+        "ndcg@10": 0.351,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 7.0,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 2,
+          "reason": "Industrial production line; vision plausible but not stated"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "2": {
+          "count": 1,
+          "avg_model_score": 7.0,
+          "min_model_score": 7.0,
+          "max_model_score": 7.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_003",
+      "product": "Condition monitoring platform for autonomous agricultural robots and battery-management systems.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 45,
+          "bedrijfsnaam": "BERKENRIJS",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 40,
+          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
+          "score": 7.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "score": 7.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 1,
+          "gold_label": 3,
+          "reason": "Autonomous agricultural robots directly mentioned"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 45,
+          "bedrijfsnaam": "BERKENRIJS",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 40,
+          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
+          "score": 7.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "score": 7.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {}
+    },
+    {
+      "case_id": "starter_004",
+      "product": "SCADA modernization toolkit for Schneider Electric based food production sites.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 1.0,
+        "ndcg@10": 1.0,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 3
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 7.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 7.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "3": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_005",
+      "product": "Recruitment CRM for industrial service engineers with field-operations workflow automation.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.2015,
+        "ndcg@10": 0.2015,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 9.0,
+          "gold_label": 2
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 1,
+          "gold_label": 3,
+          "reason": "Field service engineers explicitly present"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 8.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "2": {
+          "count": 1,
+          "avg_model_score": 9.0,
+          "min_model_score": 9.0,
+          "max_model_score": 9.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_006",
+      "product": "Energy monitoring platform for high-power drive systems in heavy manufacturing.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.123,
+        "ndcg@10": 0.123,
+        "precision@3": 0.0,
+        "precision@5": 0.0
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 1
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 3,
+          "reason": "Heavy industry with Sinamics drives"
+        }
+      ],
+      "unlabeled_top_predictions": [],
+      "calibration": {
+        "1": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_007",
+      "product": "Industrial cybersecurity audit service for PLC, SCADA, and OT networks.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.5563,
+        "ndcg@10": 0.5563,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 2,
+          "reason": "PLC-heavy environment but no SCADA mentioned"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "2": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_008",
+      "product": "Warehouse robotics software for autonomous guided vehicles and fleet orchestration.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "score": 8.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 1,
+          "gold_label": 2,
+          "reason": "Robotics but agricultural not warehouse"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "score": 8.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {}
+    },
+    {
+      "case_id": "starter_009",
+      "product": "Preventive maintenance SaaS for food and beverage production equipment.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.5788,
+        "ndcg@10": 0.5788,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 3
+        },
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 45,
+          "bedrijfsnaam": "BERKENRIJS",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 40,
+          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 45,
+          "bedrijfsnaam": "BERKENRIJS",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 40,
+          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "score": 6.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "3": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_010",
+      "product": "AI lead scoring for B2B technical recruitment and industrial staffing.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.2961,
+        "ndcg@10": 0.2961,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 5.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 9.0,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "score": 5.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "score": 5.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "score": 10.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 1,
+          "gold_label": 2,
+          "reason": "Hiring engineers suggests recruitment need"
+        },
+        {
+          "bedrijf_id": 3,
+          "gold_label": 2,
+          "reason": "Specialist hiring suggests staffing needs"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 5.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "score": 5.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "score": 5.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "score": 10.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "2": {
+          "count": 1,
+          "avg_model_score": 9.0,
+          "min_model_score": 9.0,
+          "max_model_score": 9.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_011",
+      "product": "Retrofit package for legacy Siemens and Schneider PLC environments.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.7872,
+        "ndcg@10": 0.7872,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 3
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 2,
+          "reason": "Siemens present but no legacy retrofit trigger"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "3": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_012",
+      "product": "Remote diagnostics platform for field service teams maintaining industrial machines.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.2015,
+        "ndcg@10": 0.2015,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 8.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 9.0,
+          "gold_label": 2
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 1,
+          "gold_label": 3,
+          "reason": "Field service engineers maintaining machines"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 8.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "2": {
+          "count": 1,
+          "avg_model_score": 9.0,
+          "min_model_score": 9.0,
+          "max_model_score": 9.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_013",
+      "product": "Computer vision defect detection for metal forming and CNC production lines.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.131,
+        "ndcg@10": 0.131,
+        "precision@3": 0.0,
+        "precision@5": 0.0
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 1
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 3,
+          "reason": "Metal forming production line explicitly stated"
+        }
+      ],
+      "unlabeled_top_predictions": [],
+      "calibration": {
+        "1": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_014",
+      "product": "Battery analytics software for electric vehicle component manufacturing plants.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 3,
+          "gold_label": 2,
+          "reason": "EV components mentioned but no battery analytics evidence"
+        }
+      ],
+      "unlabeled_top_predictions": [],
+      "calibration": {
+        "0": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    },
+    {
+      "case_id": "starter_015",
+      "product": "Sales CRM for industrial automation integrators with quote and follow-up workflows.",
+      "top_k": 10,
+      "notes": "Real starter set built from repo sample company data. Fill in labels manually: 3=strong fit, 2=plausible, 1=weak, 0=no fit.",
+      "metrics": {
+        "ndcg@5": 0.4693,
+        "ndcg@10": 0.4693,
+        "precision@3": 0.3333,
+        "precision@5": 0.2
+      },
+      "top_predictions": [
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "score": 8.0,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
+        {
+          "bedrijf_id": 1,
+          "gold_label": 2,
+          "reason": "Automation/robotics company likely needing CRM"
+        },
+        {
+          "bedrijf_id": 3,
+          "gold_label": 2,
+          "reason": "Industrial automation environment suggests CRM need"
+        }
+      ],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "score": 6.0,
+          "gold_label": 0
+        }
+      ],
+      "calibration": {
+        "2": {
+          "count": 1,
+          "avg_model_score": 8.0,
+          "min_model_score": 8.0,
+          "max_model_score": 8.0
+        }
+      }
+    }
+  ]
+}

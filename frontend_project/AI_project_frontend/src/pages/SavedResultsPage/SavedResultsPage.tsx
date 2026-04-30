@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import styles from './SavedResultsPage.module.css';
 import { Building, CircuitBoard, Folder, Search } from 'lucide-react';
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+import { API_BASE_URL } from '../../api/client';
 
 type SavedKind = 'job' | 'company';
 type ViewMode = 'searches' | 'results';
