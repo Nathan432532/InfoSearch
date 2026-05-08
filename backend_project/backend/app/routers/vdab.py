@@ -625,18 +625,8 @@ SYNONIEMEN = {
     "recruitment": ["recruitment", "staffing", "hiring", "vacature", "engineers"],
     "staffing": ["recruitment", "hiring", "vacature", "engineers"],
     "food": ["brewery", "brouwerij", "voeding", "beverage", "packaging", "food processing", "horeca"],
-    "voeding": ["food", "food processing", "horeca", "keukenmachines"],
-    "horeca": ["professionele keuken", "keukenmachines", "catering", "commercial kitchen"],
-    "aardappel": ["aardappelschiller", "aardappelschilmachine", "aardappelverwerking", "potato", "potato peeler", "potato peeling machine"],
-    "aardappelen": ["aardappelschiller", "aardappelschilmachine", "aardappelverwerking", "potato", "potato peeler", "potato peeling machine"],
-    "schiller": ["peeler", "peeling", "schilmachine", "aardappelschiller", "potato peeler"],
-    "schillers": ["peelers", "peeling machines", "schilmachines", "aardappelschillers", "potato peelers"],
-    "schilmachine": ["peeling machine", "peeler", "aardappelschilmachine", "potato peeling machine"],
-    "peeler": ["schiller", "schilmachine", "potato peeler", "potato peeling machine"],
-    "peelers": ["schillers", "schilmachines", "potato peelers"],
-    "potato": ["aardappel", "aardappelschiller", "aardappelschilmachine", "potato peeler", "potato peeling machine"],
-    "keukenmachine": ["horeca", "professionele keuken", "commercial kitchen", "food processing"],
-    "keukenmachines": ["horeca", "professionele keuken", "commercial kitchen", "food processing"],
+    "voeding": ["food", "food processing", "horeca", "commercial kitchen"],
+    "horeca": ["professionele keuken", "catering", "commercial kitchen"],
     "cnc": ["bewerkingscentra", "metal forming", "walsinstallaties"],
 }
 
@@ -678,11 +668,16 @@ def _expanded_product_terms(product_tokens: set[str]) -> set[str]:
     return terms
 
 
+def _important_product_terms(product_tokens: set[str]) -> set[str]:
+    generic = {"automatische", "automatic", "professionele", "professional", "industriele", "industriële", "commercial"}
+    return {token for token in product_tokens if token not in generic}
+
+
 def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, list[str]]:
     product_text = _normalize_text(product)
     company_text = _build_company_text(company)
     product_tokens = set(_tokenize(product_text))
-    expanded_terms = _expanded_product_terms(product_tokens)
+    important_terms = _important_product_terms(product_tokens)
 
     score = 0.0
     product_evidence = 0
@@ -693,10 +688,7 @@ def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, 
         "field service", "service engineer", "battery-management", "autonomous", "robot",
         "robotics", "warehouse", "agv", "machine vision", "computer vision", "cnc",
         "metal forming", "food", "beverage", "predictive maintenance", "preventive maintenance",
-        "automatische aardappelschiller", "aardappelschilmachine", "aardappelschillers",
-        "industriële aardappelschiller", "industriele aardappelschiller", "professionele aardappelschiller",
-        "potato peeling machine", "automatic potato peeler", "commercial potato peeler",
-        "food processing machinery", "horeca keukenmachines", "aardappelverwerkingsmachines",
+        "food processing machinery", "commercial kitchen", "professionele keuken",
     ]
     for phrase in exact_phrases:
         if phrase in product_text and phrase in company_text:
@@ -729,19 +721,13 @@ def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, 
     if company.get("tech_stack"):
         score += 0.3
 
-    potato_query = bool({"aardappel", "aardappelen", "schiller", "schillers", "schilmachine", "potato", "peeler", "peelers"} & expanded_terms)
-    if potato_query:
-        potato_evidence_terms = [
-            "aardappel", "aardappelschiller", "aardappelschilmachine", "schilmachine",
-            "potato", "peeler", "peeling", "horeca", "keukenmachine", "food processing",
-            "voedingsmachine", "catering", "commercial kitchen",
-        ]
-        if any(term in company_text for term in potato_evidence_terms):
-            score += 2.0
-            product_evidence += 2
-            reasons.append("potato/food-processing equipment evidence")
-        else:
-            score -= 6.0
+    important_matches = sum(1 for term in important_terms if term in company_text)
+    if important_terms and important_matches == 0:
+        score -= 4.0
+    elif important_terms and important_matches >= max(1, min(2, len(important_terms))):
+        score += min(2.0, important_matches * 0.7)
+        product_evidence += 1
+        reasons.append("multiple product terms matched")
 
     if any(t in product_tokens for t in {"siemens", "plc", "profinet", "s7-1500"}):
         if "siemens" not in company_text and "s7" not in company_text and "plc" not in company_text:

@@ -548,31 +548,21 @@ Fixed the issue where location-only matches could appear as partial matches.
 
 The product/service query is now treated as the primary matching factor. Location filters only constrain the candidate set and do not create relevance by themselves.
 
-For the example query `Automatische aardappel schiller` with an Antwerpen filter, the scoring now looks for product evidence such as:
+For example, if a user searches for a specific product/service with an Antwerpen filter, a business should not be treated as relevant just because it is located in Antwerpen. The company still needs evidence that it is connected to the requested product, service, supplier category, or closely related equipment/industry.
 
-- automatische aardappelschillers
-- aardappelschilmachines
-- professionele/horeca aardappelschillers
-- industriële aardappelschillers
-- potato peeling machines
-- automatic potato peelers
-- commercial potato peelers
-- food processing machinery
-- horeca keukenmachines
-- aardappelverwerkingsmachines
-
-If a candidate only matches Antwerp but has no concrete product/service evidence, its score is capped as low-quality and it is not returned/saved as a useful prospect.
+If a candidate only matches the location but has no concrete product/service evidence, its score is capped as low-quality and it is not returned/saved as a useful prospect.
 
 ### Query expansion and synonyms
 
-Added product synonym expansion for matching terms around:
+Added generic product synonym expansion for matching terms around broad categories already used by the system, such as:
 
-- potato/aardappel
-- peeler/schiller/schilmachine
-- horeca/commercial kitchen
-- food processing machinery
+- automation and robotics
+- PLC/SCADA/industrial control
+- food/packaging/horeca equipment
+- maintenance and field service
+- recruitment/staffing signals
 
-This lets the search try relevant variants before giving up, without changing the overall architecture.
+This lets the search try relevant variants before giving up, without hardcoding one specific example product into the system.
 
 ### End-of-run reporting
 
@@ -618,7 +608,7 @@ Possible longer description:
 - Deduplicate businesses using normalized name, contact, domain, address, and KBO/VAT signals
 - Merge useful fields into existing business/saved-result records instead of duplicating
 - Reject low-score location-only saved company results
-- Add product-first scoring and potato-peeler/horeca equipment query expansion
+- Add product-first scoring and generic query expansion
 - Add run reports for pull/prospect result quality and query expansion
 - Document the workflow and remaining caveats
 ```
