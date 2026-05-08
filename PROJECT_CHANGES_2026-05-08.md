@@ -6,6 +6,20 @@ This document records the latest project changes, the relevant recent commits, a
 
 ---
 
+## Documentation practice for future sessions
+
+For this InfoSearch project, future requested changes should also be documented across sessions. When work continues in a later session, add a short entry to the project documentation describing:
+
+- what the user asked to change
+- which files or components were changed
+- why the change was needed
+- how the change was verified
+- any remaining caveats or follow-up work
+
+This keeps the project history understandable even when work happens over multiple assistant sessions.
+
+---
+
 ## Current uncommitted changes
 
 The latest working-tree changes affect 5 files:
