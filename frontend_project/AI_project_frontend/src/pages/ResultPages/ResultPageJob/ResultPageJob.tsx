@@ -305,6 +305,7 @@ export default function JobResultPage() {
         const filters: Record<string, string> = {};
         if (locatie) filters.gemeente = locatie;
         if (contractType) filters.contract_type = contractType;
+        if (sector) filters.sector = sector;
         if (ervaring) filters.ervaring = ervaring;
 
         const response = await fetch(`${API_BASE_URL}/search`, {
@@ -360,9 +361,11 @@ export default function JobResultPage() {
     const filters: Record<string, string> = {};
     const locatie = searchParams.get('locatie');
     const contractType = searchParams.get('contract_type');
+    const sector = searchParams.get('sector');
     const ervaring = searchParams.get('ervaring');
     if (locatie) filters.locatie = locatie;
     if (contractType) filters.contract_type = contractType;
+    if (sector) filters.sector = sector;
     if (ervaring) filters.ervaring = ervaring;
     return filters;
   }, [searchParams]);

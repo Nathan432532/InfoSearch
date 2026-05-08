@@ -38,6 +38,7 @@ export default function SearchPageCompany() {
         const params = new URLSearchParams({ query: query.trim() });
         if (filters.locatie) params.set('locatie', filters.locatie);
         if (filters.sector) params.set('sector', filters.sector);
+        if (filters.bedrijfsgrootte) params.set('bedrijfsgrootte', filters.bedrijfsgrootte);
         if (filters.regio) params.set('regio', filters.regio);
 
         navigate(`/results/company?${params.toString()}`);

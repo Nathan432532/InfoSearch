@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Any
 
 import httpx
@@ -293,6 +294,11 @@ def search_vacancies(payload: SearchRequest) -> dict[str, Any]:
             clauses.append(f"{column} = %s")
             values.append(filter_value)
 
+        sector_filter = (payload.filters or {}).get("sector")
+        if isinstance(sector_filter, str) and sector_filter.strip():
+            clauses.append("beroep LIKE %s")
+            values.append(f"%{sector_filter.strip()}%")
+
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         vacancies = _fetch_vacancies(where_sql, tuple(values))
 
@@ -424,6 +430,161 @@ def _parse_json_list(raw: Any) -> list[str]:
     return []
 
 
+TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9\-\+\.]{1,}")
+
+STOPWORDS = {
+    "de", "het", "een", "en", "of", "voor", "van", "met", "op", "in", "aan", "te", "tot",
+    "software", "platform", "systeem", "system", "toolkit", "services", "package",
+    "ai", "automated", "automatic", "based", "sites",
+}
+
+SYNONIEMEN = {
+    "agv": ["autonomous guided vehicle", "guided vehicles", "fleet orchestration", "warehouse robotics"],
+    "warehouse": ["logistiek", "magazijn", "intralogistics"],
+    "robot": ["robotica", "robotics", "autonome"],
+    "robots": ["robotica", "robotics", "autonome"],
+    "scada": ["wonderware", "intouch", "hmi", "supervisory"],
+    "plc": ["s7", "s7-1500", "codesys", "safety plc"],
+    "siemens": ["s7", "s7-1500", "sinamics"],
+    "schneider": ["ecostruxure", "modicon"],
+    "drives": ["drive", "sinamics", "frequentieregelaars", "high power"],
+    "battery": ["batterij", "battery-management", "bms"],
+    "vision": ["camera", "computer vision", "inspectie", "inspection", "defect detection"],
+    "maintenance": ["onderhoud", "storingen", "predictive maintenance", "preventive maintenance"],
+    "field": ["buitendienst", "field service"],
+    "service": ["buitendienst", "service engineer", "field service"],
+    "recruitment": ["recruitment", "staffing", "hiring", "vacature", "engineers"],
+    "staffing": ["recruitment", "hiring", "vacature", "engineers"],
+    "food": ["brewery", "brouwerij", "voeding", "beverage", "packaging"],
+    "cnc": ["bewerkingscentra", "metal forming", "walsinstallaties"],
+}
+
+
+def _normalize_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, list):
+        value = " ".join(str(item) for item in value)
+    return str(value).lower()
+
+
+def _tokenize(value: Any) -> list[str]:
+    text = _normalize_text(value)
+    return [token for token in TOKEN_RE.findall(text) if token not in STOPWORDS and len(token) > 1]
+
+
+def _build_company_text(company: dict[str, Any]) -> str:
+    parts = [
+        company.get("naam", ""),
+        company.get("sector", ""),
+        company.get("locatie", ""),
+        company.get("ai_beschrijving", ""),
+        company.get("business_trigger", ""),
+        " ".join(company.get("vacatures", [])),
+        " ".join(company.get("beroepen", [])),
+        " ".join(company.get("tech_stack", [])),
+        " ".join(company.get("machine_park", [])),
+        " ".join(company.get("keywords", [])),
+        " ".join(company.get("vacature_samenvattingen", [])),
+    ]
+    return _normalize_text(" ".join(part for part in parts if part))
+
+
+def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, list[str]]:
+    product_text = _normalize_text(product)
+    company_text = _build_company_text(company)
+    product_tokens = set(_tokenize(product_text))
+
+    score = 0.0
+    reasons: list[str] = []
+
+    exact_phrases = [
+        "siemens s7-1500", "profinet", "sinamics", "scada", "schneider", "ecostruxure",
+        "field service", "service engineer", "battery-management", "autonomous", "robot",
+        "robotics", "warehouse", "agv", "machine vision", "computer vision", "cnc",
+        "metal forming", "food", "beverage", "predictive maintenance", "preventive maintenance",
+    ]
+    for phrase in exact_phrases:
+        if phrase in product_text and phrase in company_text:
+            score += 4.0
+            reasons.append(phrase)
+
+    overlap_count = 0
+    for token in product_tokens:
+        if token in company_text:
+            score += 1.2
+            overlap_count += 1
+            reasons.append(token)
+        for synonym in SYNONIEMEN.get(token, []):
+            if synonym in company_text:
+                score += 0.8
+                overlap_count += 1
+                reasons.append(synonym)
+
+    score += min(3.0, overlap_count * 0.35)
+
+    if any(term in company_text for term in ["plc", "scada", "robot", "robotica", "cnc", "maintenance", "onderhoud", "field service"]):
+        score += 0.5
+
+    if company.get("business_trigger"):
+        score += 0.3
+
+    if company.get("tech_stack"):
+        score += 0.3
+
+    if any(t in product_tokens for t in {"siemens", "plc", "profinet", "s7-1500"}):
+        if "siemens" not in company_text and "s7" not in company_text and "plc" not in company_text:
+            score -= 3.0
+    if any(t in product_tokens for t in {"schneider", "scada"}):
+        if "schneider" not in company_text and "ecostruxure" not in company_text and "scada" not in company_text and "wonderware" not in company_text:
+            score -= 3.0
+    if any(t in product_tokens for t in {"robot", "robotics", "agv", "warehouse", "autonomous"}):
+        if "robot" not in company_text and "robotica" not in company_text and "autonome" not in company_text and "agv" not in company_text:
+            score -= 2.5
+    if any(t in product_tokens for t in {"food", "beverage", "packaging"}):
+        if not any(term in company_text for term in ["food", "beverage", "voeding", "brouwerij", "afvullijnen", "packaging"]):
+            score -= 2.5
+
+    unique_reasons: list[str] = []
+    seen: set[str] = set()
+    for reason in reasons:
+        if reason not in seen:
+            seen.add(reason)
+            unique_reasons.append(reason)
+
+    return score, unique_reasons[:4]
+
+
+def _deterministic_prospect_results(product: str, companies: list[dict[str, Any]], limit: int = 10) -> list[dict[str, Any]]:
+    ranked: list[tuple[float, dict[str, Any], list[str]]] = []
+    for company in companies:
+        score, reasons = _score_company_match(product, company)
+        ranked.append((score, company, reasons))
+
+    ranked.sort(key=lambda item: (-item[0], item[1].get("naam", "")))
+
+    results: list[dict[str, Any]] = []
+    for raw_score, company, reasons in ranked[:limit]:
+        normalized_score = max(1, min(10, int(round(raw_score))))
+        reason_text = ", ".join(reasons) if reasons else "algemene overlap in vacaturedata"
+        results.append(
+            {
+                "id": company["id"],
+                "bedrijf_id": company["id"],
+                "bedrijfsnaam": company["naam"],
+                "sector": company.get("sector", "Onbekend"),
+                "locatie": company.get("locatie", ""),
+                "beschrijving": (company.get("ai_beschrijving") or company.get("business_trigger") or f"{company['naam']} heeft relevante vacaturesignalen.")[:280],
+                "waarom": f"Match op: {reason_text}.",
+                "score": normalized_score,
+                "contactgegevens": company.get("contactgegevens", "Niet beschikbaar"),
+                "techstack": company.get("tech_stack", [])[:8],
+            }
+        )
+
+    return results
+
+
 def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
     query = """
         SELECT
@@ -523,6 +684,7 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
         filters = payload.filters or {}
         locatie_filter = (filters.get("locatie") or "").strip().lower()
         sector_filter = (filters.get("sector") or "").strip().lower()
+        bedrijfsgrootte_filter = (filters.get("bedrijfsgrootte") or "").strip().lower()
         regio_filter = (filters.get("regio") or "").strip().lower()
 
         regio_map = {
@@ -543,15 +705,35 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
             if regio_filter and regio_filter in regio_map:
                 if not any(prov in loc for prov in regio_map[regio_filter]):
                     return False
+            if bedrijfsgrootte_filter:
+                # We do not have employee-count data yet, so use the number of
+                # linked vacancies as a pragmatic size signal until real company
+                # size enrichment is added.
+                vacature_count = len(company.get("vacatures", []))
+                if bedrijfsgrootte_filter == "klein" and vacature_count >= 5:
+                    return False
+                if bedrijfsgrootte_filter == "middel" and not (5 <= vacature_count <= 20):
+                    return False
+                if bedrijfsgrootte_filter == "groot" and vacature_count <= 20:
+                    return False
             return True
 
+        has_active_filters = any(
+            value.strip() for value in [locatie_filter, sector_filter, bedrijfsgrootte_filter, regio_filter]
+        )
         filtered_bedrijven = [company for company in bedrijven if matches_filters(company)]
-        if not filtered_bedrijven:
+        if not filtered_bedrijven and not has_active_filters:
             filtered_bedrijven = bedrijven
+
+        heuristic_results = _deterministic_prospect_results(product, filtered_bedrijven, limit=10)
 
         ai_results = None
         used_ai = False
-        if AI_SERVICE_URL:
+        # The AI wrapper currently fetches its own broad candidate list and does
+        # not accept filters, so use the backend-filtered deterministic ranking
+        # when filters are active. This prevents filtered searches from showing
+        # unfiltered AI results.
+        if AI_SERVICE_URL and not has_active_filters:
             try:
                 with httpx.Client(timeout=120.0) as client:
                     res = client.post(
@@ -565,25 +747,12 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                             ai_results = rapport
                             used_ai = True
                     else:
-                        print(f"AI prospect service returned {res.status_code}, using fallback...")
+                        print(f"AI prospect service returned {res.status_code}, using deterministic fallback...")
             except Exception as e:
-                print(f"AI service unreachable ({e}), using fallback...")
+                print(f"AI service unreachable ({e}), using deterministic fallback...")
 
         if ai_results is None:
-            ai_results = [
-                {
-                    "id": company["id"],
-                    "bedrijfsnaam": company["naam"],
-                    "sector": company.get("sector", "Onbekend"),
-                    "locatie": company.get("locatie", ""),
-                    "beschrijving": f"{company['naam']} heeft {len(company.get('vacatures', []))} actieve vacature(s).",
-                    "waarom": "Score gebaseerd op beschikbare vacaturedata (AI niet beschikbaar).",
-                    "score": min(10, len(company.get("vacatures", [])) * 2 + 3),
-                    "contactgegevens": company.get("contactgegevens", "Niet beschikbaar"),
-                    "techstack": company.get("tech_stack", []),
-                }
-                for company in filtered_bedrijven[:5]
-            ]
+            ai_results = heuristic_results
 
         return {
             "query": product,

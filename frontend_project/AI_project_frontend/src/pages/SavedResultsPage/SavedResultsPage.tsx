@@ -99,8 +99,11 @@ export default function SavedResultsPage() {
 
   useEffect(() => {
     if (!loading && listRef.current) {
+      const savedItems = Array.from(listRef.current.querySelectorAll(`.${styles.savedItem}`));
+      if (savedItems.length === 0) return;
+
       gsap.fromTo(
-        Array.from(listRef.current.querySelectorAll(`.${styles.savedItem}`)),
+        savedItems,
         { opacity: 0, x: -20 },
         { opacity: 1, x: 0, duration: 0.38, stagger: 0.04, ease: 'power2.out', clearProps: 'transform' }
       );

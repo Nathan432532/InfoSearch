@@ -291,6 +291,7 @@ export default function CompanyResultPage() {
     const locatie = searchParams.get('locatie') || '';
     const sector = searchParams.get('sector') || '';
     const regio = searchParams.get('regio') || '';
+    const bedrijfsgrootte = searchParams.get('bedrijfsgrootte') || '';
     setSearchedQuery(query);
 
     if (!query) {
@@ -306,6 +307,7 @@ export default function CompanyResultPage() {
         const filters: Record<string, string> = {};
         if (locatie) filters.locatie = locatie;
         if (sector) filters.sector = sector;
+        if (bedrijfsgrootte) filters.bedrijfsgrootte = bedrijfsgrootte;
         if (regio) filters.regio = regio;
         if (Object.keys(filters).length > 0) body.filters = filters;
 
@@ -356,9 +358,11 @@ export default function CompanyResultPage() {
     const filters: Record<string, string> = {};
     const loc = searchParams.get('locatie');
     const sec = searchParams.get('sector');
+    const size = searchParams.get('bedrijfsgrootte');
     const reg = searchParams.get('regio');
     if (loc) filters.locatie = loc;
     if (sec) filters.sector = sec;
+    if (size) filters.bedrijfsgrootte = size;
     if (reg) filters.regio = reg;
     return filters;
   }, [searchParams]);
