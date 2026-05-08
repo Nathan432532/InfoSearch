@@ -294,6 +294,11 @@ def search_vacancies(payload: SearchRequest) -> dict[str, Any]:
             clauses.append(f"{column} = %s")
             values.append(filter_value)
 
+        sector_filter = (payload.filters or {}).get("sector")
+        if isinstance(sector_filter, str) and sector_filter.strip():
+            clauses.append("beroep LIKE %s")
+            values.append(f"%{sector_filter.strip()}%")
+
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         vacancies = _fetch_vacancies(where_sql, tuple(values))
 
@@ -679,6 +684,7 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
         filters = payload.filters or {}
         locatie_filter = (filters.get("locatie") or "").strip().lower()
         sector_filter = (filters.get("sector") or "").strip().lower()
+        bedrijfsgrootte_filter = (filters.get("bedrijfsgrootte") or "").strip().lower()
         regio_filter = (filters.get("regio") or "").strip().lower()
 
         regio_map = {
@@ -699,17 +705,35 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
             if regio_filter and regio_filter in regio_map:
                 if not any(prov in loc for prov in regio_map[regio_filter]):
                     return False
+            if bedrijfsgrootte_filter:
+                # We do not have employee-count data yet, so use the number of
+                # linked vacancies as a pragmatic size signal until real company
+                # size enrichment is added.
+                vacature_count = len(company.get("vacatures", []))
+                if bedrijfsgrootte_filter == "klein" and vacature_count >= 5:
+                    return False
+                if bedrijfsgrootte_filter == "middel" and not (5 <= vacature_count <= 20):
+                    return False
+                if bedrijfsgrootte_filter == "groot" and vacature_count <= 20:
+                    return False
             return True
 
+        has_active_filters = any(
+            value.strip() for value in [locatie_filter, sector_filter, bedrijfsgrootte_filter, regio_filter]
+        )
         filtered_bedrijven = [company for company in bedrijven if matches_filters(company)]
-        if not filtered_bedrijven:
+        if not filtered_bedrijven and not has_active_filters:
             filtered_bedrijven = bedrijven
 
         heuristic_results = _deterministic_prospect_results(product, filtered_bedrijven, limit=10)
 
         ai_results = None
         used_ai = False
-        if AI_SERVICE_URL:
+        # The AI wrapper currently fetches its own broad candidate list and does
+        # not accept filters, so use the backend-filtered deterministic ranking
+        # when filters are active. This prevents filtered searches from showing
+        # unfiltered AI results.
+        if AI_SERVICE_URL and not has_active_filters:
             try:
                 with httpx.Client(timeout=120.0) as client:
                     res = client.post(
