@@ -487,18 +487,138 @@ This will likely improve matching quality more than only switching to a larger m
 
 ---
 
+## 2026-05-08 follow-up: scheduled pull, deduplication, and product-first relevance
+
+Requested change:
+
+- Keep the existing cron setup and scheduled data-pull workflow unchanged.
+- Improve the current pull behavior so the scheduled run collects more data, deduplicates businesses, and avoids saving product-irrelevant/location-only matches.
+
+Implemented changes:
+
+### Scheduled pull maximization
+
+- Kept the existing scheduler structure in `backend/app/main.py`.
+- Increased the default scheduled pull amount from `100` to `500` using `AUTO_SYNC_AMOUNT`.
+- Added the sync settings to `backend/.env.example`:
+  - `AUTO_SYNC_ENABLED=true`
+  - `AUTO_SYNC_TIME=02:30`
+  - `AUTO_SYNC_TZ=Europe/Brussels`
+  - `AUTO_SYNC_AMOUNT=500`
+- The existing VDAB service already paginates in pages of up to 50 results, so the larger amount lets the existing scheduled run continue pagination instead of stopping after the first small batch.
+
+### Business deduplication
+
+Added normalization and deduplication helpers for businesses in `backend/app/routers/vdab.py`.
+
+Deduplication now uses normalized versions of:
+
+- business name
+- website/domain
+- phone number
+- email address
+- address
+- VAT/KBO/company number when available
+
+Normalization includes:
+
+- lowercase names
+- accent stripping
+- punctuation removal
+- extra-space cleanup
+- ignoring common company suffixes such as `bv`, `bvba`, `nv`, `gmbh`, `ltd`, `srl`
+- phone digit normalization
+- domain normalization by removing protocol, `www`, paths, and trailing slashes
+
+When an existing business is found during the VDAB pull:
+
+- no second `tblBedrijven` row is created
+- useful missing fields are merged into the existing row
+- the pull report counts it as merged/skipped instead of newly saved
+
+Saved result deduplication was also improved:
+
+- company saved results below `4/10` are rejected instead of saved
+- duplicate saved businesses for the same user are merged instead of inserted again
+- merged saved results keep the most complete payload and source list where available
+
+### Product-first relevance scoring
+
+Fixed the issue where location-only matches could appear as partial matches.
+
+The product/service query is now treated as the primary matching factor. Location filters only constrain the candidate set and do not create relevance by themselves.
+
+For the example query `Automatische aardappel schiller` with an Antwerpen filter, the scoring now looks for product evidence such as:
+
+- automatische aardappelschillers
+- aardappelschilmachines
+- professionele/horeca aardappelschillers
+- industriële aardappelschillers
+- potato peeling machines
+- automatic potato peelers
+- commercial potato peelers
+- food processing machinery
+- horeca keukenmachines
+- aardappelverwerkingsmachines
+
+If a candidate only matches Antwerp but has no concrete product/service evidence, its score is capped as low-quality and it is not returned/saved as a useful prospect.
+
+### Query expansion and synonyms
+
+Added product synonym expansion for matching terms around:
+
+- potato/aardappel
+- peeler/schiller/schilmachine
+- horeca/commercial kitchen
+- food processing machinery
+
+This lets the search try relevant variants before giving up, without changing the overall architecture.
+
+### End-of-run reporting
+
+The VDAB pull now returns a `run_report` containing:
+
+- number of new businesses saved
+- number of duplicates merged or skipped
+- number of low-quality results rejected
+- best search terms / pull source note
+- whether pagination maximization was used
+
+The prospect endpoint also returns a `run_report` containing:
+
+- number of businesses returned
+- number of low-quality candidates rejected
+- best product terms used
+- whether query expansion was used
+- whether location was used only as a constraint
+
+Verification:
+
+- `python -m py_compile backend/app/routers/vdab.py backend/app/main.py backend/app/services/vdab_service.py` passed.
+- `npm run build` in the frontend passed, with only the existing large bundle-size warning.
+
+Caveats:
+
+- Real source URL history for `tblBedrijven` is still limited by the current schema. Saved result payloads can merge source lists, and business rows merge available website/contact fields, but a dedicated business-source history table would be cleaner later.
+- The scheduler time itself was not changed.
+- The VDAB source is still the main data source; this does not add a new external source crawler.
+
+---
+
 ## Suggested commit message for the current uncommitted work
 
 ```text
-Fix saved page animation warning and apply search filters to results
+Improve scheduled pull deduplication and product-first relevance
 ```
 
 Possible longer description:
 
 ```text
-- Guard saved-results GSAP animation when no saved items are rendered
-- Pass company bedrijfsgrootte filter through search URL and results request
-- Apply company prospect filters before backend ranking
-- Avoid unfiltered AI prospect results when filters are active
-- Send and apply job sector filter in vacancy search
+- Increase default scheduled VDAB pull amount while keeping existing scheduler flow
+- Deduplicate businesses using normalized name, contact, domain, address, and KBO/VAT signals
+- Merge useful fields into existing business/saved-result records instead of duplicating
+- Reject low-score location-only saved company results
+- Add product-first scoring and potato-peeler/horeca equipment query expansion
+- Add run reports for pull/prospect result quality and query expansion
+- Document the workflow and remaining caveats
 ```
