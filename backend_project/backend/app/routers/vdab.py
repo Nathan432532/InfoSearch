@@ -1,7 +1,9 @@
 import json
 import os
 import re
+import unicodedata
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 import mysql.connector
@@ -96,6 +98,114 @@ def _score_value(raw_score: Any) -> float | None:
     return None
 
 
+_COMPANY_SUFFIXES = {
+    "bv", "bvba", "nv", "gmbh", "ltd", "srl", "sa", "sprl", "vof", "commv", "cv", "llc", "inc"
+}
+
+
+def _strip_accents(value: str) -> str:
+    return "".join(
+        char for char in unicodedata.normalize("NFKD", value)
+        if not unicodedata.combining(char)
+    )
+
+
+def _normalize_business_name(value: Any) -> str:
+    text = _strip_accents(str(value or "").lower())
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    parts = [part for part in text.split() if part not in _COMPANY_SUFFIXES]
+    return " ".join(parts)
+
+
+def _normalize_phone(value: Any) -> str:
+    raw = str(value or "")
+    digits = re.sub(r"\D+", "", raw)
+    if digits.startswith("00"):
+        digits = digits[2:]
+    if digits.startswith("32") and len(digits) > 9:
+        digits = "0" + digits[2:]
+    return digits
+
+
+def _normalize_email(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _normalize_domain(value: Any) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+    if "://" not in raw:
+        raw = "https://" + raw
+    parsed = urlparse(raw)
+    host = parsed.netloc or parsed.path.split("/", 1)[0]
+    return host.removeprefix("www.").rstrip("/")
+
+
+def _normalize_address(value: Any) -> str:
+    text = _strip_accents(str(value or "").lower())
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    return " ".join(text.split())
+
+
+def _business_dedupe_keys(payload: dict[str, Any]) -> dict[str, str]:
+    contact = str(payload.get("contactgegevens") or "")
+    email_match = re.search(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", contact, re.I)
+    phone_value = payload.get("telefoon") or payload.get("phone") or contact
+    website_value = payload.get("website") or payload.get("url") or payload.get("source_url") or contact
+    address = payload.get("adres") or payload.get("address") or payload.get("locatie") or ""
+    vat = payload.get("kbo_nummer") or payload.get("kbo") or payload.get("vat") or payload.get("btw_nummer") or ""
+    return {
+        "name": _normalize_business_name(payload.get("bedrijfsnaam") or payload.get("naam") or payload.get("title")),
+        "domain": _normalize_domain(website_value),
+        "phone": _normalize_phone(phone_value),
+        "email": _normalize_email(email_match.group(0) if email_match else payload.get("email")),
+        "address": _normalize_address(address),
+        "vat": re.sub(r"\W+", "", str(vat or "").lower()),
+    }
+
+
+def _is_duplicate_business(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    left_keys = _business_dedupe_keys(left)
+    right_keys = _business_dedupe_keys(right)
+    for key in ["vat", "domain", "email", "phone"]:
+        if left_keys[key] and left_keys[key] == right_keys[key]:
+            return True
+    if left_keys["name"] and left_keys["name"] == right_keys["name"]:
+        if left_keys["address"] and right_keys["address"] and left_keys["address"] == right_keys["address"]:
+            return True
+        if not left_keys["address"] or not right_keys["address"]:
+            return True
+    return False
+
+
+def _merge_result_payload(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(existing)
+    for key, value in incoming.items():
+        if value in (None, "", [], {}):
+            continue
+        current = merged.get(key)
+        if current in (None, "", [], {}):
+            merged[key] = value
+        elif isinstance(current, list):
+            values = value if isinstance(value, list) else [value]
+            for item in values:
+                if item not in current:
+                    current.append(item)
+        elif isinstance(value, str) and isinstance(current, str) and len(value) > len(current):
+            merged[key] = value
+    sources = []
+    for source in [existing.get("source_url"), incoming.get("source_url"), existing.get("sources"), incoming.get("sources")]:
+        if isinstance(source, list):
+            sources.extend(str(item) for item in source if item)
+        elif source:
+            sources.append(str(source))
+    if sources:
+        merged["sources"] = sorted(set(sources))
+    merged["save_status"] = "merged"
+    return merged
+
+
 def _build_result_payload(result: dict[str, Any], item_type: str) -> dict[str, Any]:
     payload = dict(result)
     payload.pop("saved_result_id", None)
@@ -120,11 +230,14 @@ def _build_result_payload(result: dict[str, Any], item_type: str) -> dict[str, A
     return payload
 
 
-def _insert_saved_results(cursor: Any, search_id: int, item_type: str, results: list[dict[str, Any]]) -> None:
+def _insert_saved_results(cursor: Any, search_id: int, item_type: str, results: list[dict[str, Any]], user_id: int | None = None) -> dict[str, int]:
     result_type = RESULT_TYPE_MAP[item_type]
+    stats = {"new": 0, "merged": 0, "rejected_low_quality": 0}
+
     for index, result in enumerate(results, start=1):
         payload = _build_result_payload(result, item_type)
         rank = payload.get("rank") or index
+        score = _score_value(payload.get("score"))
         vacature_id = None
         bedrijf_id = None
 
@@ -141,10 +254,63 @@ def _insert_saved_results(cursor: Any, search_id: int, item_type: str, results: 
             except (ValueError, TypeError):
                 bedrijf_id = None
 
+        if item_type == "company" and score is not None and score < 4:
+            stats["rejected_low_quality"] += 1
+            continue
         if item_type == "job" and not vacature_id:
             raise HTTPException(status_code=400, detail="Saved job result is missing vacature reference")
         if item_type == "company" and bedrijf_id is None:
             raise HTTPException(status_code=400, detail="Saved company result is missing bedrijf_id")
+
+        if item_type == "company" and user_id is not None:
+            cursor.execute(
+                """
+                SELECT r.id, r.explanation_json, r.match_score
+                FROM tblSearchResults r
+                JOIN tblSearchSessions s ON s.id = r.search_id
+                WHERE s.user_id = %s AND r.result_type = 'bedrijf'
+                """,
+                (user_id,),
+            )
+            for existing_id, existing_json, existing_score in cursor.fetchall():
+                existing_payload = json.loads(existing_json) if existing_json else {}
+                existing_bedrijf_id = existing_payload.get("bedrijf_id") or existing_payload.get("id")
+                is_same_id = bedrijf_id is not None and str(existing_bedrijf_id) == str(bedrijf_id)
+                if is_same_id or _is_duplicate_business(existing_payload, payload):
+                    merged_payload = _merge_result_payload(existing_payload, payload)
+                    merged_score = max(
+                        float(existing_score or 0),
+                        float(score or 0),
+                    ) or None
+                    cursor.execute(
+                        """
+                        UPDATE tblSearchResults
+                        SET match_score = %s, explanation_json = %s
+                        WHERE id = %s
+                        """,
+                        (merged_score, json.dumps(merged_payload, ensure_ascii=False, default=str), existing_id),
+                    )
+                    stats["merged"] += 1
+                    break
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO tblSearchResults
+                        (search_id, result_type, vacature_id, bedrijf_id, `rank`, match_score, explanation_json)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        search_id,
+                        result_type,
+                        vacature_id,
+                        bedrijf_id,
+                        rank,
+                        score,
+                        json.dumps(payload, ensure_ascii=False, default=str),
+                    ),
+                )
+                stats["new"] += 1
+            continue
 
         cursor.execute(
             """
@@ -158,10 +324,13 @@ def _insert_saved_results(cursor: Any, search_id: int, item_type: str, results: 
                 vacature_id,
                 bedrijf_id,
                 rank,
-                _score_value(payload.get("score")),
+                score,
                 json.dumps(payload, ensure_ascii=False, default=str),
             ),
         )
+        stats["new"] += 1
+
+    return stats
 
 
 def _row_to_saved_result(row: dict[str, Any]) -> dict[str, Any]:
@@ -455,8 +624,61 @@ SYNONIEMEN = {
     "service": ["buitendienst", "service engineer", "field service"],
     "recruitment": ["recruitment", "staffing", "hiring", "vacature", "engineers"],
     "staffing": ["recruitment", "hiring", "vacature", "engineers"],
-    "food": ["brewery", "brouwerij", "voeding", "beverage", "packaging"],
+    "food": ["brewery", "brouwerij", "voeding", "beverage", "packaging", "food processing", "horeca"],
+    "voeding": ["food", "food processing", "horeca", "commercial kitchen"],
+    "horeca": ["professionele keuken", "catering", "commercial kitchen"],
     "cnc": ["bewerkingscentra", "metal forming", "walsinstallaties"],
+}
+
+FILTER_SYNONIEMEN = {
+    "automatisatie": ["automation", "automatisering", "industrial automation", "plc", "scada", "hmi", "robotica", "robotics"],
+    "automation": ["automatisatie", "automatisering", "industrial automation", "plc", "scada", "robotics"],
+    "techniek": ["technisch", "technician", "technieker", "maintenance", "onderhoud", "engineering"],
+    "industrie": ["industrieel", "industrial", "productie", "manufacturing", "fabriek"],
+    "metaal": ["metal", "metal forming", "cnc", "wals", "staal", "bewerking", "machining"],
+    "voeding": ["food", "beverage", "brouwerij", "brewery", "horeca", "afvullijnen", "packaging"],
+    "food": ["voeding", "beverage", "brouwerij", "brewery", "afvullijnen", "packaging"],
+    "horeca": ["catering", "keuken", "commercial kitchen", "voeding"],
+    "logistiek": ["logistics", "warehouse", "magazijn", "intralogistics", "agv"],
+    "bouw": ["construction", "werf", "aannemer", "building"],
+    "zorg": ["healthcare", "care", "verpleeg", "medisch", "medical"],
+    "ict": ["it", "software", "developer", "data", "cloud", "cybersecurity"],
+    "recruitment": ["staffing", "hiring", "hr", "vacature", "rekrutering"],
+    "landbouw": ["agriculture", "agricultural", "agro", "tuinbouw", "horticulture"],
+    "robotica": ["robotics", "robot", "autonome", "autonomous", "agv"],
+    "onderhoud": ["maintenance", "preventive maintenance", "predictive maintenance", "storingen", "service engineer"],
+    "energie": ["energy", "power", "drives", "sinamics", "batterij", "battery"],
+}
+
+LOCATION_ALIASES = {
+    "brussel": ["brussels", "bruxelles", "brussel-hoofdstad", "brussels capital"],
+    "brussels": ["brussel", "bruxelles"],
+    "antwerpen": ["antwerp", "anvers"],
+    "antwerp": ["antwerpen", "anvers"],
+    "luik": ["liege", "li?ge"],
+    "liege": ["luik", "li?ge"],
+    "bergen": ["mons"],
+    "mons": ["bergen"],
+    "namen": ["namur"],
+    "namur": ["namen"],
+    "mechelen": ["malines"],
+    "doornik": ["tournai"],
+    "tournai": ["doornik"],
+    "oost-vlaanderen": ["oost vlaanderen", "east flanders", "flandre orientale"],
+    "west-vlaanderen": ["west vlaanderen", "west flanders", "flandre occidentale"],
+    "vlaams-brabant": ["vlaams brabant", "flemish brabant", "brabant flamand"],
+    "waals-brabant": ["waals brabant", "walloon brabant", "brabant wallon"],
+    "henegouwen": ["hainaut"],
+    "luxemburg": ["luxembourg"],
+}
+
+REGIO_ALIASES = {
+    "vlaanderen": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant", "flanders", "flemish"],
+    "flanders": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant", "vlaanderen"],
+    "wallonie": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant", "wallonia", "walloon"],
+    "wallonia": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant", "wallonie"],
+    "brussel": ["brussel", "brussels", "bruxelles"],
+    "brussels": ["brussel", "bruxelles"],
 }
 
 
@@ -465,7 +687,56 @@ def _normalize_text(value: Any) -> str:
         return ""
     if isinstance(value, list):
         value = " ".join(str(item) for item in value)
-    return str(value).lower()
+    text = str(value).lower().replace("?", "'")
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _filter_terms(raw_value: Any, aliases: dict[str, list[str]] | None = None) -> set[str]:
+    """Build normalized filter terms from a selected/typed value plus aliases."""
+    aliases = aliases or {}
+    raw = _normalize_text(raw_value)
+    if not raw:
+        return set()
+
+    terms = {raw, raw.replace("-", " ")}
+    tokens = _tokenize(raw)
+    terms.update(tokens)
+
+    lookup_keys = {raw, raw.replace("-", " "), *tokens}
+    for key in list(lookup_keys):
+        for alias in aliases.get(key, []):
+            norm_alias = _normalize_text(alias)
+            if norm_alias:
+                terms.add(norm_alias)
+                terms.add(norm_alias.replace("-", " "))
+                terms.update(_tokenize(norm_alias))
+
+    return {term for term in terms if term and term not in STOPWORDS}
+
+
+def _contains_filter_term(text: Any, terms: set[str]) -> bool:
+    if not terms:
+        return True
+    normalized = _normalize_text(text).replace("-", " ")
+    return any(term in normalized for term in terms)
+
+
+def _company_sector_filter_text(company: dict[str, Any]) -> str:
+    return " ".join(
+        str(part) for part in [
+            company.get("sector", ""),
+            company.get("ai_beschrijving", ""),
+            company.get("business_trigger", ""),
+            " ".join(company.get("vacatures", [])),
+            " ".join(company.get("beroepen", [])),
+            " ".join(company.get("tech_stack", [])),
+            " ".join(company.get("machine_park", [])),
+            " ".join(company.get("keywords", [])),
+            " ".join(company.get("vacature_samenvattingen", [])),
+        ] if part
+    )
 
 
 def _tokenize(value: Any) -> list[str]:
@@ -490,12 +761,26 @@ def _build_company_text(company: dict[str, Any]) -> str:
     return _normalize_text(" ".join(part for part in parts if part))
 
 
+def _expanded_product_terms(product_tokens: set[str]) -> set[str]:
+    terms = set(product_tokens)
+    for token in list(product_tokens):
+        terms.update(_tokenize(SYNONIEMEN.get(token, [])))
+    return terms
+
+
+def _important_product_terms(product_tokens: set[str]) -> set[str]:
+    generic = {"automatische", "automatic", "professionele", "professional", "industriele", "industriële", "commercial"}
+    return {token for token in product_tokens if token not in generic}
+
+
 def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, list[str]]:
     product_text = _normalize_text(product)
     company_text = _build_company_text(company)
     product_tokens = set(_tokenize(product_text))
+    important_terms = _important_product_terms(product_tokens)
 
     score = 0.0
+    product_evidence = 0
     reasons: list[str] = []
 
     exact_phrases = [
@@ -503,22 +788,26 @@ def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, 
         "field service", "service engineer", "battery-management", "autonomous", "robot",
         "robotics", "warehouse", "agv", "machine vision", "computer vision", "cnc",
         "metal forming", "food", "beverage", "predictive maintenance", "preventive maintenance",
+        "food processing machinery", "commercial kitchen", "professionele keuken",
     ]
     for phrase in exact_phrases:
         if phrase in product_text and phrase in company_text:
             score += 4.0
+            product_evidence += 2
             reasons.append(phrase)
 
     overlap_count = 0
     for token in product_tokens:
         if token in company_text:
-            score += 1.2
+            score += 1.4
             overlap_count += 1
+            product_evidence += 1
             reasons.append(token)
         for synonym in SYNONIEMEN.get(token, []):
             if synonym in company_text:
-                score += 0.8
+                score += 1.0
                 overlap_count += 1
+                product_evidence += 1
                 reasons.append(synonym)
 
     score += min(3.0, overlap_count * 0.35)
@@ -532,6 +821,14 @@ def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, 
     if company.get("tech_stack"):
         score += 0.3
 
+    important_matches = sum(1 for term in important_terms if term in company_text)
+    if important_terms and important_matches == 0:
+        score -= 4.0
+    elif important_terms and important_matches >= max(1, min(2, len(important_terms))):
+        score += min(2.0, important_matches * 0.7)
+        product_evidence += 1
+        reasons.append("multiple product terms matched")
+
     if any(t in product_tokens for t in {"siemens", "plc", "profinet", "s7-1500"}):
         if "siemens" not in company_text and "s7" not in company_text and "plc" not in company_text:
             score -= 3.0
@@ -541,9 +838,16 @@ def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, 
     if any(t in product_tokens for t in {"robot", "robotics", "agv", "warehouse", "autonomous"}):
         if "robot" not in company_text and "robotica" not in company_text and "autonome" not in company_text and "agv" not in company_text:
             score -= 2.5
-    if any(t in product_tokens for t in {"food", "beverage", "packaging"}):
-        if not any(term in company_text for term in ["food", "beverage", "voeding", "brouwerij", "afvullijnen", "packaging"]):
+    if any(t in product_tokens for t in {"food", "beverage", "packaging", "voeding", "horeca"}):
+        if not any(term in company_text for term in ["food", "beverage", "voeding", "brouwerij", "afvullijnen", "packaging", "horeca", "keuken"]):
             score -= 2.5
+
+    # Product-first relevance: do not allow a company to rank on generic or
+    # location-only overlap. A candidate needs concrete product evidence before
+    # it can be saved as a useful prospect.
+    if product_tokens and product_evidence == 0:
+        score = min(score, 2.0)
+        reasons.append("rejected: no concrete product/service evidence")
 
     unique_reasons: list[str] = []
     seen: set[str] = set()
@@ -552,7 +856,7 @@ def _score_company_match(product: str, company: dict[str, Any]) -> tuple[float, 
             seen.add(reason)
             unique_reasons.append(reason)
 
-    return score, unique_reasons[:4]
+    return score, unique_reasons[:5]
 
 
 def _deterministic_prospect_results(product: str, companies: list[dict[str, Any]], limit: int = 10) -> list[dict[str, Any]]:
@@ -564,9 +868,10 @@ def _deterministic_prospect_results(product: str, companies: list[dict[str, Any]
     ranked.sort(key=lambda item: (-item[0], item[1].get("naam", "")))
 
     results: list[dict[str, Any]] = []
-    for raw_score, company, reasons in ranked[:limit]:
+    quality_ranked = [(raw_score, company, reasons) for raw_score, company, reasons in ranked if raw_score >= 4]
+    for raw_score, company, reasons in quality_ranked[:limit]:
         normalized_score = max(1, min(10, int(round(raw_score))))
-        reason_text = ", ".join(reasons) if reasons else "algemene overlap in vacaturedata"
+        reason_text = ", ".join(reasons) if reasons else "concrete product/service overlap in vacancy data"
         results.append(
             {
                 "id": company["id"],
@@ -575,10 +880,11 @@ def _deterministic_prospect_results(product: str, companies: list[dict[str, Any]
                 "sector": company.get("sector", "Onbekend"),
                 "locatie": company.get("locatie", ""),
                 "beschrijving": (company.get("ai_beschrijving") or company.get("business_trigger") or f"{company['naam']} heeft relevante vacaturesignalen.")[:280],
-                "waarom": f"Match op: {reason_text}.",
+                "waarom": f"Match op product/service-evidence: {reason_text}.",
                 "score": normalized_score,
                 "contactgegevens": company.get("contactgegevens", "Niet beschikbaar"),
                 "techstack": company.get("tech_stack", [])[:8],
+                "sources": company.get("source_urls", []),
             }
         )
 
@@ -639,6 +945,7 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
                 "contactgegevens": " - ".join(
                     p for p in [row.get("bedrijf_email") or row.get("sollicitatie_email"), row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon"), row.get("website")] if p
                 ),
+                "source_urls": [url for url in [row.get("website")] if url],
                 "ai_beschrijving": row.get("ai_beschrijving") or "",
                 "business_trigger": row.get("business_trigger") or "",
                 "tech_stack": _parse_json_list(row.get("tech_stack_json")),
@@ -682,50 +989,84 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
             raise HTTPException(status_code=404, detail="No companies in database")
 
         filters = payload.filters or {}
-        locatie_filter = (filters.get("locatie") or "").strip().lower()
-        sector_filter = (filters.get("sector") or "").strip().lower()
-        bedrijfsgrootte_filter = (filters.get("bedrijfsgrootte") or "").strip().lower()
-        regio_filter = (filters.get("regio") or "").strip().lower()
+        locatie_filter = _normalize_text(filters.get("locatie") or filters.get("gemeente") or "")
+        sector_filter = _normalize_text(filters.get("sector") or "")
+        bedrijfsgrootte_filter = _normalize_text(filters.get("bedrijfsgrootte") or "")
+        regio_filter = _normalize_text(filters.get("regio") or "")
 
-        regio_map = {
-            "vlaanderen": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant"],
-            "wallonie": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant"],
-            "brussel": ["brussel"],
+        locatie_terms = _filter_terms(locatie_filter, LOCATION_ALIASES)
+        sector_terms = _filter_terms(sector_filter, FILTER_SYNONIEMEN)
+        regio_terms = _filter_terms(regio_filter, REGIO_ALIASES | LOCATION_ALIASES)
+        valid_size_filters = {"klein", "middel", "medium", "groot", "large"}
+
+        filter_stats = {
+            "input_count": len(bedrijven),
+            "after_locatie": None,
+            "after_sector": None,
+            "after_regio": None,
+            "after_bedrijfsgrootte": None,
+            "filter_terms": {
+                "locatie": sorted(locatie_terms),
+                "sector": sorted(sector_terms),
+                "regio": sorted(regio_terms),
+            },
+            "warnings": [],
         }
+        if bedrijfsgrootte_filter and bedrijfsgrootte_filter not in valid_size_filters:
+            filter_stats["warnings"].append(f"Unknown bedrijfsgrootte filter ignored: {bedrijfsgrootte_filter}")
 
-        def matches_filters(company: dict[str, Any]) -> bool:
-            loc = (company.get("locatie") or "").lower()
-            if locatie_filter and locatie_filter not in loc:
-                return False
-            if sector_filter:
-                sec = (company.get("sector") or "").lower()
-                vacs = " ".join(company.get("vacatures", [])).lower()
-                if sector_filter not in sec and sector_filter not in vacs:
-                    return False
-            if regio_filter and regio_filter in regio_map:
-                if not any(prov in loc for prov in regio_map[regio_filter]):
-                    return False
-            if bedrijfsgrootte_filter:
-                # We do not have employee-count data yet, so use the number of
-                # linked vacancies as a pragmatic size signal until real company
-                # size enrichment is added.
-                vacature_count = len(company.get("vacatures", []))
-                if bedrijfsgrootte_filter == "klein" and vacature_count >= 5:
-                    return False
-                if bedrijfsgrootte_filter == "middel" and not (5 <= vacature_count <= 20):
-                    return False
-                if bedrijfsgrootte_filter == "groot" and vacature_count <= 20:
-                    return False
+        def company_matches_locatie(company: dict[str, Any]) -> bool:
+            if not locatie_terms:
+                return True
+            return _contains_filter_term(company.get("locatie", ""), locatie_terms)
+
+        def company_matches_sector(company: dict[str, Any]) -> bool:
+            if not sector_terms:
+                return True
+            return _contains_filter_term(_company_sector_filter_text(company), sector_terms)
+
+        def company_matches_regio(company: dict[str, Any]) -> bool:
+            if not regio_terms:
+                return True
+            return _contains_filter_term(company.get("locatie", ""), regio_terms)
+
+        def company_matches_size(company: dict[str, Any]) -> bool:
+            if not bedrijfsgrootte_filter or bedrijfsgrootte_filter not in valid_size_filters:
+                return True
+            # Temporary heuristic: we do not have employee-count data yet, so use
+            # linked-vacancy count as a rough company-size/activity signal.
+            vacature_count = len(company.get("vacatures", []))
+            if bedrijfsgrootte_filter == "klein":
+                return vacature_count < 5
+            if bedrijfsgrootte_filter in {"middel", "medium"}:
+                return 5 <= vacature_count <= 20
+            if bedrijfsgrootte_filter in {"groot", "large"}:
+                return vacature_count > 20
             return True
 
-        has_active_filters = any(
-            value.strip() for value in [locatie_filter, sector_filter, bedrijfsgrootte_filter, regio_filter]
-        )
-        filtered_bedrijven = [company for company in bedrijven if matches_filters(company)]
+        has_active_filters = any([locatie_terms, sector_terms, regio_terms, bedrijfsgrootte_filter])
+
+        filtered_bedrijven = bedrijven
+        if locatie_terms:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_locatie(company)]
+            filter_stats["after_locatie"] = len(filtered_bedrijven)
+        if sector_terms:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_sector(company)]
+            filter_stats["after_sector"] = len(filtered_bedrijven)
+        if regio_terms:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_regio(company)]
+            filter_stats["after_regio"] = len(filtered_bedrijven)
+        if bedrijfsgrootte_filter in valid_size_filters:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_size(company)]
+            filter_stats["after_bedrijfsgrootte"] = len(filtered_bedrijven)
+
         if not filtered_bedrijven and not has_active_filters:
             filtered_bedrijven = bedrijven
+        filter_stats["final_count"] = len(filtered_bedrijven)
 
         heuristic_results = _deterministic_prospect_results(product, filtered_bedrijven, limit=10)
+        low_quality_rejected = max(len(filtered_bedrijven) - len(heuristic_results), 0)
+        query_expansion_used = any(token in SYNONIEMEN for token in _tokenize(product))
 
         ai_results = None
         used_ai = False
@@ -753,11 +1094,25 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
 
         if ai_results is None:
             ai_results = heuristic_results
+        elif isinstance(ai_results, list):
+            # Keep product-first quality rules even when the AI path is used.
+            ai_results = [item for item in ai_results if float(item.get("score") or 0) >= 4]
 
+        results = ai_results if isinstance(ai_results, list) else [ai_results]
         return {
             "query": product,
             "ai_powered": used_ai,
-            "results": ai_results if isinstance(ai_results, list) else [ai_results],
+            "results": results,
+            "run_report": {
+                "new_businesses_returned": len(results),
+                "duplicates_merged_or_skipped": 0,
+                "low_quality_results_rejected": low_quality_rejected,
+                "best_search_terms": _tokenize(product)[:8],
+                "query_expansion_used": query_expansion_used,
+                "product_first_relevance": True,
+                "location_filter_used_as_constraint_only": bool(locatie_terms or regio_terms),
+                "filters_applied": filter_stats,
+            },
         }
     except HTTPException:
         raise
@@ -765,8 +1120,58 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _find_existing_company_id(cursor: Any, cleaned: dict[str, Any]) -> int | None:
+    company_payload = {
+        "bedrijfsnaam": cleaned["bedrijf"].get("naam"),
+        "kbo_nummer": cleaned["bedrijf"].get("kbo"),
+        "email": cleaned["sollicitatie"].get("email"),
+        "telefoon": cleaned["sollicitatie"].get("telefoon"),
+        "website": cleaned["sollicitatie"].get("webformulier"),
+        "adres": " ".join(
+            str(part) for part in [
+                cleaned["locatie"].get("postcode"),
+                cleaned["locatie"].get("gemeente"),
+                cleaned["locatie"].get("provincie"),
+            ] if part
+        ),
+    }
+    if company_payload["kbo_nummer"]:
+        cursor.execute("SELECT id FROM tblBedrijven WHERE kbo_nummer = %s", (company_payload["kbo_nummer"],))
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+
+    cursor.execute(
+        """
+        SELECT id, kbo_nummer, naam, website, email, telefoon, adres_postcode, adres_gemeente, adres_provincie
+        FROM tblBedrijven
+        WHERE adres_gemeente = %s OR naam LIKE %s OR email = %s OR telefoon = %s
+        LIMIT 200
+        """,
+        (
+            cleaned["locatie"].get("gemeente"),
+            f"%{(cleaned['bedrijf'].get('naam') or '').split()[0] if cleaned['bedrijf'].get('naam') else ''}%",
+            cleaned["sollicitatie"].get("email"),
+            cleaned["sollicitatie"].get("telefoon"),
+        ),
+    )
+    for row in cursor.fetchall():
+        candidate = {
+            "bedrijf_id": row[0],
+            "kbo_nummer": row[1],
+            "bedrijfsnaam": row[2],
+            "website": row[3],
+            "email": row[4],
+            "telefoon": row[5],
+            "adres": " ".join(str(part) for part in [row[6], row[7], row[8]] if part),
+        }
+        if _is_duplicate_business(candidate, company_payload):
+            return row[0]
+    return None
+
+
 @router.post("/vacancies/update")
-def update_vacancies(aantal: int = 100) -> dict[str, Any]:
+def update_vacancies(aantal: int = 500) -> dict[str, Any]:
     try:
         data = get_vacatures(aantal=aantal)
         raw_list = data.get("resultaten", [])
@@ -774,6 +1179,9 @@ def update_vacancies(aantal: int = 100) -> dict[str, Any]:
 
         conn = mysql.connector.connect(**_db_config())
         upserted = 0
+        new_businesses_saved = 0
+        duplicates_merged_or_skipped = 0
+        low_quality_rejected = 0
         try:
             with conn.cursor() as cursor:
                 total = len(raw_list)
@@ -794,31 +1202,58 @@ def update_vacancies(aantal: int = 100) -> dict[str, Any]:
                     if not cleaned["id"] or not cleaned["job"].get("titel"):
                         continue
 
-                    bedrijf_id = None
+                    bedrijf_id = _find_existing_company_id(cursor, cleaned)
                     kbo = cleaned["bedrijf"].get("kbo")
-                    if kbo:
+                    if bedrijf_id:
                         cursor.execute(
-                            "INSERT INTO tblBedrijven (kbo_nummer, naam, type, adres_postcode, adres_gemeente, adres_provincie, source_code) "
-                            "VALUES (%s, %s, %s, %s, %s, %s, 'vdab') "
-                            "ON DUPLICATE KEY UPDATE "
-                            "naam=VALUES(naam), type=VALUES(type), "
-                            "adres_postcode=COALESCE(VALUES(adres_postcode), adres_postcode), "
-                            "adres_gemeente=COALESCE(VALUES(adres_gemeente), adres_gemeente), "
-                            "adres_provincie=COALESCE(VALUES(adres_provincie), adres_provincie), "
-                            "updated_at=CURRENT_TIMESTAMP",
+                            """
+                            UPDATE tblBedrijven
+                            SET kbo_nummer=COALESCE(kbo_nummer, %s),
+                                naam=COALESCE(NULLIF(naam, ''), %s),
+                                type=COALESCE(type, %s),
+                                email=COALESCE(email, %s),
+                                telefoon=COALESCE(telefoon, %s),
+                                website=COALESCE(website, %s),
+                                adres_postcode=COALESCE(adres_postcode, %s),
+                                adres_gemeente=COALESCE(adres_gemeente, %s),
+                                adres_provincie=COALESCE(adres_provincie, %s),
+                                updated_at=CURRENT_TIMESTAMP
+                            WHERE id=%s
+                            """,
                             (
                                 kbo,
                                 cleaned["bedrijf"].get("naam"),
                                 cleaned["bedrijf"].get("type"),
+                                cleaned["sollicitatie"].get("email"),
+                                cleaned["sollicitatie"].get("telefoon"),
+                                cleaned["sollicitatie"].get("webformulier"),
+                                cleaned["locatie"]["postcode"],
+                                cleaned["locatie"]["gemeente"],
+                                cleaned["locatie"]["provincie"],
+                                bedrijf_id,
+                            ),
+                        )
+                        duplicates_merged_or_skipped += 1
+                    elif cleaned["bedrijf"].get("naam"):
+                        cursor.execute(
+                            "INSERT INTO tblBedrijven (kbo_nummer, naam, type, website, email, telefoon, adres_postcode, adres_gemeente, adres_provincie, source_code) "
+                            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'vdab')",
+                            (
+                                kbo,
+                                cleaned["bedrijf"].get("naam"),
+                                cleaned["bedrijf"].get("type"),
+                                cleaned["sollicitatie"].get("webformulier"),
+                                cleaned["sollicitatie"].get("email"),
+                                cleaned["sollicitatie"].get("telefoon"),
                                 cleaned["locatie"]["postcode"],
                                 cleaned["locatie"]["gemeente"],
                                 cleaned["locatie"]["provincie"],
                             ),
                         )
-                        cursor.execute("SELECT id FROM tblBedrijven WHERE kbo_nummer = %s", (kbo,))
-                        row = cursor.fetchone()
-                        if row:
-                            bedrijf_id = row[0]
+                        bedrijf_id = cursor.lastrowid
+                        new_businesses_saved += 1
+                    else:
+                        low_quality_rejected += 1
 
                     cursor.execute(
                         "INSERT INTO tblVacatures ("
@@ -885,7 +1320,19 @@ def update_vacancies(aantal: int = 100) -> dict[str, Any]:
                     upserted += 1
 
                 conn.commit()
-            return {"upserted": upserted, "fetched": len(raw_list), "fallback": is_fallback}
+            return {
+                "upserted": upserted,
+                "fetched": len(raw_list),
+                "fallback": is_fallback,
+                "run_report": {
+                    "new_businesses_saved": new_businesses_saved,
+                    "duplicates_merged_or_skipped": duplicates_merged_or_skipped,
+                    "low_quality_results_rejected": low_quality_rejected,
+                    "best_search_terms": ["VDAB scheduled vacancy import"],
+                    "query_expansion_used": False,
+                    "maximized_with_pagination": len(raw_list) >= min(aantal, 50),
+                },
+            }
         except Exception:
             conn.rollback()
             raise
@@ -977,7 +1424,7 @@ def upsert_company_profile(payload: CompanyProfile) -> dict[str, Any]:
 
 
 @router.post("/sync")
-def full_sync(aantal: int = 100) -> dict[str, Any]:
+def full_sync(aantal: int = 500) -> dict[str, Any]:
     import_result = update_vacancies(aantal=aantal)
 
     enrich_result: dict[str, Any] = {"status": "skipped"}
@@ -1045,9 +1492,9 @@ def save_search(payload: SaveSearchRequest, infosearch_session: str | None = Coo
                 ),
             )
             search_id = cursor.lastrowid
-            _insert_saved_results(cursor, search_id, item_type, payload.results or [])
+            save_stats = _insert_saved_results(cursor, search_id, item_type, payload.results or [], user.id)
             conn.commit()
-        return {"status": "ok", "search_id": search_id}
+        return {"status": "ok", "search_id": search_id, "save_stats": save_stats}
     except Exception as e:
         conn.rollback()
         _raise_save_error(e)
@@ -1078,9 +1525,9 @@ def save_search_item(payload: SaveResultItemRequest, infosearch_session: str | N
                 ),
             )
             search_id = cursor.lastrowid
-            _insert_saved_results(cursor, search_id, item_type, [payload.result])
+            save_stats = _insert_saved_results(cursor, search_id, item_type, [payload.result], user.id)
             conn.commit()
-        return {"status": "ok", "search_id": search_id}
+        return {"status": "ok", "search_id": search_id, "save_stats": save_stats}
     except Exception as e:
         conn.rollback()
         _raise_save_error(e)
