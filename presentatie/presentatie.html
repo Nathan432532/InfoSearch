@@ -1,0 +1,299 @@
+[slides]
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infosearch - AI-gedreven Prospectie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 1. FUNDAMENTELE SETUP */
+        * { box-sizing: border-box; }
+        body { background-color: #0f172a; display: grid; gap: 20px; grid-template-columns: 1fr; margin: 0; min-height: 100vh; padding: 20px 0; place-items: center; }
+
+        .slide-container {
+            width: 1280px;
+            height: 720px;
+            background-color: #f3f0df;
+            display: flex;
+            flex-direction: column;
+            font-family: "DM Sans", sans-serif;
+            overflow: hidden;
+            padding: 60px;
+            position: relative;
+        }
+
+        /* 2. TYPOGRAFIE & KLEUREN */
+        .slide-container h1, .slide-container h2, .slide-container h3 {
+            font-family: "Merriweather", serif;
+            color: #005088;
+            margin: 0;
+        }
+
+        .slide-container p, .slide-container li {
+            color: #334155;
+            font-size: 20px;
+            line-height: 1.5;
+        }
+
+        .slide-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #11caa0;
+            padding-bottom: 10px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .subtitle { font-size: 26px; color: #11caa0; margin-top: 10px; font-weight: 500; }
+
+        /* 3. LAYOUT COMPONENTEN */
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+
+        .title-layout { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .title-layout h1 { font-size: 72px; line-height: 1.1; }
+
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; }
+        .tiled { background-color: #ffffff; border-radius: 12px; border: 1px solid #cbd5e1; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        .image-wrapper { border-radius: 12px; overflow: hidden; height: 100%; width: 100%; border: 1px solid #005088; }
+        .image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+        .bullet-list { list-style: none; padding: 0; }
+        .bullet-list li { position: relative; padding-left: 40px; margin-bottom: 20px; }
+        .bullet-list i { position: absolute; left: 0; top: 5px; color: #11caa0; font-size: 24px; }
+
+        .tile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; width: 100%; }
+        .tile { background-color: #005088; color: white; padding: 30px; border-radius: 12px; text-align: center; }
+        .tile h3 { color: #11caa0; margin-bottom: 15px; }
+        .tile p { color: #f3f0df; font-size: 16px; }
+        .tile .icon { font-size: 48px; margin-bottom: 20px; }
+
+        /* 4. CHARTS & DATA */
+        .chart-container { width: 100%; display: flex; flex-direction: column; gap: 20px; }
+        .bar { display: flex; align-items: center; gap: 20px; }
+        .bar-label { width: 250px; text-align: right; font-weight: 700; color: #005088; }
+        .bar-inner { flex-grow: 1; height: 45px; background: #cbd5e1; border-radius: 8px; overflow: hidden; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #005088, #11caa0); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; color: white; font-weight: 700; }
+
+        /* 5. TIMELINE */
+        .timeline { display: flex; justify-content: space-between; position: relative; padding-top: 50px; }
+        .timeline::before { content: ''; position: absolute; top: 75px; left: 0; width: 100%; height: 4px; background: #cbd5e1; }
+        .timeline-item { width: 45%; background: white; padding: 25px; border-radius: 12px; border: 1px solid #005088; position: relative; z-index: 1; }
+        .timeline-item::after { content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: #11caa0; border-radius: 50%; border: 4px solid #f3f0df; }
+
+        /* 6. SPECIAL LAYOUTS */
+        .bleed-image-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; padding: 0; }
+        .bleed-image-layout .text-content { padding: 60px; }
+        .bleed-image-side { width: 100%; height: 720px; object-fit: cover; }
+
+        .qa-layout { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .qa-layout h2 { font-size: 80px; }
+
+        #formula-container { background: #ffffff; padding: 20px; border-radius: 8px; border-left: 5px solid #11caa0; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="slide-container" id="slide1">
+    <div class="title-layout">
+        <h1>Infosearch</h1>
+        <p class="subtitle">AI-gedreven Prospectie & Marktoptimalisatie</p>
+        <div style="margin-top: 60px;">
+            <p><strong>Team:</strong> Nathan ter Hark & Sam Van Ginderen</p>
+            <p>Strategische Tooling voor Bedrijfsdata en Vacature Matching</p>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide2">
+    <h2 class="slide-title">Doelstelling & Scope Prioritisatie</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="tiled">
+                <h3>De Hoofddoelstelling</h3>
+                <p>Het bouwen van een <strong>intelligente brug</strong> tussen ongestructureerde vacaturedata (VDAB) en commerciële acquisitie.</p>
+                <ul class="bullet-list" style="margin-top: 20px;">
+                    <li><i class="fa-solid fa-arrow-right"></i> Een end-to-end pipeline bouwen voor prospectie.</li>
+                    <li><i class="fa-solid fa-arrow-right"></i> Prioriteit: De AI-prospectie flow.</li>
+                    <li><i class="fa-solid fa-arrow-right"></i> Focus op de meest complexe module.</li>
+                    <li><i class="fa-solid fa-arrow-right"></i> Uitstel van lokaal draaiende LLM.</li>
+                </ul>
+            </div>
+            <div class="image-wrapper">
+                <img src="./img/a_cinematic_portrait_of_a_cyberpunk_detective_in_a_rainy_neo_tokyo_street__futuristic__highly_detailed__8k_resolution_1127760721.png" alt="Strategy and Scope planning">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide3">
+    <h2 class="slide-title">Status Update: Deliverables</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3 style="color: #11caa0; margin-bottom: 20px;"><i class="fa-solid fa-circle-check"></i> In Scope (Werkend)</h3>
+                <ul class="bullet-list">
+                    <li><strong>Frontend Interface:</strong> React/Vite voor een responsieve prospectie-ervaring draaiende op Vercel.</li>
+                    <li><strong>Backend API:</strong> FastAPI integratie met een MySQL database.</li>
+                    <li><strong>AI Service:</strong> Werkend matching model via externe API.</li>
+                    <li><strong>Authenticatie:</strong> Veilig inloggen en opgeslagen zoekopdrachten.</li>
+                </ul>
+            </div>
+            <div style="background-color: #cbd5e1; padding: 30px; border-radius: 12px;">
+                <h3 style="color: #64748b; margin-bottom: 20px;"><i class="fa-solid fa-circle-exclamation"></i> Out of Scope (Roadmap)</h3>
+                <ul class="bullet-list">
+                    <li><strong>Vacatures Zoeken:</strong> Module uitgesteld wegens tijdsrestricties.</li>
+                    <li><strong>Lokale LLM:</strong> Vervangen door API voor snellere <em>time-to-market</em>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title">Demo: Prospectie Flow in Actie</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="image-wrapper" style="height: 450px; border: 2px solid #11caa0;">
+                <img src="http://googleusercontent.com/image_collection/image_retrieval/1529781034038305884" alt="Software Dashboard Demo">
+            </div>
+            <div>
+                <h3>Key Feature: Slimme Matching</h3>
+                <p>Onze interface stelt gebruikers in staat om producten of diensten in te voeren en direct relevante prospects te identificeren.</p>
+                <ul class="bullet-list" style="margin-top: 30px;">
+                    <li><strong>Real-time Filters:</strong> Sector, regio en vacature-proxy.</li>
+                    <li><strong>Data Connectiviteit:</strong> Directe koppeling tussen React frontend en FastAPI backend.</li>
+                    <li><strong>Inzicht:</strong> Bedrijfsdata vertaald naar commerciële kansen.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide5">
+    <h2 class="slide-title">Architectuur & Onderliggende Data</h2>
+    <div class="content-area">
+        <div class="tile-grid">
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-code"></i></div>
+                <h3>Stack</h3>
+                <p>React (Frontend) & FastAPI (Backend). Georkestreerd via Docker Compose.</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-database"></i></div>
+                <h3>Data Bronnen</h3>
+                <p>Gebruik van VDAB vacaturedata voor bedrijfsinzichten en technografische profielen.</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
+                <h3>Proxies</h3>
+                <p>Aantal openstaande vacatures als tijdelijke proxy voor de bedrijfsgrootte.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide6">
+    <h2 class="slide-title">Uitdagingen & Oplossingen</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="tiled">
+                <h3>Organisatorisch</h3>
+                <p>De transitie van 3 naar 2 teamleden vroeg om een versnelde herziening van de architectuur en een strikte afbakening om kwaliteit te garanderen.</p>
+            </div>
+            <div class="tiled" style="border-left: 6px solid #11caa0;">
+                <h3>Technisch & Data</h3>
+                <p><strong>Kwaliteit:</strong> Ongestructureerde VDAB tekstdata maakt consistente AI-beslissingen uitdagend.</p>
+                <p><strong>Filter Logica:</strong> Complexiteit bij het mappen van Frontend filters naar de AI-wrapper in de Backend.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide7">
+    <h2 class="slide-title">AI Evaluatie: Verwachtingen vs. Realiteit</h2>
+    <div class="content-area">
+        <div class="chart-container">
+            <div class="bar">
+                <div class="bar-label">Obvious Matches</div>
+                <div class="bar-inner"><div class="bar-fill" style="width: 95%;">95% Accuraat</div></div>
+            </div>
+            <div class="bar">
+                <div class="bar-label">Nuancering (Ruwe Tekst)</div>
+                <div class="bar-inner"><div class="bar-fill" style="width: 45%;">45% Accuraat</div></div>
+            </div>
+        </div>
+        <div id="formula-container">
+            <p><strong>Belangrijkste Les:</strong> Data-structurering is essentieel vóór AI-verwerking.</p>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="math">
+                <msub><mi>Kwaliteit</mi><mi>Output</mi></msub>
+                <mo>=</mo>
+                <mo>&#x2211;</mo>
+                <mo>(</mo>
+                <msub><mi>Structuur</mi><mi>Data</mi></msub>
+                <mo>+</mo>
+                <msub><mi>Context</mi><mi>Prompt</mi></msub>
+                <mo>)</mo>
+            </math>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container bleed-image-layout" id="slide8">
+    <div class="text-content">
+        <h2 class="slide-title">Toekomst: Lokale AI</h2>
+        <h3 style="color: #005088;">Integratie van Ollama</h3>
+        <p>Om te voldoen aan de originele privacy- en security-eisen, is de volgende stap een volledige migratie naar lokale container-modellen.</p>
+        <ul class="bullet-list" style="margin-top: 30px;">
+            <li><i class="fa-solid fa-shield-halved"></i> Data blijft binnen de eigen infrastructuur.</li>
+            <li><i class="fa-solid fa-server"></i> Gebruik van Mistral of Llama-3 in Docker.</li>
+            <li><i class="fa-solid fa-bolt"></i> Lagere latency en geen externe API kosten.</li>
+        </ul>
+    </div>
+    <div class="image-container">
+        <img class="bleed-image-side" src="http://googleusercontent.com/image_collection/image_retrieval/12622408223617076582" alt="Server Room AI">
+    </div>
+</div>
+
+<div class="slide-container" id="slide9">
+    <h2 class="slide-title">Roadmap: Uitbreiding & Testen</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="tiled">
+                <div style="height: 150px; margin-bottom: 20px;">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/6470498914003977504" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                </div>
+                <h3>Vacature Flow</h3>
+                <p>Activeren van de `/search/job` routes en koppelen aan de herbruikbare React componenten.</p>
+            </div>
+            <div class="tiled">
+                <div style="height: 150px; margin-bottom: 20px;">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/640785624200031913" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                </div>
+                <h3>Golden Dataset</h3>
+                <p>Bouwen van een handmatig gelabelde set (50+ records) voor geautomatiseerde AI-testen.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide10" style="background-color: #005088;">
+    <div class="qa-layout">
+        <h2 style="color: #11caa0;">Conclusie & Vragen</h2>
+        <p style="color: #f3f0df; font-size: 24px; max-width: 800px; margin: 40px auto;">
+            Ondanks de organisatorische uitdagingen staat er een robuuste architectuur. We hebben de weg vrijgemaakt voor een schaalbare, lokale AI-oplossing voor prospectie.
+        </p>
+        <div style="margin-top: 40px; color: #11caa0; font-size: 32px;">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
