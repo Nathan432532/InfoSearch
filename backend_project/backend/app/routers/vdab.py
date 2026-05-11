@@ -630,13 +630,113 @@ SYNONIEMEN = {
     "cnc": ["bewerkingscentra", "metal forming", "walsinstallaties"],
 }
 
+FILTER_SYNONIEMEN = {
+    "automatisatie": ["automation", "automatisering", "industrial automation", "plc", "scada", "hmi", "robotica", "robotics"],
+    "automation": ["automatisatie", "automatisering", "industrial automation", "plc", "scada", "robotics"],
+    "techniek": ["technisch", "technician", "technieker", "maintenance", "onderhoud", "engineering"],
+    "industrie": ["industrieel", "industrial", "productie", "manufacturing", "fabriek"],
+    "metaal": ["metal", "metal forming", "cnc", "wals", "staal", "bewerking", "machining"],
+    "voeding": ["food", "beverage", "brouwerij", "brewery", "horeca", "afvullijnen", "packaging"],
+    "food": ["voeding", "beverage", "brouwerij", "brewery", "afvullijnen", "packaging"],
+    "horeca": ["catering", "keuken", "commercial kitchen", "voeding"],
+    "logistiek": ["logistics", "warehouse", "magazijn", "intralogistics", "agv"],
+    "bouw": ["construction", "werf", "aannemer", "building"],
+    "zorg": ["healthcare", "care", "verpleeg", "medisch", "medical"],
+    "ict": ["it", "software", "developer", "data", "cloud", "cybersecurity"],
+    "recruitment": ["staffing", "hiring", "hr", "vacature", "rekrutering"],
+    "landbouw": ["agriculture", "agricultural", "agro", "tuinbouw", "horticulture"],
+    "robotica": ["robotics", "robot", "autonome", "autonomous", "agv"],
+    "onderhoud": ["maintenance", "preventive maintenance", "predictive maintenance", "storingen", "service engineer"],
+    "energie": ["energy", "power", "drives", "sinamics", "batterij", "battery"],
+}
+
+LOCATION_ALIASES = {
+    "brussel": ["brussels", "bruxelles", "brussel-hoofdstad", "brussels capital"],
+    "brussels": ["brussel", "bruxelles"],
+    "antwerpen": ["antwerp", "anvers"],
+    "antwerp": ["antwerpen", "anvers"],
+    "luik": ["liege", "li?ge"],
+    "liege": ["luik", "li?ge"],
+    "bergen": ["mons"],
+    "mons": ["bergen"],
+    "namen": ["namur"],
+    "namur": ["namen"],
+    "mechelen": ["malines"],
+    "doornik": ["tournai"],
+    "tournai": ["doornik"],
+    "oost-vlaanderen": ["oost vlaanderen", "east flanders", "flandre orientale"],
+    "west-vlaanderen": ["west vlaanderen", "west flanders", "flandre occidentale"],
+    "vlaams-brabant": ["vlaams brabant", "flemish brabant", "brabant flamand"],
+    "waals-brabant": ["waals brabant", "walloon brabant", "brabant wallon"],
+    "henegouwen": ["hainaut"],
+    "luxemburg": ["luxembourg"],
+}
+
+REGIO_ALIASES = {
+    "vlaanderen": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant", "flanders", "flemish"],
+    "flanders": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant", "vlaanderen"],
+    "wallonie": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant", "wallonia", "walloon"],
+    "wallonia": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant", "wallonie"],
+    "brussel": ["brussel", "brussels", "bruxelles"],
+    "brussels": ["brussel", "bruxelles"],
+}
+
 
 def _normalize_text(value: Any) -> str:
     if value is None:
         return ""
     if isinstance(value, list):
         value = " ".join(str(item) for item in value)
-    return str(value).lower()
+    text = str(value).lower().replace("?", "'")
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _filter_terms(raw_value: Any, aliases: dict[str, list[str]] | None = None) -> set[str]:
+    """Build normalized filter terms from a selected/typed value plus aliases."""
+    aliases = aliases or {}
+    raw = _normalize_text(raw_value)
+    if not raw:
+        return set()
+
+    terms = {raw, raw.replace("-", " ")}
+    tokens = _tokenize(raw)
+    terms.update(tokens)
+
+    lookup_keys = {raw, raw.replace("-", " "), *tokens}
+    for key in list(lookup_keys):
+        for alias in aliases.get(key, []):
+            norm_alias = _normalize_text(alias)
+            if norm_alias:
+                terms.add(norm_alias)
+                terms.add(norm_alias.replace("-", " "))
+                terms.update(_tokenize(norm_alias))
+
+    return {term for term in terms if term and term not in STOPWORDS}
+
+
+def _contains_filter_term(text: Any, terms: set[str]) -> bool:
+    if not terms:
+        return True
+    normalized = _normalize_text(text).replace("-", " ")
+    return any(term in normalized for term in terms)
+
+
+def _company_sector_filter_text(company: dict[str, Any]) -> str:
+    return " ".join(
+        str(part) for part in [
+            company.get("sector", ""),
+            company.get("ai_beschrijving", ""),
+            company.get("business_trigger", ""),
+            " ".join(company.get("vacatures", [])),
+            " ".join(company.get("beroepen", [])),
+            " ".join(company.get("tech_stack", [])),
+            " ".join(company.get("machine_park", [])),
+            " ".join(company.get("keywords", [])),
+            " ".join(company.get("vacature_samenvattingen", [])),
+        ] if part
+    )
 
 
 def _tokenize(value: Any) -> list[str]:
@@ -889,48 +989,80 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
             raise HTTPException(status_code=404, detail="No companies in database")
 
         filters = payload.filters or {}
-        locatie_filter = (filters.get("locatie") or "").strip().lower()
-        sector_filter = (filters.get("sector") or "").strip().lower()
-        bedrijfsgrootte_filter = (filters.get("bedrijfsgrootte") or "").strip().lower()
-        regio_filter = (filters.get("regio") or "").strip().lower()
+        locatie_filter = _normalize_text(filters.get("locatie") or filters.get("gemeente") or "")
+        sector_filter = _normalize_text(filters.get("sector") or "")
+        bedrijfsgrootte_filter = _normalize_text(filters.get("bedrijfsgrootte") or "")
+        regio_filter = _normalize_text(filters.get("regio") or "")
 
-        regio_map = {
-            "vlaanderen": ["oost-vlaanderen", "west-vlaanderen", "antwerpen", "limburg", "vlaams-brabant"],
-            "wallonie": ["henegouwen", "luik", "luxemburg", "namen", "waals-brabant"],
-            "brussel": ["brussel"],
+        locatie_terms = _filter_terms(locatie_filter, LOCATION_ALIASES)
+        sector_terms = _filter_terms(sector_filter, FILTER_SYNONIEMEN)
+        regio_terms = _filter_terms(regio_filter, REGIO_ALIASES | LOCATION_ALIASES)
+        valid_size_filters = {"klein", "middel", "medium", "groot", "large"}
+
+        filter_stats = {
+            "input_count": len(bedrijven),
+            "after_locatie": None,
+            "after_sector": None,
+            "after_regio": None,
+            "after_bedrijfsgrootte": None,
+            "filter_terms": {
+                "locatie": sorted(locatie_terms),
+                "sector": sorted(sector_terms),
+                "regio": sorted(regio_terms),
+            },
+            "warnings": [],
         }
+        if bedrijfsgrootte_filter and bedrijfsgrootte_filter not in valid_size_filters:
+            filter_stats["warnings"].append(f"Unknown bedrijfsgrootte filter ignored: {bedrijfsgrootte_filter}")
 
-        def matches_filters(company: dict[str, Any]) -> bool:
-            loc = (company.get("locatie") or "").lower()
-            if locatie_filter and locatie_filter not in loc:
-                return False
-            if sector_filter:
-                sec = (company.get("sector") or "").lower()
-                vacs = " ".join(company.get("vacatures", [])).lower()
-                if sector_filter not in sec and sector_filter not in vacs:
-                    return False
-            if regio_filter and regio_filter in regio_map:
-                if not any(prov in loc for prov in regio_map[regio_filter]):
-                    return False
-            if bedrijfsgrootte_filter:
-                # We do not have employee-count data yet, so use the number of
-                # linked vacancies as a pragmatic size signal until real company
-                # size enrichment is added.
-                vacature_count = len(company.get("vacatures", []))
-                if bedrijfsgrootte_filter == "klein" and vacature_count >= 5:
-                    return False
-                if bedrijfsgrootte_filter == "middel" and not (5 <= vacature_count <= 20):
-                    return False
-                if bedrijfsgrootte_filter == "groot" and vacature_count <= 20:
-                    return False
+        def company_matches_locatie(company: dict[str, Any]) -> bool:
+            if not locatie_terms:
+                return True
+            return _contains_filter_term(company.get("locatie", ""), locatie_terms)
+
+        def company_matches_sector(company: dict[str, Any]) -> bool:
+            if not sector_terms:
+                return True
+            return _contains_filter_term(_company_sector_filter_text(company), sector_terms)
+
+        def company_matches_regio(company: dict[str, Any]) -> bool:
+            if not regio_terms:
+                return True
+            return _contains_filter_term(company.get("locatie", ""), regio_terms)
+
+        def company_matches_size(company: dict[str, Any]) -> bool:
+            if not bedrijfsgrootte_filter or bedrijfsgrootte_filter not in valid_size_filters:
+                return True
+            # Temporary heuristic: we do not have employee-count data yet, so use
+            # linked-vacancy count as a rough company-size/activity signal.
+            vacature_count = len(company.get("vacatures", []))
+            if bedrijfsgrootte_filter == "klein":
+                return vacature_count < 5
+            if bedrijfsgrootte_filter in {"middel", "medium"}:
+                return 5 <= vacature_count <= 20
+            if bedrijfsgrootte_filter in {"groot", "large"}:
+                return vacature_count > 20
             return True
 
-        has_active_filters = any(
-            value.strip() for value in [locatie_filter, sector_filter, bedrijfsgrootte_filter, regio_filter]
-        )
-        filtered_bedrijven = [company for company in bedrijven if matches_filters(company)]
+        has_active_filters = any([locatie_terms, sector_terms, regio_terms, bedrijfsgrootte_filter])
+
+        filtered_bedrijven = bedrijven
+        if locatie_terms:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_locatie(company)]
+            filter_stats["after_locatie"] = len(filtered_bedrijven)
+        if sector_terms:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_sector(company)]
+            filter_stats["after_sector"] = len(filtered_bedrijven)
+        if regio_terms:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_regio(company)]
+            filter_stats["after_regio"] = len(filtered_bedrijven)
+        if bedrijfsgrootte_filter in valid_size_filters:
+            filtered_bedrijven = [company for company in filtered_bedrijven if company_matches_size(company)]
+            filter_stats["after_bedrijfsgrootte"] = len(filtered_bedrijven)
+
         if not filtered_bedrijven and not has_active_filters:
             filtered_bedrijven = bedrijven
+        filter_stats["final_count"] = len(filtered_bedrijven)
 
         heuristic_results = _deterministic_prospect_results(product, filtered_bedrijven, limit=10)
         low_quality_rejected = max(len(filtered_bedrijven) - len(heuristic_results), 0)
@@ -978,7 +1110,8 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                 "best_search_terms": _tokenize(product)[:8],
                 "query_expansion_used": query_expansion_used,
                 "product_first_relevance": True,
-                "location_filter_used_as_constraint_only": bool(locatie_filter or regio_filter),
+                "location_filter_used_as_constraint_only": bool(locatie_terms or regio_terms),
+                "filters_applied": filter_stats,
             },
         }
     except HTTPException:

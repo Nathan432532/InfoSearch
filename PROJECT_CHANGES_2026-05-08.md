@@ -612,3 +612,267 @@ Possible longer description:
 - Add run reports for pull/prospect result quality and query expansion
 - Document the workflow and remaining caveats
 ```
+---
+
+## 2026-05-11 follow-up: structured model inputs and richer ranking eval
+
+Requested change:
+
+- Improve the prospect-matching model/evaluation after reviewing the project changes notes.
+
+Implemented changes:
+
+### Structured AI candidate payloads
+
+Updated `AI_project_ai/engine.py` so company candidates are no longer sent to the LLM as a loose/flat mix of fields. Each company is now compacted into a consistent evidence-first schema containing:
+
+- company name, sector, location, description
+- vacancy titles, roles, vacancy summaries
+- required skills/technologies
+- machines/tools
+- business triggers and keywords
+- short evidence snippets
+- data completeness flags
+- evidence quality (`high`, `medium`, `low`)
+- source reliability hints for sector, vacancies, enrichment, and triggers
+
+This should make company-to-company comparison fairer and reduce over-scoring companies that merely have more text.
+
+### Structured product profile before matching
+
+Added a deterministic product-profile extraction step before the LLM prompt. The product profile now separates:
+
+- product summary
+- target industries
+- required technologies
+- pain points solved
+- ideal customer signals
+- bad-fit signals
+
+The LLM prompt now compares this product profile against structured company profiles instead of comparing raw product text against raw company text.
+
+### Evidence-based scoring prompt
+
+Reworked the prospect-generation prompt to require separate scoring dimensions:
+
+- `technical_fit`
+- `industry_fit`
+- `business_need`
+- `evidence_strength`
+- `data_confidence`
+
+The final score must now be consistent with those dimensions, and low evidence/data confidence should pull the score down. The output also includes explicit evidence snippets, making later debugging and evaluation easier.
+
+### Output normalization
+
+Added post-processing for LLM results to:
+
+- deduplicate company IDs
+- normalize `id`/`bedrijf_id`
+- clamp scores to `0-10`
+- sort results deterministically by score
+- keep the existing API-compatible fields while adding richer evaluation fields
+
+### Richer evaluation metrics
+
+Updated `AI_project_ai/evals/eval_ranking.py` with additional metrics beyond nDCG and precision:
+
+- `recall@5`
+- `recall@10`
+- `mrr@10`
+- `pairwise_order_accuracy`
+- `returned_count`
+- `labeled_coverage@10`
+
+This makes the eval better at showing whether the model finds all relevant companies, ranks the first relevant result early, preserves ordering among labeled candidates, and returns too many/too few results.
+
+Verification:
+
+- `python -m py_compile AI_project_ai\engine.py AI_project_ai\api.py AI_project_ai\evals\eval_ranking.py` passed.
+- A small local `evaluate_case(...)` smoke test passed and produced the new metric fields.
+
+Caveats / follow-up:
+
+- The live eval report was not regenerated yet because that requires the backend/API endpoint to be running with current data.
+- The gold dataset is still small and synthetic/starter-oriented; model quality will improve more once real labeled product/company pairs are added.
+---
+
+## 2026-05-11 status note: is the model/prompt better?
+
+Short answer: yes, the model/prompt setup is better structurally, but the live ranking quality still needs to be proven by rerunning the eval against the active backend data.
+
+Why it is better now:
+
+- The LLM receives a consistent company schema instead of a loose mix of fields.
+- Each company now includes evidence snippets, data-completeness flags, evidence quality, and source-reliability hints.
+- The product is converted into a structured product profile before matching.
+- The prompt now forces separate scoring dimensions for technical fit, industry fit, business need, evidence strength, and data confidence.
+- The model is explicitly told to penalize weak/missing evidence instead of guessing.
+- LLM output is normalized, deduplicated, score-clamped, and sorted before use.
+- The eval now tracks recall, MRR, pairwise ordering, returned count, and labeled coverage, not only precision/nDCG.
+
+Important caveat:
+
+- This improves the matching design and should reduce bad high scores from vague/generic evidence, but it is not yet a measured quality improvement until `AI_project_ai/evals/eval_ranking.py` is rerun against the current API/backend and the new `latest_report.json` is reviewed.
+
+Recommended next verification:
+
+```bash
+cd AI_project_ai
+python evals/eval_ranking.py
+```
+
+Then compare the new `evals/results/latest_report.json` against the previous report, especially:
+
+- `ndcg@5` / `ndcg@10`
+- `precision@3` / `precision@5`
+- `recall@5` / `recall@10`
+- `mrr@10`
+- `pairwise_order_accuracy`
+- number of missed relevant companies
+- number of unlabeled top predictions
+---
+
+## 2026-05-11 clarification: where prospect matches come from
+
+Question answered:
+
+- Does a prospect request call the VDAB API live, or does the AI get matches from the database?
+
+Current behavior:
+
+- A normal prospect request does **not** call the external VDAB API live.
+- `/companies/prospect` loads companies and linked vacancies from the local database using `_fetch_all_companies_with_vacatures()`.
+- That local data comes from `tblBedrijven` joined with `tblVacatures`.
+- The backend first computes deterministic/product-first prospect rankings from the database candidates.
+- If `AI_SERVICE_URL` is configured and no filters are active, the backend may call the AI wrapper at `/generate-prospect`.
+- The AI wrapper also fetches candidates from the backend `/companies/search`, which itself queries the local database; it does not call VDAB directly for live matches.
+
+Where VDAB is called:
+
+- VDAB is called during import/sync/pull flows, where vacancies are fetched, cleaned, deduplicated, and saved into `tblVacatures` / `tblBedrijven`.
+- Matching requests then use that stored database snapshot.
+
+Important caveat:
+
+- If the local database is stale, prospect matching is also stale until the VDAB sync/pull flow runs again.
+---
+
+## 2026-05-11 filter assessment
+
+Question answered:
+
+- Are the current company prospect filters working correctly?
+
+Assessment:
+
+- The filters are not trash; the main company prospect filter path is wired correctly now.
+- `SearchPageCompany.tsx` puts `locatie`, `sector`, `bedrijfsgrootte`, and `regio` into the result URL.
+- `CompanyResultPage.tsx` reads those URL params and sends them in `body.filters` to `/companies/prospect`.
+- `/companies/prospect` applies filters before ranking companies.
+- When filters are active, the backend skips the AI wrapper because the wrapper still fetches its own broad candidates and does not accept filters. This prevents unfiltered AI results from leaking into filtered searches.
+
+Limitations:
+
+- `bedrijfsgrootte` is still a weak approximation based on number of linked vacancies, not real employee count.
+  - `klein`: fewer than 5 linked vacancies
+  - `middel`: 5 to 20 linked vacancies
+  - `groot`: more than 20 linked vacancies
+- `sector` filtering is substring-based against company sector and vacancy titles, so it can miss synonyms or related industries.
+- `locatie` is substring-based against the combined location string, so spelling/region variations may miss.
+- `regio` only supports the configured broad buckets (`vlaanderen`, `wallonie`, `brussel`).
+- Filters are applied in Python after loading database candidates instead of directly in SQL for `/companies/prospect`, which is okay for small/medium datasets but may become inefficient later.
+
+Conclusion:
+
+- Filters are functional and safer than before, especially because filtered requests no longer use the unfiltered AI wrapper path.
+- They are still basic/heuristic and should eventually be upgraded with normalized location/sector fields and real employee/company-size data.
+---
+
+## 2026-05-11 filter improvement implementation
+
+Requested change:
+
+- Improve the company prospect filters so they are less brittle than direct substring checks.
+
+Files changed:
+
+- `backend_project/backend/app/routers/vdab.py`
+- `PROJECT_CHANGES_2026-05-08.md`
+
+Implemented changes:
+
+### Normalized filter matching
+
+Filter matching now normalizes text before comparison:
+
+- lowercase
+- accent stripping (`Li?ge` / `Liege`, `industri?le` / `industriele`)
+- whitespace cleanup
+- hyphen/space variants for terms such as `oost-vlaanderen` / `oost vlaanderen`
+
+### Better location and region aliases
+
+Added aliases for common Belgian location/province variants, including examples such as:
+
+- `brussel`, `brussels`, `bruxelles`
+- `antwerpen`, `antwerp`, `anvers`
+- `luik`, `liege`, `li?ge`
+- province aliases such as `oost-vlaanderen`, `east flanders`, `flandre orientale`
+
+Region filtering now expands broad regions into province/location terms using aliases:
+
+- Vlaanderen / Flanders
+- Wallonie / Wallonia
+- Brussel / Brussels / Bruxelles
+
+### Better sector aliases
+
+Sector matching now expands common business/industry terms before filtering. Examples:
+
+- automation / automatisatie / PLC / SCADA / robotica
+- techniek / onderhoud / maintenance / engineering
+- voeding / food / beverage / brouwerij / packaging
+- logistiek / warehouse / magazijn / AGV
+- metaal / metal / CNC / machining
+- zorg / healthcare / medisch
+- ICT / IT / software / cloud / cybersecurity
+
+### Wider sector evidence matching
+
+Sector filters are now matched against more than just the company sector and vacancy titles. The backend now checks a combined sector evidence text containing:
+
+- company sector
+- AI description
+- business trigger
+- vacancy titles
+- roles/beroepen
+- tech stack
+- machine park
+- keywords
+- vacancy summaries
+
+This should reduce false negatives where the sector is not stored cleanly but is visible in vacancy/enrichment data.
+
+### Filter diagnostics in run report
+
+`/companies/prospect` now includes `filters_applied` in `run_report`, with:
+
+- original candidate count
+- count after each filter stage
+- final filtered count
+- expanded filter terms used
+- warnings for ignored/unknown company-size filters
+
+This makes it easier to debug whether filters are too strict or too broad.
+
+Still limited:
+
+- `bedrijfsgrootte` still uses linked-vacancy count as a temporary heuristic because real employee-count/company-size data is not available yet.
+- Filters are still applied after loading DB candidates into Python, not pushed fully into SQL.
+- Alias lists are useful but incomplete; they should grow as real user searches reveal misses.
+
+Verification:
+
+- `python -m py_compile backend_project\backend\app\routers\vdab.py AI_project_ai\engine.py AI_project_ai\api.py AI_project_ai\evals\eval_ranking.py` passed.
+
