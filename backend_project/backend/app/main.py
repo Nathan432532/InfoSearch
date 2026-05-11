@@ -24,9 +24,12 @@ def _parse_cors_origins() -> list[str]:
 
 app = FastAPI()
 
+origins = _parse_cors_origins()
+print(f"DEBUG: Allowed origins are: {origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_parse_cors_origins(),
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
