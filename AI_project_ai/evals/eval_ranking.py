@@ -131,6 +131,42 @@ def precision_at_k(predicted_ids: list[int], gold_map: dict[int, int], k: int, m
     return hits / k
 
 
+def recall_at_k(predicted_ids: list[int], gold_map: dict[int, int], k: int, min_relevance: int = 2) -> float:
+    relevant_ids = {bedrijf_id for bedrijf_id, label in gold_map.items() if label >= min_relevance}
+    if not relevant_ids:
+        return 0.0
+    hits = sum(1 for bedrijf_id in predicted_ids[:k] if bedrijf_id in relevant_ids)
+    return hits / len(relevant_ids)
+
+
+def mrr_at_k(predicted_ids: list[int], gold_map: dict[int, int], k: int, min_relevance: int = 2) -> float:
+    for rank, bedrijf_id in enumerate(predicted_ids[:k], start=1):
+        if gold_map.get(bedrijf_id, 0) >= min_relevance:
+            return 1.0 / rank
+    return 0.0
+
+
+def pairwise_order_accuracy(predictions: list[dict[str, Any]], gold_map: dict[int, int]) -> float | None:
+    """How often higher-labeled items receive higher/equal model scores among labeled predictions."""
+    labeled = [item for item in predictions if item["bedrijf_id"] in gold_map]
+    comparisons = 0
+    correct = 0
+    for i, left in enumerate(labeled):
+        for right in labeled[i + 1:]:
+            left_label = gold_map[left["bedrijf_id"]]
+            right_label = gold_map[right["bedrijf_id"]]
+            if left_label == right_label:
+                continue
+            comparisons += 1
+            left_score = float(left.get("score") or 0)
+            right_score = float(right.get("score") or 0)
+            if (left_label > right_label and left_score >= right_score) or (right_label > left_label and right_score >= left_score):
+                correct += 1
+    if comparisons == 0:
+        return None
+    return correct / comparisons
+
+
 def calibration_summary(predictions: list[dict[str, Any]], gold_map: dict[int, int]) -> dict[str, Any]:
     buckets: dict[int, list[float]] = defaultdict(list)
     for item in predictions:
@@ -192,6 +228,18 @@ def evaluate_case(case: EvalCase, predictions: list[dict[str, Any]]) -> dict[str
             "ndcg@10": round(ndcg_at_k(predicted_ids, gold_map, 10), 4),
             "precision@3": round(precision_at_k(predicted_ids, gold_map, 3), 4),
             "precision@5": round(precision_at_k(predicted_ids, gold_map, 5), 4),
+            "recall@5": round(recall_at_k(predicted_ids, gold_map, 5), 4),
+            "recall@10": round(recall_at_k(predicted_ids, gold_map, 10), 4),
+            "mrr@10": round(mrr_at_k(predicted_ids, gold_map, 10), 4),
+            "pairwise_order_accuracy": (
+                None if pairwise_order_accuracy(predictions, gold_map) is None
+                else round(pairwise_order_accuracy(predictions, gold_map) or 0.0, 4)
+            ),
+            "returned_count": len(predictions),
+            "labeled_coverage@10": round(
+                sum(1 for bedrijf_id in predicted_ids[:10] if bedrijf_id in gold_ids) / max(1, min(10, len(predicted_ids))),
+                4,
+            ),
         },
         "top_predictions": labeled_predictions,
         "missed_relevant": missed_relevant,
@@ -207,8 +255,9 @@ def aggregate_results(case_results: list[dict[str, Any]]) -> dict[str, Any]:
     metric_names = list(case_results[0]["metrics"].keys())
     averaged = {}
     for name in metric_names:
-        values = [float(case["metrics"][name]) for case in case_results]
-        averaged[name] = round(sum(values) / len(values), 4)
+        values = [case["metrics"].get(name) for case in case_results]
+        numeric_values = [float(value) for value in values if isinstance(value, (int, float))]
+        averaged[name] = round(sum(numeric_values) / len(numeric_values), 4) if numeric_values else None
 
     return {
         "cases": len(case_results),
