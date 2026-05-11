@@ -1,0 +1,26 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Node / frontend generated files
+node_modules/
+dist/
+build/
+.next/
+
+# Local AI/runtime data
+AI_project_ai/ollama_test_data/
+
+# Temporary generated extraction files
+*_extracted.txt
