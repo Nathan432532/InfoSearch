@@ -47,8 +47,8 @@ def load_cases(path: Path) -> list[EvalCase]:
                     bedrijf_id=int(item["bedrijf_id"]),
                     label=int(item["label"]),
                     reason=str(item.get("reason", "")),
-                    bedrijfsnaam=str(item.get("bedrijfsnaam", "")),
-                    kbo_nummer=str(item.get("kbo_nummer", "")),
+                    bedrijfsnaam=str(item.get("bedrijfsnaam") or ""),
+                    kbo_nummer=str(item.get("kbo_nummer") or ""),
                 )
                 for item in data.get("labels", [])
             ]

@@ -988,4 +988,63 @@ Verification:
 
 - `python AI_project_ai\evals\_build_live_labeling_set.py` succeeded.
 - `python -m py_compile AI_project_ai\evals\_build_live_labeling_set.py AI_project_ai\evals\_convert_live_labeling_to_gold.py AI_project_ai\evals\eval_ranking.py` passed.
+---
+
+## 2026-05-11 live labels compact format support
+
+Requested clarification:
+
+- The user asked whether they can fill labels in a compact JSON array format like `{ case_id, labels: [...] }` instead of editing the full live candidate starter JSONL file.
+
+Change made:
+
+- Updated `AI_project_ai/evals/_convert_live_labeling_to_gold.py` to support both input formats:
+  1. the full starter file `prospect_ranking_live_labeling_starter.jsonl` with `candidate_businesses`
+  2. a compact JSON array file `prospect_ranking_live_labels.json` with `labels`
+
+New preferred compact workflow:
+
+```powershell
+cd "C:\Users\nterh\OneDrive\Bureaublad\ai_project\AI_project\AI_project_ai"
+notepad evals\prospect_ranking_live_labels.json
+python evals\_convert_live_labeling_to_gold.py
+$env:EVAL_GOLD_PATH="evals\prospect_ranking_live_gold.jsonl"
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+python evals\eval_ranking.py
+```
+
+The converter now reads `prospect_ranking_live_labels.json` if it exists; otherwise it falls back to `prospect_ranking_live_labeling_starter.jsonl`.
+
+Verification:
+
+- `python -m py_compile AI_project_ai\evals\_convert_live_labeling_to_gold.py` passed.
+---
+
+## 2026-05-11 eval speed / AI path clarification
+
+Observed behavior:
+
+- The live eval against `https://infosearch.duckdns.org` completed very quickly.
+- A direct check of `/companies/prospect` returned `ai_powered: false`.
+
+Interpretation:
+
+- The eval is currently measuring the backend deterministic prospect-ranking fallback, not the AI wrapper/Groq prompt path.
+- This explains why the report can be written in a few seconds for 15 cases.
+- If the AI path were active for every case, the eval would normally take noticeably longer because each case would involve an AI service call.
+
+Additional observation:
+
+- The direct response had an empty `run_report`, which suggests the deployed Hetzner backend may not yet include the latest local backend changes that add richer run-report/filter diagnostics.
+
+Fix made locally:
+
+- Updated `AI_project_ai/evals/eval_ranking.py` so optional `bedrijfsnaam` / `kbo_nummer` fields do not appear as the literal string `"None"` in reports when compact labels omit them.
+
+Next checks:
+
+- Confirm the Hetzner backend has the latest commits deployed.
+- Confirm `AI_SERVICE_URL` is set in the backend environment.
+- Confirm the AI wrapper service is running and reachable from the backend.
+- Rerun a single `/companies/prospect` request and check whether `ai_powered` becomes `true`.
 
