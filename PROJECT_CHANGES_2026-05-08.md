@@ -875,4 +875,176 @@ Still limited:
 Verification:
 
 - `python -m py_compile backend_project\backend\app\routers\vdab.py AI_project_ai\engine.py AI_project_ai\api.py AI_project_ai\evals\eval_ranking.py` passed.
+---
+
+## 2026-05-11 eval report review
+
+Reviewed file:
+
+- `AI_project_ai/evals/results/latest_report.json`
+
+Report generated against:
+
+- `https://infosearch.duckdns.org`
+- endpoint `/companies/prospect`
+- generated at `2026-05-11T13:09:14Z`
+
+Observed summary metrics:
+
+- `ndcg@5`: 0.1876
+- `ndcg@10`: 0.1876
+- `precision@3`: 0.1333
+- `precision@5`: 0.08
+- `recall@5`: 0.2222
+- `recall@10`: 0.2222
+- `mrr@10`: 0.3
+- average `returned_count`: 2.2667
+- `labeled_coverage@10`: 0.2622
+
+Important interpretation:
+
+- These numbers look weak, but the report is likely not a valid quality measurement yet.
+- The gold file labels companies by numeric IDs from the old/starter sample data (`bedrijf_id` 1, 2, 3).
+- The live Hetzner database uses different real company IDs/names. For example, the report maps `bedrijf_id: 2` to `ArcelorMittal Gent`, while the starter gold labels expected ID 2 to be the sample company `BREW-TECH AUTOMATION`.
+- Because of this ID mismatch, many predictions are scored as wrong even when the model may be doing something reasonable for the live database.
+
+Conclusion:
+
+- The current eval report is useful as a smoke test that the endpoint runs and returns structured metrics.
+- It is not yet reliable for judging actual model quality on Hetzner.
+
+Recommended next fix:
+
+- Rebuild the gold dataset from the actual Hetzner/live database, or make eval labels use stable company identifiers such as normalized company name/domain instead of environment-specific numeric IDs.
+- Until then, avoid using the current metrics as proof that the model got better or worse.
+---
+
+## 2026-05-11 live gold/labeling set rebuild
+
+Requested change:
+
+- Rebuild the gold database/set after discovering that the old gold labels used starter/sample company IDs that do not match the live Hetzner database.
+
+Implemented changes:
+
+### Live labeling set builder
+
+Added:
+
+- `AI_project_ai/evals/_build_live_labeling_set.py`
+
+This script fetches the current live companies from:
+
+- `{EVAL_API_URL or BACKEND_URL or https://infosearch.duckdns.org}/companies/search`
+
+It then builds:
+
+- `AI_project_ai/evals/prospect_ranking_live_labeling_starter.jsonl`
+- `AI_project_ai/evals/LIVE_LABELING_GUIDE.md`
+
+The generated starter set uses live DB company IDs, names, KBO numbers, locations, contact data, and compact vacancy evidence. It creates 15 product cases with 12 likely candidate companies per case.
+
+### Live labeling converter
+
+Added:
+
+- `AI_project_ai/evals/_convert_live_labeling_to_gold.py`
+
+After labels are manually filled in the live starter file, this script converts it into:
+
+- `AI_project_ai/evals/prospect_ranking_live_gold.jsonl`
+
+The converter refuses to create gold cases with no labels, because unlabeled data should not be treated as gold.
+
+### Eval metadata hardening
+
+Updated:
+
+- `AI_project_ai/evals/eval_ranking.py`
+
+The eval loader now accepts optional `bedrijfsnaam` and `kbo_nummer` fields in labels. Reports now include expected company names for labeled predictions/missed relevant companies and can show `id_name_mismatches` if a numeric ID points to a different company name than expected.
+
+Generated live starter set:
+
+- Fetched 41 live companies from `https://infosearch.duckdns.org`.
+- Wrote 15 live labeling cases.
+- Each case currently has 12 candidates with `label: null` and empty `reason` fields ready for manual labeling.
+
+Important caveat:
+
+- The real `prospect_ranking_live_gold.jsonl` was not generated yet because the new live starter set needs human labels first. Auto-labeling it would create a weak synthetic benchmark, not a real gold set.
+
+Recommended workflow:
+
+```bash
+cd AI_project_ai
+python evals/_build_live_labeling_set.py
+# manually fill labels/reasons in evals/prospect_ranking_live_labeling_starter.jsonl
+python evals/_convert_live_labeling_to_gold.py
+EVAL_GOLD_PATH=evals/prospect_ranking_live_gold.jsonl python evals/eval_ranking.py
+```
+
+Verification:
+
+- `python AI_project_ai\evals\_build_live_labeling_set.py` succeeded.
+- `python -m py_compile AI_project_ai\evals\_build_live_labeling_set.py AI_project_ai\evals\_convert_live_labeling_to_gold.py AI_project_ai\evals\eval_ranking.py` passed.
+---
+
+## 2026-05-11 live labels compact format support
+
+Requested clarification:
+
+- The user asked whether they can fill labels in a compact JSON array format like `{ case_id, labels: [...] }` instead of editing the full live candidate starter JSONL file.
+
+Change made:
+
+- Updated `AI_project_ai/evals/_convert_live_labeling_to_gold.py` to support both input formats:
+  1. the full starter file `prospect_ranking_live_labeling_starter.jsonl` with `candidate_businesses`
+  2. a compact JSON array file `prospect_ranking_live_labels.json` with `labels`
+
+New preferred compact workflow:
+
+```powershell
+cd "C:\Users\nterh\OneDrive\Bureaublad\ai_project\AI_project\AI_project_ai"
+notepad evals\prospect_ranking_live_labels.json
+python evals\_convert_live_labeling_to_gold.py
+$env:EVAL_GOLD_PATH="evals\prospect_ranking_live_gold.jsonl"
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+python evals\eval_ranking.py
+```
+
+The converter now reads `prospect_ranking_live_labels.json` if it exists; otherwise it falls back to `prospect_ranking_live_labeling_starter.jsonl`.
+
+Verification:
+
+- `python -m py_compile AI_project_ai\evals\_convert_live_labeling_to_gold.py` passed.
+---
+
+## 2026-05-11 eval speed / AI path clarification
+
+Observed behavior:
+
+- The live eval against `https://infosearch.duckdns.org` completed very quickly.
+- A direct check of `/companies/prospect` returned `ai_powered: false`.
+
+Interpretation:
+
+- The eval is currently measuring the backend deterministic prospect-ranking fallback, not the AI wrapper/Groq prompt path.
+- This explains why the report can be written in a few seconds for 15 cases.
+- If the AI path were active for every case, the eval would normally take noticeably longer because each case would involve an AI service call.
+
+Additional observation:
+
+- The direct response had an empty `run_report`, which suggests the deployed Hetzner backend may not yet include the latest local backend changes that add richer run-report/filter diagnostics.
+
+Fix made locally:
+
+- Updated `AI_project_ai/evals/eval_ranking.py` so optional `bedrijfsnaam` / `kbo_nummer` fields do not appear as the literal string `"None"` in reports when compact labels omit them.
+
+Next checks:
+
+- Confirm the Hetzner backend has the latest commits deployed.
+- Confirm `AI_SERVICE_URL` is set in the backend environment.
+- Confirm the AI wrapper service is running and reachable from the backend.
+- Rerun a single `/companies/prospect` request and check whether `ai_powered` becomes `true`.
 
