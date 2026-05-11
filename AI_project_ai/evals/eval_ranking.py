@@ -21,6 +21,8 @@ class Label:
     bedrijf_id: int
     label: int
     reason: str = ""
+    bedrijfsnaam: str = ""
+    kbo_nummer: str = ""
 
 
 @dataclass
@@ -45,6 +47,8 @@ def load_cases(path: Path) -> list[EvalCase]:
                     bedrijf_id=int(item["bedrijf_id"]),
                     label=int(item["label"]),
                     reason=str(item.get("reason", "")),
+                    bedrijfsnaam=str(item.get("bedrijfsnaam", "")),
+                    kbo_nummer=str(item.get("kbo_nummer", "")),
                 )
                 for item in data.get("labels", [])
             ]
@@ -189,16 +193,29 @@ def calibration_summary(predictions: list[dict[str, Any]], gold_map: dict[int, i
 
 def evaluate_case(case: EvalCase, predictions: list[dict[str, Any]]) -> dict[str, Any]:
     gold_map = {label.bedrijf_id: label.label for label in case.labels}
+    gold_meta = {label.bedrijf_id: label for label in case.labels}
     predicted_ids = [item["bedrijf_id"] for item in predictions]
     gold_ids = set(gold_map)
 
     top_k = case.top_k
     labeled_predictions = []
+    id_name_mismatches = []
     for item in predictions[:top_k]:
+        meta = gold_meta.get(item["bedrijf_id"])
+        expected_name = meta.bedrijfsnaam if meta else ""
+        if expected_name and expected_name.lower() != item["bedrijfsnaam"].lower():
+            id_name_mismatches.append(
+                {
+                    "bedrijf_id": item["bedrijf_id"],
+                    "expected_bedrijfsnaam": expected_name,
+                    "predicted_bedrijfsnaam": item["bedrijfsnaam"],
+                }
+            )
         labeled_predictions.append(
             {
                 "bedrijf_id": item["bedrijf_id"],
                 "bedrijfsnaam": item["bedrijfsnaam"],
+                "expected_bedrijfsnaam": expected_name or None,
                 "score": item["score"],
                 "gold_label": gold_map.get(item["bedrijf_id"], 0),
             }
@@ -207,6 +224,8 @@ def evaluate_case(case: EvalCase, predictions: list[dict[str, Any]]) -> dict[str
     missed_relevant = [
         {
             "bedrijf_id": label.bedrijf_id,
+            "bedrijfsnaam": label.bedrijfsnaam or None,
+            "kbo_nummer": label.kbo_nummer or None,
             "gold_label": label.label,
             "reason": label.reason,
         }
@@ -244,6 +263,7 @@ def evaluate_case(case: EvalCase, predictions: list[dict[str, Any]]) -> dict[str
         "top_predictions": labeled_predictions,
         "missed_relevant": missed_relevant,
         "unlabeled_top_predictions": unlabeled_top_predictions,
+        "id_name_mismatches": id_name_mismatches,
         "calibration": calibration_summary(predictions, gold_map),
     }
 
