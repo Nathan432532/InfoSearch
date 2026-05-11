@@ -43,7 +43,7 @@ AUTO_SYNC_ON_STARTUP = os.getenv("AUTO_SYNC_ON_STARTUP", "false").strip().lower(
 AUTO_SYNC_ENABLED = os.getenv("AUTO_SYNC_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 AUTO_SYNC_TIME = os.getenv("AUTO_SYNC_TIME", "02:30")
 AUTO_SYNC_TZ = os.getenv("AUTO_SYNC_TZ", "Europe/Brussels")
-AUTO_SYNC_AMOUNT = int(os.getenv("AUTO_SYNC_AMOUNT", "100"))
+AUTO_SYNC_AMOUNT = int(os.getenv("AUTO_SYNC_AMOUNT", "500"))
 _auto_sync_task: asyncio.Task | None = None
 
 
