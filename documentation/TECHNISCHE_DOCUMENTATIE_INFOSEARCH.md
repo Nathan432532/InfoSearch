@@ -6,9 +6,9 @@
 
 ## InfoSearch — AI-gedreven vacaturezoektocht en bedrijfsprospectie
 
-**Developers:** [vul namen developers in]  
+**Developers:** Nathan ter Hark & Sam Van Ginderen  
 **Academiejaar:** 2025-2026, 2de semester  
-**Documentdatum:** 11 mei 2026
+**Documentdatum:** 16 mei 2026
 
 ---
 
@@ -45,7 +45,7 @@
 | Nr. | Datum | Verspreiding | Status | Wijziging |
 |---|---|---|---|---|
 | 0.01 | 2026-05-11 | Projectteam InfoSearch | Eerste draft | Technische documentatie opgesteld op basis van de bestaande Word-template en de huidige projectcode. |
-| 1.00 | [in te vullen] | Projectteam InfoSearch / lector | Finale versie | Finale versie na controle en aanvulling van namen, screenshots en eventuele feedback. |
+| 1.00 | 2026-05-16 | Projectteam InfoSearch / lector | Finale versie | Finale versie na controle en aanvulling van namen, screenshots en de presentatie. |
 
 # Termen en Afkortingen
 

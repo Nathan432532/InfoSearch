@@ -1,4 +1,3 @@
-[slides]
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -12,18 +11,35 @@
     <style>
         /* 1. FUNDAMENTELE SETUP */
         * { box-sizing: border-box; }
-        body { background-color: #0f172a; display: grid; gap: 20px; grid-template-columns: 1fr; margin: 0; min-height: 100vh; padding: 20px 0; place-items: center; }
-
+        body { background-color: #0f172a; margin: 0; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; overflow: hidden; cursor: pointer; }
+        
         .slide-container {
-            width: 1280px;
-            height: 720px;
+            width: 95vw;
+            height: 90vh;
             background-color: #f3f0df;
-            display: flex;
+            display: none;
             flex-direction: column;
             font-family: "DM Sans", sans-serif;
             overflow: hidden;
-            padding: 60px;
+            padding: 60px 8%;
             position: relative;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .slide-container.active {
+            display: flex;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide-container.active.bleed-image-layout {
+            display: grid;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* 2. TYPOGRAFIE & KLEUREN */
@@ -60,8 +76,12 @@
         .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; }
         .tiled { background-color: #ffffff; border-radius: 12px; border: 1px solid #cbd5e1; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
-        .image-wrapper { border-radius: 12px; overflow: hidden; height: 100%; width: 100%; border: 1px solid #005088; }
+        .image-wrapper { border-radius: 12px; overflow: hidden; height: 100%; width: 100%; border: 1px solid #005088; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+        .demo-grid { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 20px; height: 100%; }
+        .demo-screenshot { border: 2px solid #11caa0; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .demo-screenshot img { width: 100%; height: 100%; object-fit: cover; }
 
         .bullet-list { list-style: none; padding: 0; }
         .bullet-list li { position: relative; padding-left: 40px; margin-bottom: 20px; }
@@ -87,11 +107,11 @@
         .timeline-item::after { content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: #11caa0; border-radius: 50%; border: 4px solid #f3f0df; }
 
         /* 6. SPECIAL LAYOUTS */
-        .bleed-image-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; padding: 0; }
+        .bleed-image-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; padding: 0; height: 100%; }
         .bleed-image-layout .text-content { padding: 60px; }
-        .bleed-image-side { width: 100%; height: 720px; object-fit: cover; }
+        .bleed-image-side { width: 100%; height: 100%; object-fit: cover; }
 
-        .qa-layout { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .qa-layout { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .qa-layout h2 { font-size: 80px; }
 
         #formula-container { background: #ffffff; padding: 20px; border-radius: 8px; border-left: 5px solid #11caa0; margin: 20px 0; }
@@ -99,7 +119,7 @@
 </head>
 <body>
 
-<div class="slide-container" id="slide1">
+<div class="slide-container active" id="slide1">
     <div class="title-layout">
         <h1>Infosearch</h1>
         <p class="subtitle">AI-gedreven Prospectie & Marktoptimalisatie</p>
@@ -125,7 +145,7 @@
                 </ul>
             </div>
             <div class="image-wrapper">
-                <img src="./img/a_cinematic_portrait_of_a_cyberpunk_detective_in_a_rainy_neo_tokyo_street__futuristic__highly_detailed__8k_resolution_1127760721.png" alt="Strategy and Scope planning">
+                <img src="./img/strategic_scope.png" alt="Strategy and Scope planning">
             </div>
         </div>
     </div>
@@ -156,19 +176,39 @@
 </div>
 
 <div class="slide-container" id="slide4">
-    <h2 class="slide-title">Demo: Prospectie Flow in Actie</h2>
+    <h2 class="slide-title">Demo: Prospectie Configuratie</h2>
     <div class="content-area">
         <div class="two-column">
-            <div class="image-wrapper" style="height: 450px; border: 2px solid #11caa0;">
-                <img src="./img/marin-kitagawa-1920x1080-v0-m3zold4gbo0b1.png.webp" alt="Software Dashboard Demo">
+            <div class="image-wrapper" style="border: 2px solid #11caa0;">
+                <img src="./img/app_search.png" alt="Search Interface" style="object-fit: contain; background: white;">
             </div>
             <div>
-                <h3>Key Feature: Slimme Matching</h3>
-                <p>Onze interface stelt gebruikers in staat om producten of diensten in te voeren en direct relevante prospects te identificeren.</p>
+                <h3>Stap 1: Invoer & Filters</h3>
+                <p>De gebruiker voert een product of dienst in. AI-matching wordt gecombineerd met krachtige deterministische filters.</p>
                 <ul class="bullet-list" style="margin-top: 30px;">
-                    <li><strong>Real-time Filters:</strong> Sector, regio en vacature-proxy.</li>
-                    <li><strong>Data Connectiviteit:</strong> Directe koppeling tussen React frontend en FastAPI backend.</li>
-                    <li><strong>Inzicht:</strong> Bedrijfsdata vertaald naar commerciële kansen.</li>
+                    <li><strong>Slimme Filters:</strong> Filteren op sector, regio en bedrijfsgrootte.</li>
+                    <li><strong>Flexibiliteit:</strong> Zoeken op basis van vrije tekst (Product/Dienst).</li>
+                    <li><strong>UX:</strong> Intuïtieve interface gebouwd met React & Tailwind.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide4b">
+    <h2 class="slide-title">Demo: AI-Resultaten & Ranking</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="image-wrapper" style="border: 2px solid #11caa0;">
+                <img src="./img/app_results.png" alt="Search Results" style="object-fit: contain; background: white;">
+            </div>
+            <div>
+                <h3>Stap 2: Analyse & Ranking</h3>
+                <p>Het LLM (Groq/Llama-3) rankt de bedrijven op basis van <em>product-market fit</em> en geeft een score en motivatie.</p>
+                <ul class="bullet-list" style="margin-top: 30px;">
+                    <li><strong>Matching Scores:</strong> Direct inzicht in de kwaliteit van de prospect.</li>
+                    <li><strong>Verrijkte Data:</strong> Bedrijfsinformatie geëxtraheerd uit ongestructureerde vacaturedata.</li>
+                    <li><strong>Actiegerichte Output:</strong> Bewaren van favoriete prospects voor later gebruik.</li>
                 </ul>
             </div>
         </div>
@@ -244,6 +284,28 @@
     </div>
 </div>
 
+<div class="slide-container" id="slide7b">
+    <h2 class="slide-title">Gedetailleerde Evaluatie Metrics</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="tiled">
+                <h3>Ranking Kwaliteit</h3>
+                <ul class="bullet-list" style="margin-top: 20px;">
+                    <li><i class="fa-solid fa-chart-simple"></i> <strong>nDCG@5:</strong> 0.5704</li>
+                    <li><i class="fa-solid fa-chart-simple"></i> <strong>nDCG@10:</strong> 0.6270</li>
+                    <li><i class="fa-solid fa-bullseye"></i> <strong>MRR@10:</strong> 0.5111</li>
+                    <li><i class="fa-solid fa-check-double"></i> <strong>Pairwise Accuracy:</strong> 97.9%</li>
+                </ul>
+            </div>
+            <div class="tiled">
+                <h3>Interpretatie</h3>
+                <p>Het model is zeer sterk in het <strong>ordenen</strong> van kandidaten (97.9% pairwise accuracy), maar de absolute precision@k is nog beperkt door de ruwe data kwaliteit.</p>
+                <p style="margin-top: 20px;"><strong>Focus:</strong> Verfijnen van de <em>evidence extraction</em> om de nDCG scores verder te pushen boven de 0.80.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="slide-container bleed-image-layout" id="slide8">
     <div class="text-content">
         <h2 class="slide-title">Toekomst: Lokale AI</h2>
@@ -256,7 +318,7 @@
         </ul>
     </div>
     <div class="image-container">
-        <img class="bleed-image-side" src="http://googleusercontent.com/image_collection/image_retrieval/12622408223617076582" alt="Server Room AI">
+        <img class="bleed-image-side" src="./img/server_ai.png" alt="Server Room AI">
     </div>
 </div>
 
@@ -266,14 +328,14 @@
         <div class="two-column">
             <div class="tiled">
                 <div style="height: 150px; margin-bottom: 20px;">
-                    <img src="http://googleusercontent.com/image_collection/image_retrieval/6470498914003977504" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                    <img src="./img/job_search_ui.png" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
                 </div>
                 <h3>Vacature Flow</h3>
                 <p>Activeren van de `/search/job` routes en koppelen aan de herbruikbare React componenten.</p>
             </div>
             <div class="tiled">
                 <div style="height: 150px; margin-bottom: 20px;">
-                    <img src="http://googleusercontent.com/image_collection/image_retrieval/640785624200031913" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                    <img src="./img/data_testing.png" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
                 </div>
                 <h3>Golden Dataset</h3>
                 <p>Bouwen van een handmatig gelabelde set (50+ records) voor geautomatiseerde AI-testen.</p>
@@ -282,17 +344,71 @@
     </div>
 </div>
 
-<div class="slide-container" id="slide10" style="background-color: #005088;">
+<div class="slide-container" id="slide9b">
+    <h2 class="slide-title">Ethiek, Privacy & Security</h2>
+    <div class="content-area">
+        <div class="tile-grid">
+            <div class="tile" style="background-color: #11caa0; color: #005088;">
+                <div class="icon"><i class="fa-solid fa-user-shield"></i></div>
+                <h3>GDPR Compliance</h3>
+                <p>Dataminimalisatie bij VDAB-data en strikte sessiecontrole via HttpOnly cookies.</p>
+            </div>
+            <div class="tile" style="background-color: #11caa0; color: #005088;">
+                <div class="icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                <h3>Bias Mitigatie</h3>
+                <p>Evidence-first prompting voorkomt dat AI beslissingen neemt op basis van vage aannames.</p>
+            </div>
+            <div class="tile" style="background-color: #11caa0; color: #005088;">
+                <div class="icon"><i class="fa-solid fa-lock"></i></div>
+                <h3>Toekomstige Security</h3>
+                <p>Migratie naar Argon2 password hashing en volledige on-premise AI hosting.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide10" style="background-color: #005088; padding: 0;">
     <div class="qa-layout">
-        <h2 style="color: #11caa0;">Conclusie & Vragen</h2>
+        <h2 style="color: #11caa0; margin: 0;">Conclusie & Vragen</h2>
         <p style="color: #f3f0df; font-size: 24px; max-width: 800px; margin: 40px auto;">
             Ondanks de organisatorische uitdagingen staat er een robuuste architectuur. We hebben de weg vrijgemaakt voor een schaalbare, lokale AI-oplossing voor prospectie.
         </p>
-        <div style="margin-top: 40px; color: #11caa0; font-size: 32px;">
+        <div style="color: #11caa0; font-size: 48px;">
             <i class="fa-solid fa-comments"></i>
         </div>
     </div>
 </div>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide-container');
+
+  function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+  }
+
+  document.addEventListener('click', function(e) {
+    // Don't navigate if clicking on a link or button if we had any
+    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+    
+    currentSlide = (currentSlide + 1) % slides.length;
+    showSlide(currentSlide);
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      currentSlide = Math.min(currentSlide + 1, slides.length - 1);
+      showSlide(currentSlide);
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      currentSlide = Math.max(currentSlide - 1, 0);
+      showSlide(currentSlide);
+    }
+  });
+</script>
 
 </body>
 </html>
