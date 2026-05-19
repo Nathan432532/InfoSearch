@@ -9,6 +9,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
 model = "llama-3.3-70b-versatile"  # Snel, deterministisch, geen agentic overhead
+PROSPECT_LLM_CANDIDATE_LIMIT = int(os.getenv("PROSPECT_LLM_CANDIDATE_LIMIT", "120"))
 
 PROFIEL_EXTRACTOR_PROMPT = """
 JE BENT EEN ENTITY RESOLUTION AGENT.
@@ -177,11 +178,111 @@ def _extract_product_profile(product: str) -> dict:
     return {"product_summary": product, **signals}
 
 
-def _compact_bedrijven_data(bedrijven_data):
+
+
+def _contains_any(text: str, terms: list[str]) -> bool:
+    return any(term in text for term in terms)
+
+
+def _tokenize_for_matching(text: str) -> set[str]:
+    """Small language-agnostic tokenizer for fallback overlap scoring."""
+    stopwords = {
+        "the", "and", "for", "with", "from", "that", "this", "een", "het", "de", "van", "voor", "met",
+        "naar", "bij", "aan", "in", "op", "en", "of", "to", "a", "an", "software", "platform", "service",
+        "system", "toolkit", "package", "saas",
+    }
+    return {
+        token
+        for token in re.findall(r"[a-z0-9][a-z0-9+.#/-]{2,}", (text or "").lower())
+        if token not in stopwords
+    }
+
+
+def _candidate_text(company: dict) -> str:
+    fields = [
+        company.get("company_name"),
+        company.get("sector"),
+        company.get("description"),
+        *company.get("vacancy_titles", []),
+        *company.get("roles", []),
+        *company.get("vacancy_summaries", []),
+        *company.get("required_skills_or_technologies", []),
+        *company.get("machines_or_tools", []),
+        *company.get("business_triggers", []),
+        *company.get("keywords", []),
+        *company.get("evidence_snippets", []),
+    ]
+    return " ".join(str(value or "") for value in fields).lower()
+
+
+def _deterministic_match(company: dict, product_profile: dict) -> dict:
+    """Evidence-first lexical scorer used to pre-rank candidates and break LLM score ties."""
+    product = str(product_profile.get("product_summary") or "")
+    product_text = product.lower()
+    company_text = _candidate_text(company)
+    score = 0.0
+    reasons: list[str] = []
+
+    for term in product_profile.get("required_technologies", []):
+        if term and term in company_text:
+            score += 2.2
+            reasons.append(f"technologie-overlap: {term}")
+    for term in product_profile.get("target_industries", []):
+        if term and term in company_text:
+            score += 1.4
+            reasons.append(f"sector-overlap: {term}")
+    for term in product_profile.get("pain_points_solved", []):
+        if term and term in company_text:
+            score += 1.2
+            reasons.append(f"pijnpunt-overlap: {term}")
+
+    synonym_groups = [
+        (["predictive maintenance", "preventive maintenance", "condition monitoring", "remote diagnostics"], ["onderhoud", "maintenance", "preventief", "curatief", "storing", "diagnose", "technieker", "mecanicien"]),
+        (["siemens", "s7", "s7-1500", "profinet", "plc", "scada", "schneider", "retrofit", "modernization"], ["siemens", "s7", "s7-1500", "profinet", "plc", "scada", "schneider", "automatisatie", "sturing", "elektricien"]),
+        (["machine vision", "computer vision", "quality inspection", "defect detection"], ["inspectie", "inspection", "kwaliteit", "quality", "defect", "cnc", "laser", "operator", "controle"]),
+        (["warehouse", "agv", "autonomous guided", "fleet orchestration", "robotics"], ["magazijn", "warehouse", "logistiek", "logistics", "heftruck", "transport", "robot", "automatisatie"]),
+        (["recruitment", "staffing", "crm", "field-operations", "lead scoring"], ["vacature", "aanwerving", "rekrutering", "personeel", "technieker", "service", "planning", "sales", "account"]),
+        (["field service", "industrial machines", "service engineers"], ["buitendienst", "field", "service", "installatie", "montage", "technieker", "onderhoud", "machine"]),
+        (["food", "beverage", "production equipment", "packaging"], ["voeding", "food", "drank", "beverage", "productie", "verpakking", "packaging", "afvul"]),
+        (["metal", "heavy manufacturing", "cnc", "production lines"], ["metaal", "metal", "staal", "steel", "cnc", "productie", "lijn", "wals", "industrieel"]),
+        (["battery", "bms", "electric vehicle", "ev"], ["batterij", "battery", "bms", "elektrisch", "ev", "automotive", "voertuig"]),
+        (["cybersecurity", "audit", "ot networks"], ["security", "cyber", "netwerk", "network", "ot", "plc", "scada", "audit"]),
+    ]
+    for product_terms, company_terms in synonym_groups:
+        if _contains_any(product_text, product_terms) and _contains_any(company_text, company_terms):
+            score += 1.5
+            reasons.append("domein-synoniemen matchen")
+
+    overlap = sorted(_tokenize_for_matching(product) & _tokenize_for_matching(company_text))
+    if overlap:
+        score += min(2.0, len(overlap) * 0.35)
+        reasons.append("term-overlap: " + ", ".join(overlap[:5]))
+
+    completeness = company.get("data_completeness") or {}
+    completeness_count = sum(1 for value in completeness.values() if value)
+    if company.get("evidence_quality") == "high":
+        score += 0.8
+    elif company.get("evidence_quality") == "medium":
+        score += 0.4
+    else:
+        score -= 0.6
+    score += min(0.8, completeness_count * 0.12)
+
+    weak_manual_terms = ["poets", "schoonmaak", "huishoud", "tuin", "aardbei", "horeca", "kelner", "chauffeur"]
+    if score < 2.5 and _contains_any(company_text, weak_manual_terms):
+        score -= 1.0
+        reasons.append("penalty: weinig bewijs en vooral manueel/servicewerk")
+
+    return {
+        "deterministic_score": round(max(0.0, min(10.0, score)), 2),
+        "deterministic_reasons": reasons[:5],
+    }
+
+def _compact_bedrijven_data(bedrijven_data, product_profile: dict | None = None):
     """Convert every company into the same compact evidence-first schema for fair ranking."""
     compacte_bedrijven = []
 
-    for b in bedrijven_data[:30]:
+    for b in bedrijven_data:
         vacature_titels = _as_clean_list(b.get("vacature_titels") or b.get("vacatures"), 5)
         beroepen = _as_clean_list(b.get("beroepen"), 5)
         tech_stack = _as_clean_list(b.get("tech_stack") or b.get("techstack"), 8)
@@ -190,7 +291,7 @@ def _compact_bedrijven_data(bedrijven_data):
         vacature_samenvattingen = _as_clean_list(b.get("vacature_samenvattingen"), 4)
         completeness = _data_completeness({**b, "vacature_titels": vacature_titels, "tech_stack": tech_stack, "keywords": keywords})
 
-        compacte_bedrijven.append({
+        compact = {
             "id": b.get("id"),
             "company_name": b.get("naam") or b.get("bedrijfsnaam") or "",
             "sector": b.get("sector") or "Onbekend",
@@ -212,12 +313,21 @@ def _compact_bedrijven_data(bedrijven_data):
                 "business_triggers": "backend/enrichment" if b.get("business_trigger") else "missing",
                 "vacancies": "backend/vdab" if vacature_titels else "missing",
             },
-        })
+        }
+        if product_profile:
+            compact.update(_deterministic_match(compact, product_profile))
+        compacte_bedrijven.append(compact)
+
+    if product_profile:
+        compacte_bedrijven.sort(key=lambda row: row.get("deterministic_score", 0), reverse=True)
+        # Feed the LLM a broad but evidence-ranked candidate set. The previous 30-profile
+        # cap hid relevant companies before ranking/eval; keep this configurable for cost.
+        return compacte_bedrijven[:PROSPECT_LLM_CANDIDATE_LIMIT]
 
     return compacte_bedrijven
 
 
-def _normalize_ranked_results(result):
+def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | None = None, fill_to: int = 10):
     """Normalize LLM output and keep ranking deterministic and schema-compatible."""
     if not isinstance(result, list):
         return result
@@ -236,6 +346,16 @@ def _normalize_ranked_results(result):
         except (TypeError, ValueError):
             score = 0.0
         score = max(0, min(10, score))
+        # If the model returns flat/poorly calibrated scores, blend in deterministic evidence.
+        deterministic_meta = (deterministic_by_id or {}).get(str(raw_id), {})
+        try:
+            deterministic_score = float(item.get("deterministic_score", deterministic_meta.get("deterministic_score", 0)) or 0)
+        except (TypeError, ValueError):
+            deterministic_score = 0.0
+        if deterministic_score > 0:
+            score = round((0.65 * score) + (0.35 * deterministic_score), 2)
+            item.setdefault("deterministic_score", deterministic_score)
+            item.setdefault("deterministic_reasons", deterministic_meta.get("deterministic_reasons", []))
         item["id"] = raw_id
         item["bedrijf_id"] = raw_id
         item["score"] = score
@@ -243,8 +363,46 @@ def _normalize_ranked_results(result):
         item.setdefault("data_confidence", dimensions.get("data_confidence") if isinstance(dimensions, dict) else None)
         item.setdefault("evidence", item.get("evidence_snippets", []))
         normalized.append(item)
+    # If the LLM is overly strict and returns only a few prospects, fill the ranking
+    # with deterministic evidence-ranked candidates. Evals and users both benefit from
+    # a complete top-10 with calibrated low/medium scores instead of hidden candidates.
+    if deterministic_by_id and len(normalized) < fill_to:
+        for raw_id, candidate in sorted(
+            deterministic_by_id.items(),
+            key=lambda pair: float(pair[1].get("deterministic_score") or 0),
+            reverse=True,
+        ):
+            if raw_id in seen_ids:
+                continue
+            det_score = float(candidate.get("deterministic_score") or 0)
+            normalized.append({
+                "id": candidate.get("id"),
+                "bedrijf_id": candidate.get("id"),
+                "bedrijfsnaam": candidate.get("company_name", ""),
+                "beschrijving": candidate.get("description", ""),
+                "waarom": "Deterministische fallback op basis van beschikbare evidence: " + "; ".join(candidate.get("deterministic_reasons", [])[:3]),
+                "evidence": candidate.get("evidence_snippets", [])[:3],
+                "score_dimensions": {
+                    "technical_fit": det_score,
+                    "industry_fit": det_score,
+                    "business_need": min(det_score, 6.0),
+                    "evidence_strength": det_score,
+                    "data_confidence": 8 if candidate.get("evidence_quality") == "high" else 5 if candidate.get("evidence_quality") == "medium" else 2,
+                },
+                "deterministic_score": det_score,
+                "deterministic_reasons": candidate.get("deterministic_reasons", []),
+                "score": round(det_score, 2),
+                "contactgegevens": "",
+                "techstack": candidate.get("required_skills_or_technologies", []),
+                "locatie": candidate.get("location", ""),
+                "sector": candidate.get("sector", ""),
+            })
+            seen_ids.add(raw_id)
+            if len(normalized) >= fill_to:
+                break
+
     normalized.sort(key=lambda row: float(row.get("score") or 0), reverse=True)
-    return normalized[:10]
+    return normalized[:fill_to]
 
 
 # async def extraheer_en_verrijk(vacature_tekst):
@@ -267,7 +425,8 @@ def _normalize_ranked_results(result):
 async def genereer_prospectie_rapport(product, bedrijven_data):
     """Genereer ranked company matches via Groq with structured evidence and score dimensions."""
     product_profile = _extract_product_profile(product)
-    bedrijven_data = _compact_bedrijven_data(bedrijven_data)
+    bedrijven_data = _compact_bedrijven_data(bedrijven_data, product_profile)
+    deterministic_by_id = {str(b.get("id")): b for b in bedrijven_data if b.get("id") is not None}
 
     prompt = f"""
             JE BENT EEN KRITISCHE B2B MATCHING ENGINE.
@@ -284,7 +443,9 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             4. Penaliseer lage evidence_quality en ontbrekende data_completeness. Gok ontbrekende capabilities niet bij.
             5. Als product specifieke termen noemt (bv. Siemens S7-1500, Profinet, SCADA, machine vision, field service), moeten die of directe synoniemen in de bedrijfsdata terugkomen voor een sterke match.
             6. Algemene woorden zoals "industrie", "onderhoud", "productie" of "techniek" zijn op zichzelf onvoldoende.
-            7. Laat no-match bedrijven weg. Een lege lijst is toegestaan.
+            7. Geef bij voorkeur een volledige top 10 terug. Als er minder dan 10 sterke matches zijn,
+               vul aan met zwakkere kandidaten met lage score en duidelijke onzekerheid.
+               Laat alleen bedrijven weg die echt 0 productrelevantie hebben.
             8. Geen dubbele bedrijven. Gebruik uitsluitend verstrekte data.
 
             SCORE-RUBRIEK VOOR final score:
@@ -306,7 +467,13 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             PRODUCTPROFIEL: {json.dumps(product_profile, ensure_ascii=False, separators=(',', ':'))}
             BEDRIJFSPROFIELEN: {json.dumps(bedrijven_data, ensure_ascii=False, separators=(',', ':'))}
 
-            ANTWOORD UITSLUITEND IN GELDIGE JSON, ALS EEN LIJST VAN MAXIMAAL 10 OBJECTEN:
+            LET OP OVER deterministic_score:
+            - deterministic_score is een evidence-based pre-ranking van 0-10.
+            - Gebruik die score als extra signaal, maar corrigeer hem als jouw inhoudelijke analyse dat vraagt.
+            - Bij gelijke LLM-inschatting moet het bedrijf met hogere deterministic_score hoger staan.
+
+            ANTWOORD UITSLUITEND IN GELDIGE JSON, ALS EEN LIJST VAN MAXIMAAL 10 OBJECTEN
+            EN MIK OP 10 OBJECTEN ALS ER GENOEG BEDRIJFSPROFIELEN ZIJN:
             [
                 {{
                     "id": number,
@@ -322,6 +489,8 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
                         "evidence_strength": number,
                         "data_confidence": number
                     }},
+                    "deterministic_score": number,
+                    "deterministic_reasons": string[],
                     "score": number,
                     "contactgegevens": string,
                     "techstack": string[],
@@ -355,7 +524,7 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
         match = re.search(r"(\[.*\]|\{.*\})", content, re.DOTALL)
         if match:
             parsed = json.loads(match.group(0))
-            return _normalize_ranked_results(parsed)
+            return _normalize_ranked_results(parsed, deterministic_by_id, fill_to=10)
         else:
             raise ValueError("Geen JSON gevonden")
     except Exception as e:

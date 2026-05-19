@@ -9,6 +9,7 @@ import os
 # Gebruik de servicenaam van Docker, of val terug op localhost voor lokale tests
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+PROSPECT_CANDIDATE_FETCH_LIMIT = int(os.getenv("PROSPECT_CANDIDATE_FETCH_LIMIT", "200"))
 # Cruciaal voor de Ollama library:
 os.environ["OLLAMA_HOST"] = os.getenv("OLLAMA_HOST", "localhost:11434")
 
@@ -56,22 +57,23 @@ async def generate_prospect(product: str):
         data = res.json()
         raw_bedrijven = data.get("results", [])
 
-        # Als de gefilterde set te klein is, vul aan met alle bedrijven
-        if len(raw_bedrijven) < 10:
-            res_all = await client.post(
-                f"{engine.BACKEND_URL}/companies/search",
-                json={"query": ""},
-            )
-            all_data = res_all.json()
-            all_bedrijven = all_data.get("results", [])
-            seen_ids = {b.get("id") for b in raw_bedrijven}
-            for b in all_bedrijven:
-                if b.get("id") not in seen_ids:
-                    raw_bedrijven.append(b)
-                if len(raw_bedrijven) >= 50:
-                    break
+        # Vul altijd aan met een bredere pool. Alleen de zoekresultaten gebruiken
+        # kan relevante bedrijven missen vóór de AI-ranking ze ooit ziet.
+        res_all = await client.post(
+            f"{engine.BACKEND_URL}/companies/search",
+            json={"query": "", "limit": PROSPECT_CANDIDATE_FETCH_LIMIT},
+        )
+        all_data = res_all.json()
+        all_bedrijven = all_data.get("results", [])
+        seen_ids = {b.get("id") for b in raw_bedrijven}
+        for b in all_bedrijven:
+            if b.get("id") not in seen_ids:
+                raw_bedrijven.append(b)
+                seen_ids.add(b.get("id"))
+            if len(raw_bedrijven) >= PROSPECT_CANDIDATE_FETCH_LIMIT:
+                break
 
-        print(f"bedrijven opgehaald van backend: {len(raw_bedrijven)} stuks")
+        print(f"bedrijven opgehaald van backend: {len(raw_bedrijven)} stuks (limiet: {PROSPECT_CANDIDATE_FETCH_LIMIT})")
 
     # Keep the candidate payload compact but materially useful for matching.
     bedrijven = []

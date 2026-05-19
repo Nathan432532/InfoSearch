@@ -14,6 +14,7 @@ DEFAULT_GOLD_PATH = ROOT / "prospect_ranking_live_gold.jsonl"
 DEFAULT_RESULTS_DIR = ROOT / "results"
 DEFAULT_API_URL = os.getenv("EVAL_API_URL") or os.getenv("BACKEND_URL") or "http://localhost:8000"
 SEARCH_ENDPOINT = "/companies/prospect"
+EVAL_SSL_VERIFY = os.getenv("EVAL_SSL_VERIFY", "true").lower() not in {"0", "false", "no"}
 
 
 @dataclass
@@ -99,9 +100,14 @@ async def fetch_predictions(api_url: str, product: str, filters: dict[str, Any] 
         payload["filters"] = filters
 
     timeout = httpx.Timeout(180.0, connect=30.0)
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True, verify=EVAL_SSL_VERIFY) as client:
         response = await client.post(f"{api_url.rstrip('/')}{SEARCH_ENDPOINT}", json=payload)
-        response.raise_for_status()
+        if response.status_code >= 400:
+            preview = response.text[:500].replace("\n", " ")
+            raise RuntimeError(
+                f"Eval API returned HTTP {response.status_code} for {response.request.url}. "
+                f"Response preview: {preview}"
+            )
         data = response.json()
 
     raw_results = data.get("results", [])
@@ -191,6 +197,29 @@ def calibration_summary(predictions: list[dict[str, Any]], gold_map: dict[int, i
     return result
 
 
+def score_diagnostics(predictions: list[dict[str, Any]], k: int = 10) -> dict[str, Any]:
+    """Detect flat scoring/ranking collapse, e.g. every result receiving score 1.0."""
+    top = predictions[:k]
+    if not top:
+        return {
+            "score_spread@k": 0.0,
+            "unique_scores@k": 0,
+            "top_score_tie_count@k": 0,
+            "flat_score_warning": True,
+        }
+
+    scores = [round(float(item.get("score") or 0), 4) for item in top]
+    top_score = max(scores)
+    unique_scores = set(scores)
+    top_ties = sum(1 for score in scores if score == top_score)
+    return {
+        "score_spread@k": round(max(scores) - min(scores), 4),
+        "unique_scores@k": len(unique_scores),
+        "top_score_tie_count@k": top_ties,
+        "flat_score_warning": len(unique_scores) <= 2 or top_ties >= max(3, len(top) // 2),
+    }
+
+
 def evaluate_case(case: EvalCase, predictions: list[dict[str, Any]]) -> dict[str, Any]:
     gold_map = {label.bedrijf_id: label.label for label in case.labels}
     gold_meta = {label.bedrijf_id: label for label in case.labels}
@@ -259,6 +288,7 @@ def evaluate_case(case: EvalCase, predictions: list[dict[str, Any]]) -> dict[str
                 sum(1 for bedrijf_id in predicted_ids[:10] if bedrijf_id in gold_ids) / max(1, min(10, len(predicted_ids))),
                 4,
             ),
+            **score_diagnostics(predictions, top_k),
         },
         "top_predictions": labeled_predictions,
         "missed_relevant": missed_relevant,

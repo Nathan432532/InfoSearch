@@ -195,7 +195,7 @@ Er is geen klassiek trainingsproces met eigen modeltraining. Het project gebruik
 | Groq ranking | Model | `llama-3.3-70b-versatile` |
 | Groq ranking | Temperature | `0` voor consistente ranking |
 | Groq ranking | Max tokens | `2600` |
-| Prospectranking | Max bedrijven naar prompt | 30 compacte bedrijfsprofielen |
+| Prospectranking | Max bedrijven naar prompt | maximaal 50 compacte bedrijfsprofielen; de AI-service vult aan tot maximaal 50 kandidaten wanneer de initiële gefilterde set minder dan 10 bedrijven bevat |
 | Prospectranking | Max output | 10 bedrijven |
 | Backend sync | Aantal vacatures | standaard 500 via `AUTO_SYNC_AMOUNT` |
 | Scheduler | Sync tijd | standaard `02:30` Europe/Brussels |
