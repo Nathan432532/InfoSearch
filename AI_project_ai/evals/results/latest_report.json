@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-05-19T13:49:56.963966+00:00",
+  "generated_at": "2026-05-19T16:31:33.378402+00:00",
   "api_url": "https://infosearch.duckdns.org",
   "endpoint": "/companies/prospect",
   "gold_path": "C:\\Users\\nterh\\OneDrive\\Bureaublad\\ai_project\\AI_project\\AI_project_ai\\evals\\prospect_ranking_live_gold.jsonl",
   "summary": {
     "cases": 15,
     "metrics": {
-      "ndcg@5": 0.5442,
-      "ndcg@10": 0.6082,
-      "precision@3": 0.2667,
-      "precision@5": 0.2133,
-      "recall@5": 0.3678,
-      "recall@10": 0.4567,
-      "mrr@10": 0.4667,
-      "pairwise_order_accuracy": 0.9804,
-      "returned_count": 10.0,
-      "labeled_coverage@10": 0.6333,
-      "score_spread@k": 0.6667,
-      "unique_scores@k": 1.3333,
-      "top_score_tie_count@k": 7.2,
+      "ndcg@5": 0.0419,
+      "ndcg@10": 0.0394,
+      "precision@3": 0.0222,
+      "precision@5": 0.0133,
+      "recall@5": 0.0222,
+      "recall@10": 0.0222,
+      "mrr@10": 0.0667,
+      "pairwise_order_accuracy": null,
+      "returned_count": 0.1333,
+      "labeled_coverage@10": 0.1333,
+      "score_spread@k": 0.0,
+      "unique_scores@k": 0.1333,
+      "top_score_tie_count@k": 0.1333,
       "flat_score_warning": 1.0
     }
   },
@@ -29,94 +29,30 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.3563,
-        "ndcg@10": 0.4247,
-        "precision@3": 0.3333,
-        "precision@5": 0.2,
-        "recall@5": 0.5,
-        "recall@10": 0.5,
-        "mrr@10": 0.3333,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.8,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
+      "top_predictions": [],
+      "missed_relevant": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 3
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 3,
+          "reason": "Large heavy manufacturing site with modern industrial installations and maintenance electricians/mecanicians; strong fit for predictive maintenance on production lines."
         },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
-      "missed_relevant": [
         {
           "bedrijf_id": 37,
           "bedrijfsnaam": null,
@@ -125,43 +61,9 @@
           "reason": "Industrial maintenance outsourcing with preventive/curative maintenance; plausible user or channel, but no Siemens S7/Profinet production-line evidence."
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 5,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 2,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "3": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_002",
@@ -169,145 +71,41 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.9073,
-        "ndcg@10": 0.9733,
-        "precision@3": 0.6667,
-        "precision@5": 0.4,
-        "recall@5": 1.0,
-        "recall@10": 1.0,
-        "mrr@10": 1.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.6,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
+      "top_predictions": [],
+      "missed_relevant": [
         {
           "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "CNC/nesting/laser machine operation with accuracy needs; plausible machine-vision quality use, but not packaging lines."
         },
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 25,
-          "bedrijfsnaam": "Laleman, Marnix",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Inspection-heavy technical MRO environment; plausible quality inspection need, but not packaging automation."
         }
       ],
-      "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 3,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "2": {
-          "count": 2,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_003",
@@ -315,139 +113,26 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.4415,
-        "ndcg@10": 0.5646,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.6,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "top_predictions": [],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 3,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 3,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_004",
@@ -455,146 +140,26 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.2346,
-        "ndcg@10": 0.3911,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.5,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "top_predictions": [],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 3,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 2,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_005",
@@ -602,146 +167,55 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.7176,
-        "ndcg@10": 0.7442,
-        "precision@3": 0.6667,
-        "precision@5": 0.6,
-        "recall@5": 0.75,
-        "recall@10": 1.0,
-        "mrr@10": 1.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.5,
-        "score_spread@k": 1.0,
-        "unique_scores@k": 2,
-        "top_score_tie_count@k": 2,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
+        "score_spread@k": 0.0,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
+      "top_predictions": [],
+      "missed_relevant": [
         {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 13,
-          "bedrijfsnaam": "MAYA SERVICES",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
+          "bedrijf_id": 2,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Industrial maintenance recruiting context; plausible for technical recruitment, though not an external service-engineer workflow."
         },
         {
           "bedrijf_id": 9,
-          "bedrijfsnaam": "SKYWORKERS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Specialized rope-access technicians in industrial field work; plausible recruitment/field-ops CRM fit."
+        },
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Technical aviation maintenance staffing; plausible recruitment CRM fit, though not field-service industrial engineers."
         },
         {
           "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Field technicians and operational scheduling make CRM/workflow automation plausible, though not clearly industrial service engineers."
         }
       ],
-      "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 13,
-          "bedrijfsnaam": "MAYA SERVICES",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "1": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "2": {
-          "count": 4,
-          "avg_model_score": 1.25,
-          "min_model_score": 1.0,
-          "max_model_score": 2.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_006",
@@ -749,152 +223,41 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.3936,
-        "ndcg@10": 0.506,
-        "precision@3": 0.3333,
-        "precision@5": 0.2,
-        "recall@5": 0.5,
-        "recall@10": 1.0,
-        "mrr@10": 0.3333,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.5,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
+      "top_predictions": [],
+      "missed_relevant": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 3
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 3,
+          "reason": "Heavy manufacturing steel plant with electrical/mechanical maintenance; strong fit for energy monitoring on high-power drives."
         },
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Advanced engine MRO site may use significant industrial equipment; plausible but not clearly heavy manufacturing drives."
         }
       ],
-      "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 3,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "2": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "3": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_007",
@@ -902,118 +265,26 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.906,
-        "ndcg@10": 0.906,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.9,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 19,
-          "bedrijfsnaam": "Green Valley Hospitality",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 6,
-          "bedrijfsnaam": "INTERVERVOER MERMANS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 32,
-          "bedrijfsnaam": "KINTRANS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 25,
-          "bedrijfsnaam": "Laleman, Marnix",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "top_predictions": [],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 25,
-          "bedrijfsnaam": "Laleman, Marnix",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 6,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 3,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_008",
@@ -1021,93 +292,22 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.5524,
-        "ndcg@10": 0.5524,
-        "precision@3": 0.3333,
-        "precision@5": 0.2,
-        "recall@5": 0.5,
-        "recall@10": 0.5,
-        "mrr@10": 1.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.6,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 12,
-          "bedrijfsnaam": "GROUP MARTENS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "top_predictions": [],
       "missed_relevant": [
         {
           "bedrijf_id": 7,
@@ -1115,59 +315,18 @@
           "kbo_nummer": null,
           "gold_label": 2,
           "reason": "Logistics and material installation context; plausible fit for fleet/warehouse automation, though no AGVs shown."
+        },
+        {
+          "bedrijf_id": 12,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Explicit warehousing and logistics activities; plausible AGV/fleet orchestration buyer."
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 4,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "2": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_009",
@@ -1175,93 +334,22 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.3156,
-        "ndcg@10": 0.4106,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.9,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "top_predictions": [],
       "missed_relevant": [
         {
           "bedrijf_id": 37,
@@ -1271,30 +359,9 @@
           "reason": "Preventive/curative industrial maintenance is directly relevant, but no food/beverage equipment evidence."
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 4,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 5,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_010",
@@ -1302,94 +369,37 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.7429,
-        "ndcg@10": 0.6977,
-        "precision@3": 0.6667,
-        "precision@5": 0.6,
-        "recall@5": 0.6,
-        "recall@10": 0.6,
-        "mrr@10": 1.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.7,
-        "score_spread@k": 1.0,
-        "unique_scores@k": 2,
-        "top_score_tie_count@k": 1,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
+        "score_spread@k": 0.0,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 9,
-          "bedrijfsnaam": "SKYWORKERS",
-          "expected_bedrijfsnaam": null,
-          "score": 3.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
+      "top_predictions": [],
+      "missed_relevant": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 2
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Industrial maintenance technician hiring; plausible technical recruitment lead-scoring fit."
         },
         {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 1
+          "bedrijf_id": 9,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Specialized industrial rope-access technician hiring; plausible technical staffing fit."
         },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        }
-      ],
-      "missed_relevant": [
         {
           "bedrijf_id": 10,
           "bedrijfsnaam": null,
@@ -1403,52 +413,18 @@
           "kbo_nummer": null,
           "gold_label": 2,
           "reason": "Recruits technical aviation/MRO profiles; plausible B2B technical recruitment fit."
-        }
-      ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
         },
         {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
+          "bedrijf_id": 46,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Recruits technical field workers; plausible industrial staffing/technical recruitment CRM fit."
         }
       ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 2,
-          "avg_model_score": 2.0,
-          "min_model_score": 2.0,
-          "max_model_score": 2.0
-        },
-        "1": {
-          "count": 2,
-          "avg_model_score": 2.0,
-          "min_model_score": 2.0,
-          "max_model_score": 2.0
-        },
-        "2": {
-          "count": 3,
-          "avg_model_score": 2.3333,
-          "min_model_score": 2.0,
-          "max_model_score": 3.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_011",
@@ -1456,94 +432,30 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.4791,
-        "ndcg@10": 0.4791,
-        "precision@3": 0.3333,
-        "precision@5": 0.2,
-        "recall@5": 0.5,
-        "recall@10": 0.5,
-        "mrr@10": 0.3333,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.6,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
+      "top_predictions": [],
+      "missed_relevant": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 3
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 3,
+          "reason": "Large industrial production site with electrical/mechanical maintenance; strong retrofit target for legacy PLC environments."
         },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
-      "missed_relevant": [
         {
           "bedrijf_id": 38,
           "bedrijfsnaam": null,
@@ -1552,57 +464,9 @@
           "reason": "Advanced industrial MRO site likely uses controlled equipment; plausible retrofit target, but no Siemens/Schneider PLC evidence."
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 40,
-          "bedrijfsnaam": "CHAMPIGNONS LAPIERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 4,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "3": {
-          "count": 1,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_012",
@@ -1610,147 +474,55 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.5317,
-        "ndcg@10": 0.6641,
-        "precision@3": 0.3333,
-        "precision@5": 0.4,
-        "recall@5": 0.5,
-        "recall@10": 0.75,
-        "mrr@10": 1.0,
-        "pairwise_order_accuracy": 0.7778,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.6,
-        "score_spread@k": 1.0,
-        "unique_scores@k": 2,
-        "top_score_tie_count@k": 3,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
+        "score_spread@k": 0.0,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 13,
-          "bedrijfsnaam": "MAYA SERVICES",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
+      "top_predictions": [],
+      "missed_relevant": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 2
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Industrial maintenance teams and equipment; plausible diagnostics platform, though not field-service focused."
         },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
-      "missed_relevant": [
         {
           "bedrijf_id": 10,
           "bedrijfsnaam": null,
           "kbo_nummer": null,
           "gold_label": 2,
           "reason": "Aircraft line/base maintenance teams; plausible remote diagnostics need, though not generic industrial machines."
+        },
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Aircraft engine MRO is diagnostics-heavy; plausible fit, though not field-service industrial machines."
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Field technicians maintaining/replacing electrical meters; plausible remote diagnostics/workflow use, but not broad industrial machines."
         }
       ],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 13,
-          "bedrijfsnaam": "MAYA SERVICES",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 3,
-          "avg_model_score": 1.3333,
-          "min_model_score": 1.0,
-          "max_model_score": 2.0
-        },
-        "2": {
-          "count": 3,
-          "avg_model_score": 1.3333,
-          "min_model_score": 1.0,
-          "max_model_score": 2.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_013",
@@ -1758,18 +530,18 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.5787,
-        "ndcg@10": 0.675,
+        "ndcg@5": 0.2887,
+        "ndcg@10": 0.2887,
         "precision@3": 0.3333,
-        "precision@5": 0.4,
-        "recall@5": 0.6667,
-        "recall@10": 1.0,
+        "precision@5": 0.2,
+        "recall@5": 0.3333,
+        "recall@10": 0.3333,
         "mrr@10": 1.0,
-        "pairwise_order_accuracy": 0.9286,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.7,
-        "score_spread@k": 6.0,
-        "unique_scores@k": 2,
+        "pairwise_order_accuracy": null,
+        "returned_count": 1,
+        "labeled_coverage@10": 1.0,
+        "score_spread@k": 0.0,
+        "unique_scores@k": 1,
         "top_score_tie_count@k": 1,
         "flat_score_warning": true
       },
@@ -1778,116 +550,34 @@
           "bedrijf_id": 8,
           "bedrijfsnaam": "INTERPOINT",
           "expected_bedrijfsnaam": null,
-          "score": 8.0,
+          "score": 10.0,
           "gold_label": 2
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
+        }
+      ],
+      "missed_relevant": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 3
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 3,
+          "reason": "Steel manufacturing site; strong fit for computer-vision defect detection in metal production."
         },
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 2
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
+          "bedrijfsnaam": null,
+          "kbo_nummer": null,
+          "gold_label": 2,
+          "reason": "Inspection and repair of metal aircraft engines; plausible defect detection, though not CNC/metal forming lines."
         }
       ],
-      "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
       "calibration": {
-        "0": {
-          "count": 4,
-          "avg_model_score": 2.0,
-          "min_model_score": 2.0,
-          "max_model_score": 2.0
-        },
         "2": {
-          "count": 2,
-          "avg_model_score": 5.0,
-          "min_model_score": 2.0,
-          "max_model_score": 8.0
-        },
-        "3": {
           "count": 1,
-          "avg_model_score": 2.0,
-          "min_model_score": 2.0,
-          "max_model_score": 2.0
+          "avg_model_score": 10.0,
+          "min_model_score": 10.0,
+          "max_model_score": 10.0
         }
       }
     },
@@ -1897,153 +587,26 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.3066,
-        "ndcg@10": 0.511,
+        "ndcg@5": 0.0,
+        "ndcg@10": 0.0,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.4,
+        "pairwise_order_accuracy": null,
+        "returned_count": 0,
+        "labeled_coverage@10": 0.0,
         "score_spread@k": 0.0,
-        "unique_scores@k": 1,
-        "top_score_tie_count@k": 10,
+        "unique_scores@k": 0,
+        "top_score_tie_count@k": 0,
         "flat_score_warning": true
       },
-      "top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 30,
-          "bedrijfsnaam": "ASSIST AT HOME",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "top_predictions": [],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 18,
-          "bedrijfsnaam": "Plantsoon",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": "Sabena Aerospace Engineering",
-          "expected_bedrijfsnaam": null,
-          "score": 1.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {
-        "0": {
-          "count": 2,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        },
-        "1": {
-          "count": 2,
-          "avg_model_score": 1.0,
-          "min_model_score": 1.0,
-          "max_model_score": 1.0
-        }
-      }
+      "calibration": {}
     },
     {
       "case_id": "live_015",
@@ -2051,18 +614,18 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.6992,
-        "ndcg@10": 0.6238,
+        "ndcg@5": 0.3392,
+        "ndcg@10": 0.3026,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": 1.0,
-        "returned_count": 10,
-        "labeled_coverage@10": 0.6,
-        "score_spread@k": 1.0,
-        "unique_scores@k": 2,
+        "pairwise_order_accuracy": null,
+        "returned_count": 1,
+        "labeled_coverage@10": 1.0,
+        "score_spread@k": 0.0,
+        "unique_scores@k": 1,
         "top_score_tie_count@k": 1,
         "flat_score_warning": true
       },
@@ -2071,117 +634,19 @@
           "bedrijf_id": 5,
           "bedrijfsnaam": "Tabaknatie",
           "expected_bedrijfsnaam": null,
-          "score": 3.0,
+          "score": 5.0,
           "gold_label": 1
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": "A.R.C.F.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 35,
-          "bedrijfsnaam": "AWL TUINDERIJ",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": "ArcelorMittal Gent",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 1
-        },
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 14,
-          "bedrijfsnaam": "BAEKEN",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 45,
-          "bedrijfsnaam": "BERKENRIJS",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
         }
       ],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [
-        {
-          "bedrijf_id": 48,
-          "bedrijfsnaam": "Christianen - Van Dun L.V.",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 8,
-          "bedrijfsnaam": "INTERPOINT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 28,
-          "bedrijfsnaam": "SMOUT",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        },
-        {
-          "bedrijf_id": 4,
-          "bedrijfsnaam": "CARTERRE",
-          "expected_bedrijfsnaam": null,
-          "score": 2.0,
-          "gold_label": 0
-        }
-      ],
+      "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
       "calibration": {
-        "0": {
-          "count": 3,
-          "avg_model_score": 2.0,
-          "min_model_score": 2.0,
-          "max_model_score": 2.0
-        },
         "1": {
-          "count": 3,
-          "avg_model_score": 2.3333,
-          "min_model_score": 2.0,
-          "max_model_score": 3.0
+          "count": 1,
+          "avg_model_score": 5.0,
+          "min_model_score": 5.0,
+          "max_model_score": 5.0
         }
       }
     }

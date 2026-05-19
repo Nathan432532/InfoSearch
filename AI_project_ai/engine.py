@@ -8,7 +8,13 @@ import os
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
-model = "llama-3.3-70b-versatile"  # Snel, deterministisch, geen agentic overhead
+PROSPECT_RANKING_MODEL = os.getenv("PROSPECT_RANKING_MODEL", "openai/gpt-oss-120b")
+PROSPECT_RANKING_FALLBACK_MODELS = [
+    name.strip()
+    for name in os.getenv("PROSPECT_RANKING_FALLBACK_MODELS", "llama-3.3-70b-versatile").split(",")
+    if name.strip()
+]
+model = PROSPECT_RANKING_MODEL  # Backwards-compatible alias for older code/imports.
 PROSPECT_LLM_CANDIDATE_LIMIT = int(os.getenv("PROSPECT_LLM_CANDIDATE_LIMIT", "120"))
 
 PROFIEL_EXTRACTOR_PROMPT = """
@@ -569,17 +575,25 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             - Professioneel Nederlands.
             """
     
-    try:
-        chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model=model,
-            temperature=0,
-            max_tokens=2600,
-        )
-        content = chat_completion.choices[0].message.content or ""
-    except Exception as e:
-        print(f"[Groq] LLM call mislukt: {e}")
-        return {"error": str(e), "raw": ""}
+    content = ""
+    last_error: Exception | None = None
+    model_candidates = [PROSPECT_RANKING_MODEL, *PROSPECT_RANKING_FALLBACK_MODELS]
+    for model_name in model_candidates:
+        try:
+            print(f"[Groq] Prospect ranking model: {model_name}")
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=model_name,
+                temperature=0,
+                max_tokens=2600,
+            )
+            content = chat_completion.choices[0].message.content or ""
+            break
+        except Exception as e:
+            last_error = e
+            print(f"[Groq] LLM call mislukt met model {model_name}: {e}")
+    else:
+        return {"error": str(last_error), "raw": "", "models_tried": model_candidates}
 
     try:
         match = re.search(r"(\[.*\]|\{.*\})", content, re.DOTALL)

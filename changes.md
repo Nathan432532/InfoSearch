@@ -362,3 +362,126 @@ Expected impact after deploy:
 - `unique_scores@k` and `score_spread@k` should increase.
 - nDCG may improve because relevant candidates can move above weak candidates instead of being tied.
 
+## 2026-05-19 18:21 ? Deployed eval attempt blocked
+
+Command:
+
+```powershell
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+$env:EVAL_SSL_VERIFY="false"
+python evals\eval_ranking.py
+```
+
+Result:
+
+- Eval did not complete.
+- Backend request returned HTTP 403 before the API response.
+- Response preview showed `Fortinet Secure DNS Service Portal` / `Web Page Blocked`.
+
+Finding:
+
+- This was a network/content-filtering block against the DuckDNS backend, not an eval-code failure.
+- No new metrics were generated; `evals/results/latest_report.json` still contains the previous successful report.
+
+## 2026-05-19 18:26 ? Deployed eval after network switch
+
+Command:
+
+```powershell
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+$env:EVAL_SSL_VERIFY="false"
+python evals\eval_ranking.py
+```
+
+Summary:
+
+- `nDCG@5`: 0.5446
+- `nDCG@10`: 0.5996
+- `precision@3`: 0.2444
+- `precision@5`: 0.2000
+- `recall@5`: 0.3344
+- `recall@10`: 0.4233
+- `MRR@10`: 0.5111
+- `pairwise_order_accuracy`: 0.9774
+- `returned_count`: 8.8
+- `labeled_coverage@10`: 0.6733
+- `score_spread@k`: 0.6667
+- `unique_scores@k`: 1.3333
+- `top_score_tie_count@k`: 6.0
+- `flat_score_warning`: 1.0
+
+Finding:
+
+- Eval completed successfully after switching networks.
+- Metrics are close to the earlier 0.6014 nDCG@10 run, but lower than the full-top-10 0.6082 run.
+- `returned_count` is back to 8.8 rather than 10.0, suggesting the latest backend currently does not always return a full top 10.
+- Score ties remain unresolved on the deployed backend (`flat_score_warning` 1.0), which likely means the local score-calibration changes have not been deployed yet or are not active in the live endpoint.
+
+## 2026-05-19 18:31 ? Deployed eval completed but results collapsed
+
+Command:
+
+```powershell
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+$env:EVAL_SSL_VERIFY="false"
+python evals\eval_ranking.py
+```
+
+Summary:
+
+- `nDCG@5`: 0.0419
+- `nDCG@10`: 0.0394
+- `precision@3`: 0.0222
+- `precision@5`: 0.0133
+- `recall@5`: 0.0222
+- `recall@10`: 0.0222
+- `MRR@10`: 0.0667
+- `pairwise_order_accuracy`: null
+- `returned_count`: 0.1333
+- `labeled_coverage@10`: 0.1333
+- `flat_score_warning`: 1.0
+
+Finding:
+
+- Eval technically succeeded, but the live endpoint returned almost no results.
+- 13 out of 15 cases returned 0 predictions.
+- Only `live_013` and `live_015` returned 1 prediction each.
+- This is likely a deployed backend/API/runtime issue, not a normal ranking-quality result.
+- Recommended next check: inspect deployed backend logs for `/companies/prospect`, especially LLM/API errors, candidate fetch errors, fallback fill behavior, and any exceptions swallowed into empty `results`.
+
+## 2026-05-19 20:28 ? Ranking model upgraded
+
+Changed `AI_project_ai/engine.py` so the prospect-ranking Groq model is configurable instead of hardcoded.
+
+Before:
+
+```python
+model = "llama-3.3-70b-versatile"
+```
+
+After:
+
+```env
+PROSPECT_RANKING_MODEL=openai/gpt-oss-120b
+PROSPECT_RANKING_FALLBACK_MODELS=llama-3.3-70b-versatile
+```
+
+Code behavior:
+
+- Uses `openai/gpt-oss-120b` as the new default ranking model.
+- Falls back to `llama-3.3-70b-versatile` if the primary model fails, is unavailable, or hits a provider/model error.
+- Logs which Groq model is used for each prospect-ranking call.
+- Keeps `model = PROSPECT_RANKING_MODEL` as a backwards-compatible alias for older imports/code.
+
+Verification:
+
+```powershell
+python -m py_compile api.py engine.py evals\eval_ranking.py
+```
+
+Expected impact:
+
+- Better reasoning/ranking quality from the stronger default model.
+- Safer deployment because the previous model remains available as fallback.
+- Eval should be rerun after deployment, preferably with delay/backoff to avoid rate limits.
+
