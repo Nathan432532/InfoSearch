@@ -286,3 +286,79 @@ Watch especially:
 - `flat_score_warning`
 
 The next improvement should focus on score calibration/tie-breaking if `flat_score_warning` remains high.
+
+## 2026-05-19 15:49 ? Deployed eval after backend update
+
+Command:
+
+```powershell
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+$env:EVAL_SSL_VERIFY="false"
+python evals\eval_ranking.py
+```
+
+Summary:
+
+- `nDCG@5`: 0.5442
+- `nDCG@10`: 0.6082
+- `precision@3`: 0.2667
+- `precision@5`: 0.2133
+- `recall@5`: 0.3678
+- `recall@10`: 0.4567
+- `MRR@10`: 0.4667
+- `pairwise_order_accuracy`: 0.9804
+- `returned_count`: 10.0
+- `labeled_coverage@10`: 0.6333
+- `score_spread@k`: 0.6667
+- `unique_scores@k`: 1.3333
+- `top_score_tie_count@k`: 7.2
+- `flat_score_warning`: 1.0
+
+Finding:
+
+- Backend now returns a full top 10 on average (`returned_count` 10.0), so the candidate-volume issue is fixed.
+- `nDCG@10` improved slightly compared with the previous 0.6014 run, now 0.6082.
+- `flat_score_warning` is still 1.0 and top-score ties increased, so the next bottleneck is score calibration/tie-breaking rather than candidate count.
+
+## 2026-05-19 15:51 ? Score calibration/tie-breaking fix
+
+Problem:
+
+- Latest deployed eval returned a full top 10, but `flat_score_warning` stayed at 1.0.
+- Many cases still had all candidates scored as `1.0`, causing ranking ties even when candidate count was fixed.
+
+Changes in `AI_project_ai/engine.py`:
+
+- Added `_score_dimension_average(...)` to aggregate LLM score dimensions.
+- Added `_recalibrated_score(...)` to convert coarse LLM scores into granular 0-10 scores.
+- Added `_spread_tied_scores(...)` to avoid exact equal final scores while preserving relevance order.
+- Updated `_normalize_ranked_results(...)` so final scores combine:
+  - deterministic evidence score
+  - LLM score dimensions
+  - raw LLM score
+  - evidence count bonus
+  - a tiny stable rank tie-breaker
+- Updated fallback candidate scoring so fallback rows also receive more granular scores.
+- Updated the LLM prompt to explicitly request decimal scores and avoid flat 1/2/3 scoring.
+
+Verification:
+
+```powershell
+python -m py_compile api.py engine.py evals\eval_ranking.py
+```
+
+Smoke test:
+
+- Simulated flat LLM scores of `1.0` for all candidates.
+- New normalization produced distinct evidence-based scores:
+  - strong Siemens/Profinet industrial match: 9.49
+  - maintenance fallback: 4.18
+  - weaker MRO/inspection match: 2.97
+  - irrelevant manual farm work: 1.56
+
+Expected impact after deploy:
+
+- `flat_score_warning` should drop.
+- `unique_scores@k` and `score_spread@k` should increase.
+- nDCG may improve because relevant candidates can move above weak candidates instead of being tied.
+

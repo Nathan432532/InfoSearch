@@ -327,13 +327,71 @@ def _compact_bedrijven_data(bedrijven_data, product_profile: dict | None = None)
     return compacte_bedrijven
 
 
+def _score_dimension_average(dimensions: dict) -> float | None:
+    if not isinstance(dimensions, dict) or not dimensions:
+        return None
+    keys = ["technical_fit", "industry_fit", "business_need", "evidence_strength", "data_confidence"]
+    values: list[float] = []
+    for key in keys:
+        try:
+            values.append(float(dimensions[key]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    if not values:
+        return None
+    return sum(values) / len(values)
+
+
+def _recalibrated_score(raw_score: float, item: dict, deterministic_score: float, original_rank: int) -> float:
+    """Turn coarse LLM scores into a granular 0-10 ranking score.
+
+    Groq/Llama sometimes returns flat scores like 1.0 for every candidate. This function
+    makes the final score depend mostly on evidence, dimensions and deterministic fit,
+    with only a small stable rank tie-breaker.
+    """
+    dimensions = item.get("score_dimensions") or {}
+    dimension_avg = _score_dimension_average(dimensions)
+    evidence_count = len(_as_clean_list(item.get("evidence"), 5))
+    evidence_bonus = min(0.5, evidence_count * 0.1)
+
+    parts: list[tuple[float, float]] = []
+    if deterministic_score > 0:
+        parts.append((0.65, deterministic_score))
+    if dimension_avg is not None:
+        parts.append((0.25, dimension_avg))
+
+    # Raw LLM score is useful when it is calibrated, but it should not dominate flat 1/2 scores.
+    raw_weight = 0.10 if deterministic_score > 0 or dimension_avg is not None else 1.0
+    parts.append((raw_weight, raw_score))
+
+    total_weight = sum(weight for weight, _ in parts) or 1.0
+    score = sum(weight * value for weight, value in parts) / total_weight
+    score += evidence_bonus
+
+    # Stable tiny tie-breaker: keeps equal evidence scores deterministic without overpowering relevance.
+    score += max(0.0, 0.2 - (original_rank * 0.01))
+    return round(max(0.0, min(10.0, score)), 2)
+
+
+def _spread_tied_scores(rows: list[dict]) -> None:
+    """Ensure exactly equal final scores become rare while preserving sorted order."""
+    seen: dict[float, int] = {}
+    for row in rows:
+        score = round(float(row.get("score") or 0), 2)
+        count = seen.get(score, 0)
+        if count:
+            score = max(0.0, round(score - (count * 0.03), 2))
+            row["score"] = score
+        seen[round(float(row.get("score") or 0), 2)] = count + 1
+
+
 def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | None = None, fill_to: int = 10):
     """Normalize LLM output and keep ranking deterministic and schema-compatible."""
     if not isinstance(result, list):
         return result
     normalized = []
     seen_ids: set[str] = set()
-    for item in result:
+    for original_rank, item in enumerate(result, start=1):
         if not isinstance(item, dict):
             continue
         raw_id = item.get("id") or item.get("bedrijf_id")
@@ -353,15 +411,14 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
         except (TypeError, ValueError):
             deterministic_score = 0.0
         if deterministic_score > 0:
-            score = round((0.65 * score) + (0.35 * deterministic_score), 2)
             item.setdefault("deterministic_score", deterministic_score)
             item.setdefault("deterministic_reasons", deterministic_meta.get("deterministic_reasons", []))
         item["id"] = raw_id
         item["bedrijf_id"] = raw_id
-        item["score"] = score
         item.setdefault("score_dimensions", dimensions)
         item.setdefault("data_confidence", dimensions.get("data_confidence") if isinstance(dimensions, dict) else None)
-        item.setdefault("evidence", item.get("evidence_snippets", []))
+        item.setdefault("evidence", item.get("evidence_snippets", deterministic_meta.get("evidence_snippets", [])))
+        item["score"] = _recalibrated_score(score, item, deterministic_score, original_rank)
         normalized.append(item)
     # If the LLM is overly strict and returns only a few prospects, fill the ranking
     # with deterministic evidence-ranked candidates. Evals and users both benefit from
@@ -391,7 +448,7 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
                 },
                 "deterministic_score": det_score,
                 "deterministic_reasons": candidate.get("deterministic_reasons", []),
-                "score": round(det_score, 2),
+                "score": round(det_score + min(0.4, len(candidate.get("evidence_snippets", [])) * 0.05), 2),
                 "contactgegevens": "",
                 "techstack": candidate.get("required_skills_or_technologies", []),
                 "locatie": candidate.get("location", ""),
@@ -401,6 +458,8 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
             if len(normalized) >= fill_to:
                 break
 
+    normalized.sort(key=lambda row: float(row.get("score") or 0), reverse=True)
+    _spread_tied_scores(normalized)
     normalized.sort(key=lambda row: float(row.get("score") or 0), reverse=True)
     return normalized[:fill_to]
 
@@ -463,6 +522,8 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             - evidence_strength: hoe concreet en controleerbaar de snippets zijn
             - data_confidence: volledigheid/betrouwbaarheid van het bedrijfsprofiel
             De eindscore moet consistent zijn met deze dimensies en lager zijn bij lage evidence_strength of data_confidence.
+            Gebruik decimale scores (bv. 6.8, 5.4, 3.2), geen platte 1/2/3-scores voor alle kandidaten.
+            Kandidaten met zwakker bewijs moeten duidelijk lagere scores krijgen zodat er geen score-ties ontstaan.
 
             PRODUCTPROFIEL: {json.dumps(product_profile, ensure_ascii=False, separators=(',', ':'))}
             BEDRIJFSPROFIELEN: {json.dumps(bedrijven_data, ensure_ascii=False, separators=(',', ':'))}

@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-05-19T13:41:26.651633+00:00",
+  "generated_at": "2026-05-19T13:49:56.963966+00:00",
   "api_url": "https://infosearch.duckdns.org",
   "endpoint": "/companies/prospect",
   "gold_path": "C:\\Users\\nterh\\OneDrive\\Bureaublad\\ai_project\\AI_project\\AI_project_ai\\evals\\prospect_ranking_live_gold.jsonl",
   "summary": {
     "cases": 15,
     "metrics": {
-      "ndcg@5": 0.5523,
-      "ndcg@10": 0.6014,
+      "ndcg@5": 0.5442,
+      "ndcg@10": 0.6082,
       "precision@3": 0.2667,
       "precision@5": 0.2133,
       "recall@5": 0.3678,
       "recall@10": 0.4567,
-      "mrr@10": 0.5111,
-      "pairwise_order_accuracy": 0.9774,
-      "returned_count": 8.8,
-      "labeled_coverage@10": 0.68,
+      "mrr@10": 0.4667,
+      "pairwise_order_accuracy": 0.9804,
+      "returned_count": 10.0,
+      "labeled_coverage@10": 0.6333,
       "score_spread@k": 0.6667,
       "unique_scores@k": 1.3333,
-      "top_score_tie_count@k": 6.0,
+      "top_score_tie_count@k": 7.2,
       "flat_score_warning": 1.0
     }
   },
@@ -29,28 +29,91 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.7126,
-        "ndcg@10": 0.7126,
+        "ndcg@5": 0.3563,
+        "ndcg@10": 0.4247,
         "precision@3": 0.3333,
         "precision@5": 0.2,
         "recall@5": 0.5,
         "recall@10": 0.5,
-        "mrr@10": 1.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 1,
-        "labeled_coverage@10": 1.0,
+        "mrr@10": 0.3333,
+        "pairwise_order_accuracy": 1.0,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.8,
         "score_spread@k": 0.0,
         "unique_scores@k": 1,
-        "top_score_tie_count@k": 1,
+        "top_score_tie_count@k": 10,
         "flat_score_warning": true
       },
       "top_predictions": [
         {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
           "bedrijf_id": 2,
           "bedrijfsnaam": "ArcelorMittal Gent",
           "expected_bedrijfsnaam": null,
-          "score": 7.0,
+          "score": 1.0,
           "gold_label": 3
+        },
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 28,
+          "bedrijfsnaam": "SMOUT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
         }
       ],
       "missed_relevant": [
@@ -62,14 +125,41 @@
           "reason": "Industrial maintenance outsourcing with preventive/curative maintenance; plausible user or channel, but no Siemens S7/Profinet production-line evidence."
         }
       ],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
       "calibration": {
+        "0": {
+          "count": 5,
+          "avg_model_score": 1.0,
+          "min_model_score": 1.0,
+          "max_model_score": 1.0
+        },
+        "1": {
+          "count": 2,
+          "avg_model_score": 1.0,
+          "min_model_score": 1.0,
+          "max_model_score": 1.0
+        },
         "3": {
           "count": 1,
-          "avg_model_score": 7.0,
-          "min_model_score": 7.0,
-          "max_model_score": 7.0
+          "avg_model_score": 1.0,
+          "min_model_score": 1.0,
+          "max_model_score": 1.0
         }
       }
     },
@@ -365,19 +455,19 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
+        "ndcg@5": 0.2346,
+        "ndcg@10": 0.3911,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 1,
-        "labeled_coverage@10": 1.0,
+        "pairwise_order_accuracy": 1.0,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.5,
         "score_spread@k": 0.0,
         "unique_scores@k": 1,
-        "top_score_tie_count@k": 1,
+        "top_score_tie_count@k": 10,
         "flat_score_warning": true
       },
       "top_predictions": [
@@ -385,19 +475,124 @@
           "bedrijf_id": 46,
           "bedrijfsnaam": "A.R.C.F.",
           "expected_bedrijfsnaam": null,
-          "score": 3.0,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 35,
+          "bedrijfsnaam": "AWL TUINDERIJ",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 28,
+          "bedrijfsnaam": "SMOUT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
           "gold_label": 0
         }
       ],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 48,
+          "bedrijfsnaam": "Christianen - Van Dun L.V.",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 28,
+          "bedrijfsnaam": "SMOUT",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.0,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
       "calibration": {
         "0": {
-          "count": 1,
-          "avg_model_score": 3.0,
-          "min_model_score": 3.0,
-          "max_model_score": 3.0
+          "count": 3,
+          "avg_model_score": 1.0,
+          "min_model_score": 1.0,
+          "max_model_score": 1.0
+        },
+        "1": {
+          "count": 2,
+          "avg_model_score": 1.0,
+          "min_model_score": 1.0,
+          "max_model_score": 1.0
         }
       }
     },
