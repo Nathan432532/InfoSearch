@@ -15,7 +15,13 @@ PROSPECT_RANKING_FALLBACK_MODELS = [
     if name.strip()
 ]
 model = PROSPECT_RANKING_MODEL  # Backwards-compatible alias for older code/imports.
-PROSPECT_LLM_CANDIDATE_LIMIT = int(os.getenv("PROSPECT_LLM_CANDIDATE_LIMIT", "120"))
+# Deterministically pre-rank all fetched companies, then send a wider compact
+# candidate set to the LLM in small batches. This keeps recall higher than 30
+# while avoiding the oversized single 120-profile Groq request.
+PROSPECT_LLM_CANDIDATE_LIMIT = int(os.getenv("PROSPECT_LLM_CANDIDATE_LIMIT", "50"))
+PROSPECT_LLM_BATCH_SIZE = int(os.getenv("PROSPECT_LLM_BATCH_SIZE", "10"))
+PROSPECT_MAX_OUTPUT_TOKENS = int(os.getenv("PROSPECT_MAX_OUTPUT_TOKENS", "900"))
+PROSPECT_LLM_PROMPT_CHAR_LIMIT = int(os.getenv("PROSPECT_LLM_PROMPT_CHAR_LIMIT", "24000"))
 
 PROFIEL_EXTRACTOR_PROMPT = """
 JE BENT EEN ENTITY RESOLUTION AGENT.
@@ -391,6 +397,64 @@ def _spread_tied_scores(rows: list[dict]) -> None:
         seen[round(float(row.get("score") or 0), 2)] = count + 1
 
 
+def _is_size_or_rate_limit_error(error: Exception) -> bool:
+    """Groq reports oversized requests as 413/TPM rate-limit errors.
+
+    Retrying the same oversized prompt against fallback models only burns quota, so
+    these errors should short-circuit into deterministic fallback instead.
+    """
+    text = str(error).lower()
+    return any(
+        marker in text
+        for marker in [
+            "request too large",
+            "tokens per minute",
+            "tokens per day",
+            "rate_limit_exceeded",
+            "error code: 413",
+            "error code: 429",
+        ]
+    )
+
+
+def _deterministic_report_from_candidates(candidates: list[dict], fill_to: int = 10) -> list[dict]:
+    """Return a usable top-N when the LLM is unavailable or quota-limited."""
+    rows = []
+    for candidate in sorted(
+        candidates,
+        key=lambda row: float(row.get("deterministic_score") or 0),
+        reverse=True,
+    )[:fill_to]:
+        det_score = float(candidate.get("deterministic_score") or 0)
+        rows.append({
+            "id": candidate.get("id"),
+            "bedrijf_id": candidate.get("id"),
+            "bedrijfsnaam": candidate.get("company_name", ""),
+            "beschrijving": candidate.get("description", ""),
+            "waarom": "Deterministische ranking gebruikt omdat de LLM-call niet binnen de Groq-limieten paste: "
+                      + "; ".join(candidate.get("deterministic_reasons", [])[:3]),
+            "evidence": candidate.get("evidence_snippets", [])[:3],
+            "score_dimensions": {
+                "technical_fit": det_score,
+                "industry_fit": det_score,
+                "business_need": min(det_score, 6.0),
+                "evidence_strength": det_score,
+                "data_confidence": 8 if candidate.get("evidence_quality") == "high" else 5 if candidate.get("evidence_quality") == "medium" else 2,
+            },
+            "deterministic_score": det_score,
+            "deterministic_reasons": candidate.get("deterministic_reasons", []),
+            "score": round(det_score + min(0.4, len(candidate.get("evidence_snippets", [])) * 0.05), 2),
+            "contactgegevens": "",
+            "techstack": candidate.get("required_skills_or_technologies", []),
+            "locatie": candidate.get("location", ""),
+            "sector": candidate.get("sector", ""),
+            "llm_fallback_reason": "groq_size_or_rate_limit",
+        })
+    _spread_tied_scores(rows)
+    rows.sort(key=lambda row: float(row.get("score") or 0), reverse=True)
+    return rows
+
+
 def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | None = None, fill_to: int = 10):
     """Normalize LLM output and keep ranking deterministic and schema-compatible."""
     if not isinstance(result, list):
@@ -424,6 +488,21 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
         item.setdefault("score_dimensions", dimensions)
         item.setdefault("data_confidence", dimensions.get("data_confidence") if isinstance(dimensions, dict) else None)
         item.setdefault("evidence", item.get("evidence_snippets", deterministic_meta.get("evidence_snippets", [])))
+        techstack = _as_clean_list(
+            item.get("techstack") or item.get("tech_stack") or item.get("technologies")
+            or deterministic_meta.get("required_skills_or_technologies"),
+            8,
+        )
+        item["techstack"] = techstack
+        item["tech_stack"] = techstack
+        machinepark = _as_clean_list(item.get("machinepark") or item.get("machine_park") or deterministic_meta.get("machines_or_tools"), 8)
+        if machinepark:
+            item["machinepark"] = machinepark
+            item["machine_park"] = machinepark
+        if not item.get("sector"):
+            item["sector"] = deterministic_meta.get("sector", "")
+        if not item.get("locatie"):
+            item["locatie"] = deterministic_meta.get("location", "")
         item["score"] = _recalibrated_score(score, item, deterministic_score, original_rank)
         normalized.append(item)
     # If the LLM is overly strict and returns only a few prospects, fill the ranking
@@ -487,97 +566,54 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
 #     clean_json = content.replace("```json", "").replace("```", "").strip()
 #     return json.loads(clean_json)
 
-async def genereer_prospectie_rapport(product, bedrijven_data):
-    """Genereer ranked company matches via Groq with structured evidence and score dimensions."""
-    product_profile = _extract_product_profile(product)
-    bedrijven_data = _compact_bedrijven_data(bedrijven_data, product_profile)
-    deterministic_by_id = {str(b.get("id")): b for b in bedrijven_data if b.get("id") is not None}
+def _llm_candidate_view(candidate: dict) -> dict:
+    """Trim candidate fields that are sent to Groq; keep only ranking evidence."""
+    return {
+        "id": candidate.get("id"),
+        "company_name": candidate.get("company_name", ""),
+        "sector": candidate.get("sector", ""),
+        "location": candidate.get("location", ""),
+        "description": (candidate.get("description") or "")[:180],
+        "vacancy_titles": _as_clean_list(candidate.get("vacancy_titles"), 3),
+        "roles": _as_clean_list(candidate.get("roles"), 3),
+        "technologies": _as_clean_list(candidate.get("required_skills_or_technologies"), 5),
+        "machines_or_tools": _as_clean_list(candidate.get("machines_or_tools"), 4),
+        "business_triggers": _as_clean_list(candidate.get("business_triggers"), 1),
+        "keywords": _as_clean_list(candidate.get("keywords"), 5),
+        "evidence_snippets": _as_clean_list(candidate.get("evidence_snippets"), 4),
+        "evidence_quality": candidate.get("evidence_quality"),
+        "deterministic_score": candidate.get("deterministic_score", 0),
+        "deterministic_reasons": _as_clean_list(candidate.get("deterministic_reasons"), 3),
+    }
 
-    prompt = f"""
-            JE BENT EEN KRITISCHE B2B MATCHING ENGINE.
-            Beoordeel PRODUCT-MARKET FIT tussen een gestructureerd PRODUCTPROFIEL en een lijst gestructureerde BEDRIJFSPROFIELEN.
 
-            BELANGRIJKSTE DOEL:
-            Rank ALLEEN bedrijven waarvoor er concrete bron-evidence in het bedrijfsprofiel staat.
-            Een bedrijf met meer tekst mag niet automatisch hoger scoren; bewijs moet relevant zijn voor het product.
+def _build_prospect_prompt(product_profile: dict, candidates: list[dict]) -> str:
+    """Build a compact prompt. Instructions are intentionally short to save tokens."""
+    llm_candidates = [_llm_candidate_view(candidate) for candidate in candidates]
+    return f"""
+JE BENT EEN KRITISCHE B2B MATCHING ENGINE.
+Rank de bedrijven op product-market fit voor het PRODUCTPROFIEL.
+Gebruik alleen concrete evidence uit het bedrijfsprofiel; gok ontbrekende capabilities niet bij.
+Locatie mag nooit productrelevantie creëren. Penaliseer lage evidence_quality.
+Geef maximaal 10 bedrijven terug, gesorteerd op matchkwaliteit. Gebruik decimale scores 0-10.
 
-            BESLISREGELS:
-            1. Vergelijk het productprofiel expliciet met elk bedrijfsprofiel op technische fit, sectorfit, business need en datakwaliteit.
-            2. Hoge scores vereisen concrete overlap in evidence_snippets, required_skills_or_technologies, machines_or_tools, roles, vacancy_titles of business_triggers.
-            3. Locatie mag nooit productrelevantie creeren. Locatie is hoogstens een extra contextfactor.
-            4. Penaliseer lage evidence_quality en ontbrekende data_completeness. Gok ontbrekende capabilities niet bij.
-            5. Als product specifieke termen noemt (bv. Siemens S7-1500, Profinet, SCADA, machine vision, field service), moeten die of directe synoniemen in de bedrijfsdata terugkomen voor een sterke match.
-            6. Algemene woorden zoals "industrie", "onderhoud", "productie" of "techniek" zijn op zichzelf onvoldoende.
-            7. Geef bij voorkeur een volledige top 10 terug. Als er minder dan 10 sterke matches zijn,
-               vul aan met zwakkere kandidaten met lage score en duidelijke onzekerheid.
-               Laat alleen bedrijven weg die echt 0 productrelevantie hebben.
-            8. Geen dubbele bedrijven. Gebruik uitsluitend verstrekte data.
+SCORES:
+9-10 directe expliciete technologie/sector-overlap; 7-8 duidelijke fit; 5-6 beperkte concrete fit; 3-4 zwak/indirect; 0-2 niet teruggeven.
+Geef score_dimensions voor technical_fit, industry_fit, business_need, evidence_strength, data_confidence.
+Gebruik deterministic_score alleen als extra signaal/tiebreaker, niet blind.
 
-            SCORE-RUBRIEK VOOR final score:
-            - 9-10: directe, sterke, expliciete product/technologie/sector-overlap + goede evidence quality
-            - 7-8: duidelijke fit met meerdere concrete signalen, maar niet perfect
-            - 5-6: plausibele beperkte fit met minstens een concreet signaal
-            - 3-4: zwakke/indirecte fit of lage dataconfidence
-            - 0-2: geen zinvolle fit -> niet teruggeven
+PRODUCTPROFIEL:{json.dumps(product_profile, ensure_ascii=False, separators=(',', ':'))}
+BEDRIJFSPROFIELEN:{json.dumps(llm_candidates, ensure_ascii=False, separators=(',', ':'))}
 
-            SCORE-DIMENSIES:
-            Geef aparte scores van 0-10 voor:
-            - technical_fit: technologie, machines, rollen, vaardigheden
-            - industry_fit: sector/use-case/context
-            - business_need: trigger, vacaturedruk, pijnpunt of operationele behoefte
-            - evidence_strength: hoe concreet en controleerbaar de snippets zijn
-            - data_confidence: volledigheid/betrouwbaarheid van het bedrijfsprofiel
-            De eindscore moet consistent zijn met deze dimensies en lager zijn bij lage evidence_strength of data_confidence.
-            Gebruik decimale scores (bv. 6.8, 5.4, 3.2), geen platte 1/2/3-scores voor alle kandidaten.
-            Kandidaten met zwakker bewijs moeten duidelijk lagere scores krijgen zodat er geen score-ties ontstaan.
+ANTWOORD UITSLUITEND GELDIGE JSON: een lijst van maximaal 10 objecten met deze velden:
+id, bedrijf_id, bedrijfsnaam, beschrijving, waarom, evidence, score_dimensions,
+deterministic_score, deterministic_reasons, score, contactgegevens, techstack, locatie, sector.
+Geen markdown, geen tekst buiten JSON. Professioneel Nederlands.
+""".strip()
 
-            PRODUCTPROFIEL: {json.dumps(product_profile, ensure_ascii=False, separators=(',', ':'))}
-            BEDRIJFSPROFIELEN: {json.dumps(bedrijven_data, ensure_ascii=False, separators=(',', ':'))}
 
-            LET OP OVER deterministic_score:
-            - deterministic_score is een evidence-based pre-ranking van 0-10.
-            - Gebruik die score als extra signaal, maar corrigeer hem als jouw inhoudelijke analyse dat vraagt.
-            - Bij gelijke LLM-inschatting moet het bedrijf met hogere deterministic_score hoger staan.
-
-            ANTWOORD UITSLUITEND IN GELDIGE JSON, ALS EEN LIJST VAN MAXIMAAL 10 OBJECTEN
-            EN MIK OP 10 OBJECTEN ALS ER GENOEG BEDRIJFSPROFIELEN ZIJN:
-            [
-                {{
-                    "id": number,
-                    "bedrijf_id": number,
-                    "bedrijfsnaam": string,
-                    "beschrijving": string,
-                    "waarom": string,
-                    "evidence": string[],
-                    "score_dimensions": {{
-                        "technical_fit": number,
-                        "industry_fit": number,
-                        "business_need": number,
-                        "evidence_strength": number,
-                        "data_confidence": number
-                    }},
-                    "deterministic_score": number,
-                    "deterministic_reasons": string[],
-                    "score": number,
-                    "contactgegevens": string,
-                    "techstack": string[],
-                    "locatie": string,
-                    "sector": string
-                }}
-            ]
-
-            EXTRA REGELS:
-            - Sorteer aflopend op echte matchkwaliteit.
-            - `waarom` moet kort, concreet en evidence-based zijn.
-            - `evidence` bevat alleen korte snippets uit het bedrijfsprofiel.
-            - `techstack` bevat alleen technologieen die in het bedrijfsprofiel staan.
-            - Geen tekst voor of na de JSON. Geen Markdown code blocks.
-            - Professioneel Nederlands.
-            """
-    
-    content = ""
-    last_error: Exception | None = None
-    model_candidates = [PROSPECT_RANKING_MODEL, *PROSPECT_RANKING_FALLBACK_MODELS]
+async def _call_prospect_llm(prompt: str, model_candidates: list[str]) -> str | None:
+    """Call Groq with fallback models. Return content or None on size/rate limit."""
     for model_name in model_candidates:
         try:
             print(f"[Groq] Prospect ranking model: {model_name}")
@@ -585,25 +621,78 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
                 messages=[{"role": "user", "content": prompt}],
                 model=model_name,
                 temperature=0,
-                max_tokens=2600,
+                max_tokens=PROSPECT_MAX_OUTPUT_TOKENS,
             )
-            content = chat_completion.choices[0].message.content or ""
-            break
+            return chat_completion.choices[0].message.content or ""
         except Exception as e:
-            last_error = e
             print(f"[Groq] LLM call mislukt met model {model_name}: {e}")
-    else:
-        return {"error": str(last_error), "raw": "", "models_tried": model_candidates}
+            if _is_size_or_rate_limit_error(e):
+                print("[Groq] Size/rate limit geraakt; geen fallback retry met dezelfde payload.")
+                return None
+    return None
 
-    try:
-        match = re.search(r"(\[.*\]|\{.*\})", content, re.DOTALL)
-        if match:
-            parsed = json.loads(match.group(0))
-            return _normalize_ranked_results(parsed, deterministic_by_id, fill_to=10)
-        else:
-            raise ValueError("Geen JSON gevonden")
-    except Exception as e:
-        return {"error": str(e), "raw": content}
+
+def _parse_prospect_json(content: str):
+    match = re.search(r"(\[.*\]|\{.*\})", content or "", re.DOTALL)
+    if not match:
+        raise ValueError("Geen JSON gevonden")
+    return json.loads(match.group(0))
+
+
+async def genereer_prospectie_rapport(product, bedrijven_data):
+    """Genereer ranked company matches via Groq with structured evidence and score dimensions."""
+    product_profile = _extract_product_profile(product)
+    bedrijven_data = _compact_bedrijven_data(bedrijven_data, product_profile)
+    deterministic_by_id = {str(b.get("id")): b for b in bedrijven_data if b.get("id") is not None}
+
+    if not bedrijven_data:
+        return []
+
+    model_candidates = [PROSPECT_RANKING_MODEL, *PROSPECT_RANKING_FALLBACK_MODELS]
+    batch_size = max(1, PROSPECT_LLM_BATCH_SIZE)
+    llm_rows: list[dict] = []
+    seen_ids: set[str] = set()
+
+    # Use up to 50 compact candidates for recall, but rank them in small batches
+    # so each Groq request stays within the on-demand token limits.
+    for batch_index, start in enumerate(range(0, len(bedrijven_data), batch_size), start=1):
+        prompt_candidates = bedrijven_data[start:start + batch_size]
+        prompt = _build_prospect_prompt(product_profile, prompt_candidates)
+        while len(prompt) > PROSPECT_LLM_PROMPT_CHAR_LIMIT and len(prompt_candidates) > 3:
+            prompt_candidates = prompt_candidates[:-1]
+            prompt = _build_prospect_prompt(product_profile, prompt_candidates)
+
+        print(
+            "[Groq] Prospect ranking payload: "
+            f"batch={batch_index}, candidates={len(prompt_candidates)}, chars={len(prompt)}, "
+            f"max_tokens={PROSPECT_MAX_OUTPUT_TOKENS}"
+        )
+
+        content = await _call_prospect_llm(prompt, model_candidates)
+        if content is None:
+            continue
+
+        try:
+            parsed = _parse_prospect_json(content)
+            batch_meta = {str(b.get("id")): b for b in prompt_candidates if b.get("id") is not None}
+            normalized = _normalize_ranked_results(parsed, batch_meta, fill_to=min(10, len(prompt_candidates)))
+            if isinstance(normalized, list):
+                for row in normalized:
+                    raw_id = row.get("id") or row.get("bedrijf_id")
+                    if raw_id is None or str(raw_id) in seen_ids:
+                        continue
+                    seen_ids.add(str(raw_id))
+                    llm_rows.append(row)
+        except Exception as e:
+            print(f"[Groq] JSON parsing/normalisatie mislukt voor batch {batch_index}: {e}")
+
+    if llm_rows:
+        # Merge all batch winners into one global top-10, then fill any gaps with
+        # deterministic candidates from the full top-50 compact set.
+        return _normalize_ranked_results(llm_rows, deterministic_by_id, fill_to=10)
+
+    print("[Groq] Geen bruikbare LLM-batches; gebruik deterministic fallback over alle kandidaten.")
+    return _deterministic_report_from_candidates(bedrijven_data, fill_to=10)
 
 
 async def haal_vacatures():

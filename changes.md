@@ -485,3 +485,111 @@ Expected impact:
 - Safer deployment because the previous model remains available as fallback.
 - Eval should be rerun after deployment, preferably with delay/backoff to avoid rate limits.
 
+## 2026-05-19 20:37 ? Post-backend-update eval/model check blocked
+
+Requested check:
+
+- Run deployed eval after backend update.
+- Check whether the GPT model (`openai/gpt-oss-120b`) is being used.
+
+Probe command:
+
+```python
+POST https://infosearch.duckdns.org/companies/prospect
+```
+
+Result:
+
+- Request returned HTTP 403 before reaching the backend API.
+- Response was `Fortinet Secure DNS Service Portal` / `Web Page Blocked`.
+- Because the request is blocked at the network/content-filter level, the eval was not run.
+
+Model visibility note:
+
+- The public `/companies/prospect` response does not currently guarantee model metadata.
+- The code logs the selected model server-side with:
+  - `[Groq] Prospect ranking model: openai/gpt-oss-120b`
+  - or fallback model if primary fails.
+- Definitive confirmation requires backend logs, or exposing a debug/model field in the API response temporarily.
+
+## 2026-05-19 20:42 ? Deployed eval after network switch and GPT model update
+
+Pre-eval probe:
+
+```python
+POST https://infosearch.duckdns.org/companies/prospect
+```
+
+Probe result for Siemens predictive-maintenance query:
+
+- HTTP 200
+- `ai_powered`: false
+- `results`: []
+- `run_report.input_count`: 41
+- `run_report.low_quality_results_rejected`: 41
+- No model/Groq metadata exposed in the response.
+
+Eval command:
+
+```powershell
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+$env:EVAL_SSL_VERIFY="false"
+python evals\eval_ranking.py
+```
+
+Summary:
+
+- `nDCG@5`: 0.0419
+- `nDCG@10`: 0.0394
+- `precision@3`: 0.0222
+- `precision@5`: 0.0133
+- `recall@5`: 0.0222
+- `recall@10`: 0.0222
+- `MRR@10`: 0.0667
+- `pairwise_order_accuracy`: null
+- `returned_count`: 0.1333
+- `labeled_coverage@10`: 0.1333
+- `flat_score_warning`: 1.0
+
+Finding:
+
+- Eval reached the backend and completed, but the live endpoint returned almost no predictions.
+- This does not look like a model-quality result; it looks like the deployed endpoint is not using the AI ranking path for most cases, or is rejecting nearly all candidates before AI ranking.
+- The response did not expose whether `openai/gpt-oss-120b` was used.
+- To confirm GPT model usage, check backend logs for `[Groq] Prospect ranking model: openai/gpt-oss-120b`.
+- Also inspect why responses show `ai_powered: false` and `low_quality_results_rejected` equals the full input count for some queries.
+
+## 2026-05-20 14:12 ? Deployed eval rerun
+
+Command:
+
+```powershell
+$env:EVAL_API_URL="https://infosearch.duckdns.org"
+$env:EVAL_SSL_VERIFY="false"
+python evals\eval_ranking.py
+```
+
+Summary:
+
+- `nDCG@5`: 0.0419
+- `nDCG@10`: 0.0394
+- `precision@3`: 0.0222
+- `precision@5`: 0.0133
+- `recall@5`: 0.0222
+- `recall@10`: 0.0222
+- `MRR@10`: 0.0667
+- `pairwise_order_accuracy`: null
+- `returned_count`: 0.1333
+- `labeled_coverage@10`: 0.1333
+- `score_spread@k`: 0.0
+- `unique_scores@k`: 0.1333
+- `top_score_tie_count@k`: 0.1333
+- `flat_score_warning`: 1.0
+
+Finding:
+
+- Eval completed without network/HTTP failure.
+- Results are still collapsed: the deployed endpoint returns almost no predictions.
+- This matches the previous failed-quality run and suggests the live backend is still not using the intended AI ranking/fallback path, or is rejecting almost all candidates before ranking.
+- Recommended next check: inspect `/companies/prospect` backend logs for `ai_powered: false`, candidate rejection counts, Groq model selection, and any swallowed model/fallback errors.
+

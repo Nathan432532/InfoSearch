@@ -270,9 +270,9 @@ export default function CompanyResultPage() {
         waarom: (r.waarom as string) || '',
         score: (r.score as number) || 0,
         contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
-        techstack: (r.techstack as string[]) || [],
-        machinepark: (r.machinepark as string[]) || undefined,
-        businessTrigger: (r.businessTrigger as string) || undefined,
+        techstack: ((r.techstack || r.tech_stack || r.technologies) as string[]) || [],
+        machinepark: ((r.machinepark || r.machine_park) as string[]) || undefined,
+        businessTrigger: (r.businessTrigger || r.business_trigger) as string || undefined,
         saved_result_id: (r.saved_result_id as number) || undefined,
         saved_search_id: (r.saved_search_id as number) || undefined,
         matchKwaliteit:
@@ -331,9 +331,9 @@ export default function CompanyResultPage() {
           waarom: (r.waarom as string) || '',
           score: (r.score as number) || 0,
           contactgegevens: (r.contactgegevens as string) || 'Niet beschikbaar',
-          techstack: (r.techstack as string[]) || [],
-          machinepark: (r.machinepark as string[]) || undefined,
-          businessTrigger: (r.businessTrigger as string) || undefined,
+          techstack: ((r.techstack || r.tech_stack || r.technologies) as string[]) || [],
+          machinepark: ((r.machinepark || r.machine_park) as string[]) || undefined,
+          businessTrigger: (r.businessTrigger || r.business_trigger) as string || undefined,
           matchKwaliteit:
             (r.score as number) >= 8 ? 'Sterke match'
               : (r.score as number) >= 5 ? 'Goede match'
