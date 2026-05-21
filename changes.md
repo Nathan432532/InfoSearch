@@ -1782,4 +1782,60 @@ Deployment note:
 
 - Rebuild/restart `ai-api-test` after copying these env/code changes to the VM.
 - Logs should show `[Mistral] Prospect ranking model: mistral-medium-2508`.
+---
+
+## 2026-05-21 Mistral integration fix: ignore Groq model ids
+
+Problem observed:
+
+- The AI API was configured with `PROSPECT_RANKING_PROVIDER=mistral`, but the VM still had Groq model ids in the model/fallback env values.
+- Logs showed Mistral receiving invalid models such as `qwen/qwen3-32b`, `llama-3.1-8b-instant`, and `llama-3.3-70b-versatile`.
+- Mistral correctly rejected those with HTTP 400 `invalid_model`, causing every batch to fall back deterministically.
+
+Implemented changes:
+
+- Added `MISTRAL_DEFAULT_RANKING_MODEL`, defaulting to `mistral-medium-2508`.
+- When `PROSPECT_RANKING_PROVIDER=mistral`, the engine now filters model candidates to Mistral-family model ids only.
+- If no compatible Mistral model is configured, the engine logs this and uses `mistral-medium-2508` automatically.
+- When `PROSPECT_RANKING_PROVIDER=groq`, Mistral model ids are ignored for Groq calls.
+
+Required VM env:
+
+```env
+PROSPECT_RANKING_PROVIDER=mistral
+PROSPECT_RANKING_MODEL=mistral-medium-2508
+PROSPECT_RANKING_FALLBACK_MODELS=
+MISTRAL_DEFAULT_RANKING_MODEL=mistral-medium-2508
+```
+
+Verification:
+
+- `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py` passed.
+---
+
+## 2026-05-21 Mistral timeout follow-up
+
+Problem observed:
+
+- After switching to Mistral, backend logs showed `AI service unreachable (timed out), using deterministic fallback...`.
+- The AI service was reachable, but Mistral ranking runs multiple sequential batches. The backend's fixed 120-second wait could expire before the AI API finished.
+- When that happened, the backend returned deterministic fallback results, which can be empty for niche product queries.
+
+Implemented changes:
+
+- Added `AI_SERVICE_TIMEOUT_SECONDS` to `backend_project/backend/app/routers/vdab.py`, defaulting to `360` seconds.
+- The backend `/companies/prospect` call to `/generate-prospect` now uses this configurable timeout instead of hard-coded `120.0`.
+- Reduced local low-latency Mistral settings for manual testing:
+  - `PROSPECT_LLM_CANDIDATE_LIMIT=15`
+  - `PROSPECT_LLM_BATCH_SIZE=5`
+  - `PROSPECT_MAX_OUTPUT_TOKENS=600`
+
+Verification:
+
+- `python -m py_compile backend_project/backend/app/routers/vdab.py AI_project_ai/engine.py AI_project_ai/api.py` passed.
+
+Deployment note:
+
+- Rebuild/restart both backend and AI API after applying this change.
+- Add `AI_SERVICE_TIMEOUT_SECONDS=360` to the backend env on the VM if you want an explicit value.
 

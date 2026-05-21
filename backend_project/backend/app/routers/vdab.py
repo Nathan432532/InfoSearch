@@ -17,6 +17,7 @@ from app.services.vdab_service import get_vacature_detail, get_vacatures
 router = APIRouter(tags=["vacancies"])
 
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "").rstrip("/")
+AI_SERVICE_TIMEOUT_SECONDS = float(os.getenv("AI_SERVICE_TIMEOUT_SECONDS", "360"))
 
 
 class SearchRequest(BaseModel):
@@ -1104,7 +1105,7 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
         # unfiltered AI results.
         if AI_SERVICE_URL and not has_active_filters:
             try:
-                with httpx.Client(timeout=120.0) as client:
+                with httpx.Client(timeout=AI_SERVICE_TIMEOUT_SECONDS) as client:
                     res = client.post(
                         f"{AI_SERVICE_URL}/generate-prospect",
                         params={"product": product},

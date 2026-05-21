@@ -9,9 +9,10 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY") or ""
 MISTRAL_API_URL = os.getenv("MISTRAL_API_URL", "https://api.mistral.ai/v1/chat/completions").rstrip("/")
+MISTRAL_DEFAULT_RANKING_MODEL = os.getenv("MISTRAL_DEFAULT_RANKING_MODEL", "mistral-medium-2508")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
 PROSPECT_RANKING_PROVIDER = os.getenv("PROSPECT_RANKING_PROVIDER", "groq").strip().lower()
-PROSPECT_RANKING_MODEL = os.getenv("PROSPECT_RANKING_MODEL", "openai/gpt-oss-120b")
+PROSPECT_RANKING_MODEL = os.getenv("PROSPECT_RANKING_MODEL", MISTRAL_DEFAULT_RANKING_MODEL if PROSPECT_RANKING_PROVIDER == "mistral" else "openai/gpt-oss-120b")
 PROSPECT_RANKING_FALLBACK_MODELS = [
     name.strip()
     for name in os.getenv("PROSPECT_RANKING_FALLBACK_MODELS", "llama-3.3-70b-versatile").split(",")
@@ -657,17 +658,44 @@ async def _call_mistral_prospect_llm(prompt: str, model_name: str) -> str:
     return (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "")
 
 
+def _is_mistral_model(model_name: str) -> bool:
+    lower = (model_name or "").lower()
+    return lower.startswith(("mistral", "ministral", "magistral", "codestral", "pixtral", "devstral"))
+
+
 def _ranking_provider_for_model(model_name: str) -> str:
     if PROSPECT_RANKING_PROVIDER in {"mistral", "groq"}:
         return PROSPECT_RANKING_PROVIDER
-    if model_name.lower().startswith("mistral"):
+    if _is_mistral_model(model_name):
         return "mistral"
     return "groq"
 
 
+def _compatible_ranking_models(model_candidates: list[str]) -> list[str]:
+    """Avoid sending Groq model IDs to Mistral or Mistral IDs to Groq.
+
+    The VM can keep old env values after provider switches. If the provider is
+    Mistral and the env still says qwen/llama, use the known Mistral default
+    instead of burning requests on invalid_model errors.
+    """
+    unique = [model for model in dict.fromkeys(model_candidates) if model]
+    if PROSPECT_RANKING_PROVIDER == "mistral":
+        compatible = [model for model in unique if _is_mistral_model(model)]
+        if not compatible:
+            print(
+                "[Mistral] Geen compatibel Mistral model in env; "
+                f"gebruik default {MISTRAL_DEFAULT_RANKING_MODEL}."
+            )
+            compatible = [MISTRAL_DEFAULT_RANKING_MODEL]
+        return compatible
+    if PROSPECT_RANKING_PROVIDER == "groq":
+        return [model for model in unique if not _is_mistral_model(model)] or ["openai/gpt-oss-120b"]
+    return unique
+
+
 async def _call_prospect_llm(prompt: str, model_candidates: list[str]) -> str | None:
     """Call the configured ranking provider with fallback models."""
-    for model_name in model_candidates:
+    for model_name in _compatible_ranking_models(model_candidates):
         provider = _ranking_provider_for_model(model_name)
         try:
             print(f"[{provider.title()}] Prospect ranking model: {model_name}")
