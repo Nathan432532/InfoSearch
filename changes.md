@@ -1749,4 +1749,37 @@ Verification:
 Deployment note:
 
 - The live backend still needs to be rebuilt/restarted for this patch and the enriched `/companies/search` profile fields to take effect.
+---
+
+## 2026-05-21 eval follow-up: Mistral ranking provider support
+
+Requested change:
+
+- Allow the prospect-ranking engine to call Mistral directly instead of only Groq.
+- Use `mistral-medium-2508` with the Mistral API key from `.env`.
+
+Implemented changes:
+
+- Updated `AI_project_ai/engine.py` with provider-aware ranking calls:
+  - `PROSPECT_RANKING_PROVIDER=mistral` uses the Mistral chat completions endpoint.
+  - `PROSPECT_RANKING_PROVIDER=groq` keeps the existing Groq path.
+- Added Mistral env support:
+  - `MISTRAL_API_KEY`
+  - `MISTRAL_API_URL` with default `https://api.mistral.ai/v1/chat/completions`
+- Preserved the same prompt, batching, JSON parsing, and deterministic fallback logic.
+- Updated local `.env` ranking settings to use:
+  - `PROSPECT_RANKING_PROVIDER=mistral`
+  - `PROSPECT_RANKING_MODEL=mistral-medium-2508`
+  - `PROSPECT_LLM_CANDIDATE_LIMIT=30`
+  - `PROSPECT_LLM_BATCH_SIZE=5`
+  - `PROSPECT_MAX_OUTPUT_TOKENS=700`
+
+Verification:
+
+- `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py backend_project/backend/app/routers/vdab.py` passed.
+
+Deployment note:
+
+- Rebuild/restart `ai-api-test` after copying these env/code changes to the VM.
+- Logs should show `[Mistral] Prospect ranking model: mistral-medium-2508`.
 

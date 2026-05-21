@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-05-20T12:12:48.336597+00:00",
+  "generated_at": "2026-05-21T13:01:07.936989+00:00",
   "api_url": "https://infosearch.duckdns.org",
   "endpoint": "/companies/prospect",
   "gold_path": "C:\\Users\\nterh\\OneDrive\\Bureaublad\\ai_project\\AI_project\\AI_project_ai\\evals\\prospect_ranking_live_gold.jsonl",
   "summary": {
     "cases": 15,
     "metrics": {
-      "ndcg@5": 0.0419,
-      "ndcg@10": 0.0394,
-      "precision@3": 0.0222,
-      "precision@5": 0.0133,
-      "recall@5": 0.0222,
-      "recall@10": 0.0222,
-      "mrr@10": 0.0667,
-      "pairwise_order_accuracy": null,
-      "returned_count": 0.1333,
-      "labeled_coverage@10": 0.1333,
-      "score_spread@k": 0.0,
-      "unique_scores@k": 0.1333,
-      "top_score_tie_count@k": 0.1333,
-      "flat_score_warning": 1.0
+      "ndcg@5": 0.4937,
+      "ndcg@10": 0.4937,
+      "precision@3": 0.2667,
+      "precision@5": 0.2133,
+      "recall@5": 0.3756,
+      "recall@10": 0.3889,
+      "mrr@10": 0.5333,
+      "pairwise_order_accuracy": 0.7104,
+      "returned_count": 5.8667,
+      "labeled_coverage@10": 0.5156,
+      "score_spread@k": 1.0413,
+      "unique_scores@k": 5.3333,
+      "top_score_tie_count@k": 0.9333,
+      "flat_score_warning": 0.3333
     }
   },
   "cases": [
@@ -29,30 +29,38 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
+        "ndcg@5": 0.7126,
+        "ndcg@10": 0.7126,
+        "precision@3": 0.3333,
+        "precision@5": 0.2,
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr@10": 1.0,
+        "pairwise_order_accuracy": 1.0,
+        "returned_count": 2,
+        "labeled_coverage@10": 1.0,
+        "score_spread@k": 1.45,
+        "unique_scores@k": 2,
+        "top_score_tie_count@k": 1,
         "flat_score_warning": true
       },
-      "top_predictions": [],
-      "missed_relevant": [
+      "top_predictions": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 3,
-          "reason": "Large heavy manufacturing site with modern industrial installations and maintenance electricians/mecanicians; strong fit for predictive maintenance on production lines."
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 5.77,
+          "gold_label": 3
         },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 4.32,
+          "gold_label": 0
+        }
+      ],
+      "missed_relevant": [
         {
           "bedrijf_id": 37,
           "bedrijfsnaam": null,
@@ -63,7 +71,20 @@
       ],
       "unlabeled_top_predictions": [],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 1,
+          "avg_model_score": 4.32,
+          "min_model_score": 4.32,
+          "max_model_score": 4.32
+        },
+        "3": {
+          "count": 1,
+          "avg_model_score": 5.77,
+          "min_model_score": 5.77,
+          "max_model_score": 5.77
+        }
+      }
     },
     {
       "case_id": "live_002",
@@ -71,41 +92,152 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "ndcg@5": 0.8642,
+        "ndcg@10": 0.8642,
+        "precision@3": 0.3333,
+        "precision@5": 0.4,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr@10": 1.0,
+        "pairwise_order_accuracy": 0.5,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.5,
+        "score_spread@k": 1.85,
+        "unique_scores@k": 10,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
-      "missed_relevant": [
+      "top_predictions": [
         {
           "bedrijf_id": 8,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "CNC/nesting/laser machine operation with accuracy needs; plausible machine-vision quality use, but not packaging lines."
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 3.23,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "expected_bedrijfsnaam": null,
+          "score": 2.9,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 1.47,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 1.45,
+          "gold_label": 0
         },
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Inspection-heavy technical MRO environment; plausible quality inspection need, but not packaging automation."
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.44,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "expected_bedrijfsnaam": null,
+          "score": 1.43,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 1.42,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.4,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 1.39,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
         }
       ],
-      "unlabeled_top_predictions": [],
+      "missed_relevant": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "expected_bedrijfsnaam": null,
+          "score": 1.43,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 1.42,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.4,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 1.39,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 2,
+          "avg_model_score": 2.175,
+          "min_model_score": 1.45,
+          "max_model_score": 2.9
+        },
+        "1": {
+          "count": 1,
+          "avg_model_score": 1.47,
+          "min_model_score": 1.47,
+          "max_model_score": 1.47
+        },
+        "2": {
+          "count": 2,
+          "avg_model_score": 2.335,
+          "min_model_score": 1.44,
+          "max_model_score": 3.23
+        }
+      }
     },
     {
       "case_id": "live_003",
@@ -113,26 +245,83 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
+        "ndcg@5": 0.3904,
+        "ndcg@10": 0.3904,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "pairwise_order_accuracy": 1.0,
+        "returned_count": 4,
+        "labeled_coverage@10": 0.5,
+        "score_spread@k": 2.14,
+        "unique_scores@k": 4,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
+      "top_predictions": [
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 6.43,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 4.98,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 4.31,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 4.29,
+          "gold_label": 0
+        }
+      ],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 4.31,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 4.29,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 1,
+          "avg_model_score": 4.98,
+          "min_model_score": 4.98,
+          "max_model_score": 4.98
+        },
+        "1": {
+          "count": 1,
+          "avg_model_score": 6.43,
+          "min_model_score": 6.43,
+          "max_model_score": 6.43
+        }
+      }
     },
     {
       "case_id": "live_004",
@@ -167,22 +356,58 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
+        "ndcg@5": 0.6062,
+        "ndcg@10": 0.5061,
+        "precision@3": 0.6667,
+        "precision@5": 0.4,
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr@10": 1.0,
         "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "returned_count": 5,
+        "labeled_coverage@10": 0.4,
+        "score_spread@k": 0.06,
+        "unique_scores@k": 5,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
+      "top_predictions": [
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.34,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 4.32,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 13,
+          "bedrijfsnaam": "MAYA SERVICES",
+          "expected_bedrijfsnaam": null,
+          "score": 4.3,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 4.29,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 4.28,
+          "gold_label": 0
+        }
+      ],
       "missed_relevant": [
         {
           "bedrijf_id": 2,
@@ -197,25 +422,40 @@
           "kbo_nummer": null,
           "gold_label": 2,
           "reason": "Specialized rope-access technicians in industrial field work; plausible recruitment/field-ops CRM fit."
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Technical aviation maintenance staffing; plausible recruitment CRM fit, though not field-service industrial engineers."
-        },
-        {
-          "bedrijf_id": 46,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Field technicians and operational scheduling make CRM/workflow automation plausible, though not clearly industrial service engineers."
         }
       ],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 13,
+          "bedrijfsnaam": "MAYA SERVICES",
+          "expected_bedrijfsnaam": null,
+          "score": 4.3,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 4.29,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 4.28,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "2": {
+          "count": 2,
+          "avg_model_score": 4.33,
+          "min_model_score": 4.32,
+          "max_model_score": 4.34
+        }
+      }
     },
     {
       "case_id": "live_006",
@@ -223,41 +463,159 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "ndcg@5": 0.9177,
+        "ndcg@10": 0.9177,
+        "precision@3": 0.3333,
+        "precision@5": 0.4,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr@10": 1.0,
+        "pairwise_order_accuracy": 0.6,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.4,
+        "score_spread@k": 1.54,
+        "unique_scores@k": 10,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
-      "missed_relevant": [
+      "top_predictions": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 3,
-          "reason": "Heavy manufacturing steel plant with electrical/mechanical maintenance; strong fit for energy monitoring on high-power drives."
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 2.92,
+          "gold_label": 3
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 2.89,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "expected_bedrijfsnaam": null,
+          "score": 1.47,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 1.45,
+          "gold_label": 0
         },
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Advanced engine MRO site may use significant industrial equipment; plausible but not clearly heavy manufacturing drives."
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.44,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "expected_bedrijfsnaam": null,
+          "score": 1.43,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 1.42,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.4,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 1.39,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
         }
       ],
-      "unlabeled_top_predictions": [],
+      "missed_relevant": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 2.89,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "expected_bedrijfsnaam": null,
+          "score": 1.43,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 1.42,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 1.4,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 1.39,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 2,
+          "avg_model_score": 1.46,
+          "min_model_score": 1.45,
+          "max_model_score": 1.47
+        },
+        "2": {
+          "count": 1,
+          "avg_model_score": 1.44,
+          "min_model_score": 1.44,
+          "max_model_score": 1.44
+        },
+        "3": {
+          "count": 1,
+          "avg_model_score": 2.92,
+          "min_model_score": 2.92,
+          "max_model_score": 2.92
+        }
+      }
     },
     {
       "case_id": "live_007",
@@ -265,26 +623,125 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
+        "ndcg@5": 0.2346,
+        "ndcg@10": 0.3911,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "pairwise_order_accuracy": 0.25,
+        "returned_count": 9,
+        "labeled_coverage@10": 0.6667,
+        "score_spread@k": 0.13,
+        "unique_scores@k": 9,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
+      "top_predictions": [
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 4.99,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 4,
+          "bedrijfsnaam": "CARTERRE",
+          "expected_bedrijfsnaam": null,
+          "score": 4.98,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 4.97,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 6,
+          "bedrijfsnaam": "INTERVERVOER MERMANS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.96,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 32,
+          "bedrijfsnaam": "KINTRANS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.95,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 34,
+          "bedrijfsnaam": "LV STEFAN MASSONET",
+          "expected_bedrijfsnaam": null,
+          "score": 4.93,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.92,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 23,
+          "bedrijfsnaam": "ZAGREB",
+          "expected_bedrijfsnaam": null,
+          "score": 4.91,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 41,
+          "bedrijfsnaam": "X-tra Cleaning",
+          "expected_bedrijfsnaam": null,
+          "score": 4.86,
+          "gold_label": 0
+        }
+      ],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 34,
+          "bedrijfsnaam": "LV STEFAN MASSONET",
+          "expected_bedrijfsnaam": null,
+          "score": 4.93,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 23,
+          "bedrijfsnaam": "ZAGREB",
+          "expected_bedrijfsnaam": null,
+          "score": 4.91,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 41,
+          "bedrijfsnaam": "X-tra Cleaning",
+          "expected_bedrijfsnaam": null,
+          "score": 4.86,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 4,
+          "avg_model_score": 4.97,
+          "min_model_score": 4.95,
+          "max_model_score": 4.99
+        },
+        "1": {
+          "count": 2,
+          "avg_model_score": 4.945,
+          "min_model_score": 4.92,
+          "max_model_score": 4.97
+        }
+      }
     },
     {
       "case_id": "live_008",
@@ -300,14 +757,29 @@
         "recall@10": 0.0,
         "mrr@10": 0.0,
         "pairwise_order_accuracy": null,
-        "returned_count": 0,
+        "returned_count": 2,
         "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
+        "score_spread@k": 0.01,
+        "unique_scores@k": 2,
+        "top_score_tie_count@k": 1,
         "flat_score_warning": true
       },
-      "top_predictions": [],
+      "top_predictions": [
+        {
+          "bedrijf_id": 6,
+          "bedrijfsnaam": "INTERVERVOER MERMANS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.99,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 32,
+          "bedrijfsnaam": "KINTRANS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.98,
+          "gold_label": 0
+        }
+      ],
       "missed_relevant": [
         {
           "bedrijf_id": 7,
@@ -324,7 +796,22 @@
           "reason": "Explicit warehousing and logistics activities; plausible AGV/fleet orchestration buyer."
         }
       ],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 6,
+          "bedrijfsnaam": "INTERVERVOER MERMANS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.99,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 32,
+          "bedrijfsnaam": "KINTRANS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.98,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
       "calibration": {}
     },
@@ -334,22 +821,93 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
+        "ndcg@5": 0.3031,
+        "ndcg@10": 0.2828,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "pairwise_order_accuracy": 0.8333,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.5,
+        "score_spread@k": 1.53,
+        "unique_scores@k": 10,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
+      "top_predictions": [
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 5.67,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 5.65,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 5.63,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "expected_bedrijfsnaam": null,
+          "score": 4.21,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 20,
+          "bedrijfsnaam": "De gladde plooi",
+          "expected_bedrijfsnaam": null,
+          "score": 4.2,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 4.19,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.17,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 47,
+          "bedrijfsnaam": "Floréal het Veen",
+          "expected_bedrijfsnaam": null,
+          "score": 4.16,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 4.15,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 44,
+          "bedrijfsnaam": "VRD BENELUX",
+          "expected_bedrijfsnaam": null,
+          "score": 4.14,
+          "gold_label": 0
+        }
+      ],
       "missed_relevant": [
         {
           "bedrijf_id": 37,
@@ -359,9 +917,58 @@
           "reason": "Preventive/curative industrial maintenance is directly relevant, but no food/beverage equipment evidence."
         }
       ],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 4.19,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "expected_bedrijfsnaam": null,
+          "score": 4.17,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 47,
+          "bedrijfsnaam": "Floréal het Veen",
+          "expected_bedrijfsnaam": null,
+          "score": 4.16,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 4.15,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 44,
+          "bedrijfsnaam": "VRD BENELUX",
+          "expected_bedrijfsnaam": null,
+          "score": 4.14,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 3,
+          "avg_model_score": 4.6867,
+          "min_model_score": 4.2,
+          "max_model_score": 5.65
+        },
+        "1": {
+          "count": 2,
+          "avg_model_score": 5.65,
+          "min_model_score": 5.63,
+          "max_model_score": 5.67
+        }
+      }
     },
     {
       "case_id": "live_010",
@@ -369,62 +976,140 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
+        "ndcg@5": 0.8539,
+        "ndcg@10": 0.8548,
+        "precision@3": 1.0,
+        "precision@5": 0.8,
+        "recall@5": 0.8,
+        "recall@10": 1.0,
+        "mrr@10": 1.0,
         "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "returned_count": 10,
+        "labeled_coverage@10": 0.5,
+        "score_spread@k": 1.85,
+        "unique_scores@k": 9,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
-      "missed_relevant": [
-        {
-          "bedrijf_id": 2,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Industrial maintenance technician hiring; plausible technical recruitment lead-scoring fit."
-        },
-        {
-          "bedrijf_id": 9,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Specialized industrial rope-access technician hiring; plausible technical staffing fit."
-        },
-        {
-          "bedrijf_id": 10,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Recruits experienced aircraft technicians; plausible technical recruitment lead-scoring fit."
-        },
+      "top_predictions": [
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Recruits technical aviation/MRO profiles; plausible B2B technical recruitment fit."
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 2.91,
+          "gold_label": 2
         },
         {
           "bedrijf_id": 46,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Recruits technical field workers; plausible industrial staffing/technical recruitment CRM fit."
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 2.89,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 2.88,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 2.87,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 2.86,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 5,
+          "bedrijfsnaam": "Tabaknatie",
+          "expected_bedrijfsnaam": null,
+          "score": 2.41,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 13,
+          "bedrijfsnaam": "MAYA SERVICES",
+          "expected_bedrijfsnaam": null,
+          "score": 1.41,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 29,
+          "bedrijfsnaam": "TIJLCARS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 23,
+          "bedrijfsnaam": "ZAGREB",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 2,
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 1.06,
+          "gold_label": 2
         }
       ],
-      "unlabeled_top_predictions": [],
+      "missed_relevant": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 2.87,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 5,
+          "bedrijfsnaam": "Tabaknatie",
+          "expected_bedrijfsnaam": null,
+          "score": 2.41,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 13,
+          "bedrijfsnaam": "MAYA SERVICES",
+          "expected_bedrijfsnaam": null,
+          "score": 1.41,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 29,
+          "bedrijfsnaam": "TIJLCARS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 23,
+          "bedrijfsnaam": "ZAGREB",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "2": {
+          "count": 5,
+          "avg_model_score": 2.52,
+          "min_model_score": 1.06,
+          "max_model_score": 2.91
+        }
+      }
     },
     {
       "case_id": "live_011",
@@ -432,41 +1117,165 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "ndcg@5": 0.95,
+        "ndcg@10": 0.95,
+        "precision@3": 0.3333,
+        "precision@5": 0.4,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr@10": 1.0,
+        "pairwise_order_accuracy": 0.6667,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.4,
+        "score_spread@k": 1.68,
+        "unique_scores@k": 6,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
-      "missed_relevant": [
+      "top_predictions": [
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 3,
-          "reason": "Large industrial production site with electrical/mechanical maintenance; strong retrofit target for legacy PLC environments."
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 2.56,
+          "gold_label": 3
+        },
+        {
+          "bedrijf_id": 46,
+          "bedrijfsnaam": "A.R.C.F.",
+          "expected_bedrijfsnaam": null,
+          "score": 2.41,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "expected_bedrijfsnaam": null,
+          "score": 1.01,
+          "gold_label": 0
         },
         {
           "bedrijf_id": 38,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Advanced industrial MRO site likely uses controlled equipment; plausible retrofit target, but no Siemens/Schneider PLC evidence."
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 0.98,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "expected_bedrijfsnaam": null,
+          "score": 0.91,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
         }
       ],
-      "unlabeled_top_predictions": [],
+      "missed_relevant": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 33,
+          "bedrijfsnaam": "ELKO FRUIT SORTERING",
+          "expected_bedrijfsnaam": null,
+          "score": 0.91,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 1299,
+          "bedrijfsnaam": "salesUp",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 9,
+          "bedrijfsnaam": "SKYWORKERS",
+          "expected_bedrijfsnaam": null,
+          "score": 0.88,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 1,
+          "avg_model_score": 1.01,
+          "min_model_score": 1.01,
+          "max_model_score": 1.01
+        },
+        "1": {
+          "count": 1,
+          "avg_model_score": 2.41,
+          "min_model_score": 2.41,
+          "max_model_score": 2.41
+        },
+        "2": {
+          "count": 1,
+          "avg_model_score": 0.98,
+          "min_model_score": 0.98,
+          "max_model_score": 0.98
+        },
+        "3": {
+          "count": 1,
+          "avg_model_score": 2.56,
+          "min_model_score": 2.56,
+          "max_model_score": 2.56
+        }
+      }
     },
     {
       "case_id": "live_012",
@@ -474,43 +1283,51 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
-        "precision@3": 0.0,
-        "precision@5": 0.0,
-        "recall@5": 0.0,
-        "recall@10": 0.0,
-        "mrr@10": 0.0,
+        "ndcg@5": 0.5575,
+        "ndcg@10": 0.5575,
+        "precision@3": 0.6667,
+        "precision@5": 0.4,
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr@10": 1.0,
         "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "returned_count": 3,
+        "labeled_coverage@10": 0.6667,
+        "score_spread@k": 2.15,
+        "unique_scores@k": 3,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
-      "missed_relevant": [
+      "top_predictions": [
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 6.21,
+          "gold_label": 2
+        },
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 4.61,
+          "gold_label": 0
+        },
         {
           "bedrijf_id": 2,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Industrial maintenance teams and equipment; plausible diagnostics platform, though not field-service focused."
-        },
+          "bedrijfsnaam": "ArcelorMittal Gent",
+          "expected_bedrijfsnaam": null,
+          "score": 4.06,
+          "gold_label": 2
+        }
+      ],
+      "missed_relevant": [
         {
           "bedrijf_id": 10,
           "bedrijfsnaam": null,
           "kbo_nummer": null,
           "gold_label": 2,
           "reason": "Aircraft line/base maintenance teams; plausible remote diagnostics need, though not generic industrial machines."
-        },
-        {
-          "bedrijf_id": 38,
-          "bedrijfsnaam": null,
-          "kbo_nummer": null,
-          "gold_label": 2,
-          "reason": "Aircraft engine MRO is diagnostics-heavy; plausible fit, though not field-service industrial machines."
         },
         {
           "bedrijf_id": 46,
@@ -520,9 +1337,24 @@
           "reason": "Field technicians maintaining/replacing electrical meters; plausible remote diagnostics/workflow use, but not broad industrial machines."
         }
       ],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 8,
+          "bedrijfsnaam": "INTERPOINT",
+          "expected_bedrijfsnaam": null,
+          "score": 4.61,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "2": {
+          "count": 2,
+          "avg_model_score": 5.135,
+          "min_model_score": 4.06,
+          "max_model_score": 6.21
+        }
+      }
     },
     {
       "case_id": "live_013",
@@ -550,7 +1382,7 @@
           "bedrijf_id": 8,
           "bedrijfsnaam": "INTERPOINT",
           "expected_bedrijfsnaam": null,
-          "score": 10.0,
+          "score": 6.46,
           "gold_label": 2
         }
       ],
@@ -575,9 +1407,9 @@
       "calibration": {
         "2": {
           "count": 1,
-          "avg_model_score": 10.0,
-          "min_model_score": 10.0,
-          "max_model_score": 10.0
+          "avg_model_score": 6.46,
+          "min_model_score": 6.46,
+          "max_model_score": 6.46
         }
       }
     },
@@ -587,26 +1419,132 @@
       "top_k": 10,
       "notes": "Live compact labels converted to gold.",
       "metrics": {
-        "ndcg@5": 0.0,
-        "ndcg@10": 0.0,
+        "ndcg@5": 0.3869,
+        "ndcg@10": 0.3869,
         "precision@3": 0.0,
         "precision@5": 0.0,
         "recall@5": 0.0,
         "recall@10": 0.0,
         "mrr@10": 0.0,
-        "pairwise_order_accuracy": null,
-        "returned_count": 0,
-        "labeled_coverage@10": 0.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 0,
-        "top_score_tie_count@k": 0,
-        "flat_score_warning": true
+        "pairwise_order_accuracy": 0.8333,
+        "returned_count": 10,
+        "labeled_coverage@10": 0.7,
+        "score_spread@k": 1.13,
+        "unique_scores@k": 7,
+        "top_score_tie_count@k": 1,
+        "flat_score_warning": false
       },
-      "top_predictions": [],
+      "top_predictions": [
+        {
+          "bedrijf_id": 14,
+          "bedrijfsnaam": "BAEKEN",
+          "expected_bedrijfsnaam": null,
+          "score": 2.51,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
+          "expected_bedrijfsnaam": null,
+          "score": 2.48,
+          "gold_label": 1
+        },
+        {
+          "bedrijf_id": 19,
+          "bedrijfsnaam": "Green Valley Hospitality",
+          "expected_bedrijfsnaam": null,
+          "score": 2.41,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 2.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 20,
+          "bedrijfsnaam": "De gladde plooi",
+          "expected_bedrijfsnaam": null,
+          "score": 1.56,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 30,
+          "bedrijfsnaam": "ASSIST AT HOME",
+          "expected_bedrijfsnaam": null,
+          "score": 1.41,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 21,
+          "bedrijfsnaam": "DEVOOGHT LOGISTICS",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 47,
+          "bedrijfsnaam": "Floréal het Veen",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 44,
+          "bedrijfsnaam": "VRD BENELUX",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        }
+      ],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 10,
+          "bedrijfsnaam": "Sabena Aerospace Engineering",
+          "expected_bedrijfsnaam": null,
+          "score": 2.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 18,
+          "bedrijfsnaam": "Plantsoon",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        },
+        {
+          "bedrijf_id": 44,
+          "bedrijfsnaam": "VRD BENELUX",
+          "expected_bedrijfsnaam": null,
+          "score": 1.38,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
-      "calibration": {}
+      "calibration": {
+        "0": {
+          "count": 6,
+          "avg_model_score": 1.775,
+          "min_model_score": 1.38,
+          "max_model_score": 2.51
+        },
+        "1": {
+          "count": 1,
+          "avg_model_score": 2.48,
+          "min_model_score": 2.48,
+          "max_model_score": 2.48
+        }
+      }
     },
     {
       "case_id": "live_015",
@@ -622,31 +1560,46 @@
         "recall@10": 0.0,
         "mrr@10": 0.0,
         "pairwise_order_accuracy": null,
-        "returned_count": 1,
-        "labeled_coverage@10": 1.0,
-        "score_spread@k": 0.0,
-        "unique_scores@k": 1,
+        "returned_count": 2,
+        "labeled_coverage@10": 0.5,
+        "score_spread@k": 0.1,
+        "unique_scores@k": 2,
         "top_score_tie_count@k": 1,
         "flat_score_warning": true
       },
       "top_predictions": [
         {
-          "bedrijf_id": 5,
-          "bedrijfsnaam": "Tabaknatie",
+          "bedrijf_id": 38,
+          "bedrijfsnaam": "SAFRAN AIRCRAFT ENGINE SERVICES BRUSSELS",
           "expected_bedrijfsnaam": null,
-          "score": 5.0,
+          "score": 4.71,
           "gold_label": 1
+        },
+        {
+          "bedrijf_id": 23,
+          "bedrijfsnaam": "ZAGREB",
+          "expected_bedrijfsnaam": null,
+          "score": 4.61,
+          "gold_label": 0
         }
       ],
       "missed_relevant": [],
-      "unlabeled_top_predictions": [],
+      "unlabeled_top_predictions": [
+        {
+          "bedrijf_id": 23,
+          "bedrijfsnaam": "ZAGREB",
+          "expected_bedrijfsnaam": null,
+          "score": 4.61,
+          "gold_label": 0
+        }
+      ],
       "id_name_mismatches": [],
       "calibration": {
         "1": {
           "count": 1,
-          "avg_model_score": 5.0,
-          "min_model_score": 5.0,
-          "max_model_score": 5.0
+          "avg_model_score": 4.71,
+          "min_model_score": 4.71,
+          "max_model_score": 4.71
         }
       }
     }

@@ -6,8 +6,11 @@ import re
 import os
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
-client = Groq(api_key=GROQ_API_KEY)
+client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY") or ""
+MISTRAL_API_URL = os.getenv("MISTRAL_API_URL", "https://api.mistral.ai/v1/chat/completions").rstrip("/")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
+PROSPECT_RANKING_PROVIDER = os.getenv("PROSPECT_RANKING_PROVIDER", "groq").strip().lower()
 PROSPECT_RANKING_MODEL = os.getenv("PROSPECT_RANKING_MODEL", "openai/gpt-oss-120b")
 PROSPECT_RANKING_FALLBACK_MODELS = [
     name.strip()
@@ -399,7 +402,7 @@ def _spread_tied_scores(rows: list[dict]) -> None:
 
 
 def _is_size_or_rate_limit_error(error: Exception) -> bool:
-    """Groq reports oversized requests as 413/TPM rate-limit errors.
+    """Providers report oversized requests/rate limits with 413/429-style errors.
 
     Retrying the same oversized prompt against fallback models only burns quota, so
     these errors should short-circuit into deterministic fallback instead.
@@ -414,6 +417,9 @@ def _is_size_or_rate_limit_error(error: Exception) -> bool:
             "rate_limit_exceeded",
             "error code: 413",
             "error code: 429",
+            "status_code: 429",
+            "http 429",
+            "rate limit",
         ]
     )
 
@@ -570,7 +576,7 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
 #     return json.loads(clean_json)
 
 def _llm_candidate_view(candidate: dict) -> dict:
-    """Trim candidate fields that are sent to Groq; keep only ranking evidence."""
+    """Trim candidate fields sent to the ranking LLM; keep only ranking evidence."""
     return {
         "id": candidate.get("id"),
         "company_name": candidate.get("company_name", ""),
@@ -615,22 +621,63 @@ Geen markdown, geen tekst buiten JSON. Professioneel Nederlands.
 """.strip()
 
 
+async def _call_groq_prospect_llm(prompt: str, model_name: str) -> str:
+    if client is None:
+        raise RuntimeError("GROQ_API_KEY ontbreekt; kan Groq ranking model niet aanroepen")
+    chat_completion = client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model=model_name,
+        temperature=0,
+        max_tokens=PROSPECT_MAX_OUTPUT_TOKENS,
+    )
+    return chat_completion.choices[0].message.content or ""
+
+
+async def _call_mistral_prospect_llm(prompt: str, model_name: str) -> str:
+    if not MISTRAL_API_KEY:
+        raise RuntimeError("MISTRAL_API_KEY ontbreekt; kan Mistral ranking model niet aanroepen")
+
+    payload = {
+        "model": model_name,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0,
+        "max_tokens": PROSPECT_MAX_OUTPUT_TOKENS,
+    }
+    headers = {
+        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    timeout = httpx.Timeout(120.0, connect=30.0)
+    async with httpx.AsyncClient(timeout=timeout) as http_client:
+        response = await http_client.post(MISTRAL_API_URL, headers=headers, json=payload)
+    if response.status_code >= 400:
+        raise RuntimeError(f"Mistral HTTP {response.status_code}: {response.text[:500]}")
+    data = response.json()
+    return (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "")
+
+
+def _ranking_provider_for_model(model_name: str) -> str:
+    if PROSPECT_RANKING_PROVIDER in {"mistral", "groq"}:
+        return PROSPECT_RANKING_PROVIDER
+    if model_name.lower().startswith("mistral"):
+        return "mistral"
+    return "groq"
+
+
 async def _call_prospect_llm(prompt: str, model_candidates: list[str]) -> str | None:
-    """Call Groq with fallback models. Return content or None on size/rate limit."""
+    """Call the configured ranking provider with fallback models."""
     for model_name in model_candidates:
+        provider = _ranking_provider_for_model(model_name)
         try:
-            print(f"[Groq] Prospect ranking model: {model_name}")
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=model_name,
-                temperature=0,
-                max_tokens=PROSPECT_MAX_OUTPUT_TOKENS,
-            )
-            return chat_completion.choices[0].message.content or ""
+            print(f"[{provider.title()}] Prospect ranking model: {model_name}")
+            if provider == "mistral":
+                return await _call_mistral_prospect_llm(prompt, model_name)
+            return await _call_groq_prospect_llm(prompt, model_name)
         except Exception as e:
-            print(f"[Groq] LLM call mislukt met model {model_name}: {e}")
+            print(f"[{provider.title()}] LLM call mislukt met model {model_name}: {e}")
             if _is_size_or_rate_limit_error(e):
-                print("[Groq] Size/rate limit geraakt; geen fallback retry met dezelfde payload.")
+                print(f"[{provider.title()}] Size/rate limit geraakt; geen fallback retry met dezelfde payload.")
                 return None
     return None
 
@@ -643,7 +690,7 @@ def _parse_prospect_json(content: str):
 
 
 async def genereer_prospectie_rapport(product, bedrijven_data):
-    """Genereer ranked company matches via Groq with structured evidence and score dimensions."""
+    """Genereer ranked company matches via the configured LLM provider."""
     product_profile = _extract_product_profile(product)
     bedrijven_data = _compact_bedrijven_data(bedrijven_data, product_profile)
     deterministic_by_id = {str(b.get("id")): b for b in bedrijven_data if b.get("id") is not None}
@@ -656,8 +703,8 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
     llm_rows: list[dict] = []
     seen_ids: set[str] = set()
 
-    # Use up to 50 compact candidates for recall, but rank them in small batches
-    # so each Groq request stays within the on-demand token limits.
+    # Use compact candidates for recall, but rank them in small batches
+    # so each LLM request stays within provider token/rate limits.
     for batch_index, start in enumerate(range(0, len(bedrijven_data), batch_size), start=1):
         prompt_candidates = bedrijven_data[start:start + batch_size]
         prompt = _build_prospect_prompt(product_profile, prompt_candidates)
@@ -666,7 +713,7 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             prompt = _build_prospect_prompt(product_profile, prompt_candidates)
 
         print(
-            "[Groq] Prospect ranking payload: "
+            f"[{PROSPECT_RANKING_PROVIDER.title()}] Prospect ranking payload: "
             f"batch={batch_index}, candidates={len(prompt_candidates)}, chars={len(prompt)}, "
             f"max_tokens={PROSPECT_MAX_OUTPUT_TOKENS}"
         )
@@ -687,14 +734,14 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
                     seen_ids.add(str(raw_id))
                     llm_rows.append(row)
         except Exception as e:
-            print(f"[Groq] JSON parsing/normalisatie mislukt voor batch {batch_index}: {e}")
+            print(f"[{PROSPECT_RANKING_PROVIDER.title()}] JSON parsing/normalisatie mislukt voor batch {batch_index}: {e}")
 
     if llm_rows:
         # Merge all batch winners into one global top-10, then fill any gaps with
         # deterministic candidates from the full top-50 compact set.
         return _normalize_ranked_results(llm_rows, deterministic_by_id, fill_to=10)
 
-    print("[Groq] Geen bruikbare LLM-batches; gebruik deterministic fallback over alle kandidaten.")
+    print(f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-batches; gebruik deterministic fallback over alle kandidaten.")
     return _deterministic_report_from_candidates(bedrijven_data, fill_to=10)
 
 
