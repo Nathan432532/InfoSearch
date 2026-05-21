@@ -1936,4 +1936,24 @@ Deployment note:
 
 - Rebuild/restart both `backend` and `ai-api-test`.
 - Expected behavior: either real Mistral-ranked results, or an explicit error; no deterministic fallback results.
+---
+
+## 2026-05-21 Mistral top-10 and techstack prompt fix
+
+Problem observed:
+
+- Mistral returned only one company for a query where the UI expects a ranked list.
+- The prompt still allowed/encouraged omitting weak matches (`0-2 niet teruggeven`).
+- Mistral could return an empty `techstack` even when candidate roles/evidence contained useful technical context.
+
+Implemented changes:
+
+- Updated the ranking prompt to require exactly the top 10 companies, or all candidates if fewer than 10 are supplied.
+- Weak matches should now be returned with low score/confidence instead of omitted.
+- Updated the prompt to require non-empty `techstack` using technologies, machines/tools, roles, or evidence snippets.
+- Updated normalization so if the model leaves `techstack` empty, it is filled from the matched candidate's tech fields, machines, roles, keywords, or evidence snippets.
+
+Verification:
+
+- `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py backend_project/backend/app/routers/vdab.py` passed.
 

@@ -508,6 +508,8 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
             or deterministic_meta.get("required_skills_or_technologies"),
             8,
         )
+        if not techstack and deterministic_meta:
+            techstack = _display_tech_stack(deterministic_meta)
         item["techstack"] = techstack
         item["tech_stack"] = techstack
         machinepark = _as_clean_list(item.get("machinepark") or item.get("machine_park") or deterministic_meta.get("machines_or_tools"), 8)
@@ -612,10 +614,13 @@ JE BENT EEN KRITISCHE B2B MATCHING ENGINE.
 Rank de bedrijven op product-market fit voor het PRODUCTPROFIEL.
 Gebruik alleen concrete evidence uit het bedrijfsprofiel; gok ontbrekende capabilities niet bij.
 Locatie mag nooit productrelevantie creëren. Penaliseer lage evidence_quality.
-Geef maximaal 10 bedrijven terug, gesorteerd op matchkwaliteit. Gebruik decimale scores 0-10.
+Geef exact de top 10 bedrijven terug, of alle bedrijven als er minder dan 10 kandidaten zijn.
+Sorteer op matchkwaliteit. Gebruik decimale scores 0-10.
+Ook zwakke matches moeten terugkomen als ze in de top 10 zitten; geef dan lage score en lage confidence.
+Laat `techstack` nooit leeg: gebruik eerst technologies, daarna machines_or_tools, daarna roles/evidence_snippets als contextsignalen.
 
 SCORES:
-9-10 directe expliciete technologie/sector-overlap; 7-8 duidelijke fit; 5-6 beperkte concrete fit; 3-4 zwak/indirect; 0-2 niet teruggeven.
+9-10 directe expliciete technologie/sector-overlap; 7-8 duidelijke fit; 5-6 beperkte concrete fit; 3-4 zwak/indirect; 0-2 zeer zwak maar toch opnemen als top-10 kandidaat.
 Geef score_dimensions voor technical_fit, industry_fit, business_need, evidence_strength, data_confidence.
 Gebruik deterministic_score alleen als extra signaal/tiebreaker, niet blind.
 
