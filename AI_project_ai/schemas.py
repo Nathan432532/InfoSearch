@@ -1,13 +1,12 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class Bedrijfsprofiel(BaseModel):
-    # We dwingen hier af dat velden niet leeg mogen zijn voor die 99% score
-    naam: str = Field(..., min_length=1)
-    sector: str = Field(..., min_length=1)
-    tech_stack: List[str]
-    machine_park: List[str]
-    contactgegevens: str
-    business_trigger: str
-    keywords: List[str]
-    locatie: str
+    naam: Optional[str] = ""
+    sector: Optional[str] = ""
+    tech_stack: List[str] = Field(default_factory=list)
+    machine_park: List[str] = Field(default_factory=list)
+    contactgegevens: Optional[str] = ""
+    business_trigger: Optional[str] = ""
+    keywords: List[str] = Field(default_factory=list)
+    locatie: Optional[str] = ""
