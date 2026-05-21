@@ -29,6 +29,10 @@ services:
       - ./backend_project/backend/.env
     environment:
       MYSQL_HOST: mysql
+      # Inside Docker, talk to the AI service by Compose service name.
+      # Using host.docker.internal here can make /companies/prospect fall back
+      # to deterministic mode and return ai_powered:false during evals.
+      AI_SERVICE_URL: http://ai-api-test:8000
     depends_on:
       mysql:
         condition: service_healthy
@@ -54,8 +58,12 @@ services:
     container_name: ai-api-sim
     env_file:
       - ./AI_project_ai/.env
+    environment:
+      # Inside Docker, talk to the backend by Compose service name.
+      BACKEND_URL: http://backend:8000
     depends_on:
       - ollama-test
+      - backend
     ports:
       - "127.0.0.1:8001:8000" # Alleen intern!
     deploy:

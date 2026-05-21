@@ -496,10 +496,16 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
                 "v.vrije_vereiste LIKE %s OR "
                 "v.beroep LIKE %s OR "
                 "v.gemeente LIKE %s OR "
-                "b.naam LIKE %s"
+                "b.naam LIKE %s OR "
+                "b.sector LIKE %s OR "
+                "b.ai_beschrijving LIKE %s OR "
+                "b.business_trigger LIKE %s OR "
+                "b.tech_stack_json LIKE %s OR "
+                "b.machine_park_json LIKE %s OR "
+                "b.keywords_json LIKE %s"
                 ")"
             )
-            values.extend([like_value] * 6)
+            values.extend([like_value] * 12)
 
         gemeente_filter = (payload.filters or {}).get("gemeente") or (payload.filters or {}).get("locatie")
         if gemeente_filter and isinstance(gemeente_filter, str) and gemeente_filter.strip():
@@ -519,6 +525,12 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
                 b.email         AS bedrijf_email,
                 b.telefoon      AS bedrijf_telefoon,
                 b.website,
+                b.sector        AS bedrijf_sector,
+                b.ai_beschrijving,
+                b.tech_stack_json,
+                b.machine_park_json,
+                b.business_trigger,
+                b.keywords_json,
                 v.interne_referentie,
                 v.titel,
                 v.beroep,
@@ -559,21 +571,37 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
                     "contactgegevens": " - ".join(
                         p for p in [row.get("bedrijf_email") or row.get("sollicitatie_email"), row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon"), row.get("website")] if p
                     ),
+                    "sector": row.get("bedrijf_sector") or row.get("beroep") or "Onbekend",
+                    "ai_beschrijving": row.get("ai_beschrijving") or "",
+                    "business_trigger": row.get("business_trigger") or "",
+                    "tech_stack": _parse_json_list(row.get("tech_stack_json")),
+                    "machine_park": _parse_json_list(row.get("machine_park_json")),
+                    "keywords": _parse_json_list(row.get("keywords_json")),
+                    "vacature_samenvattingen": [],
                     "vacatures": [],
                 }
-            companies[bid]["vacatures"].append(
-                {
-                    "referentie": row["interne_referentie"],
-                    "titel": row["titel"],
-                    "beroep": row.get("beroep"),
-                    "gemeente": row.get("gemeente"),
-                    "contract_type": row.get("contract_type"),
-                    "ervaring": row.get("ervaring"),
-                    "omschrijving": (row.get("omschrijving") or "")[:300],
-                    "vrije_vereiste": (row.get("vrije_vereiste") or "")[:300],
-                    "publicatie_datum": str(row["publicatie_datum"]) if row.get("publicatie_datum") else None,
-                }
-            )
+            vacature = {
+                "referentie": row["interne_referentie"],
+                "titel": row["titel"],
+                "beroep": row.get("beroep"),
+                "gemeente": row.get("gemeente"),
+                "contract_type": row.get("contract_type"),
+                "ervaring": row.get("ervaring"),
+                "omschrijving": (row.get("omschrijving") or "")[:300],
+                "vrije_vereiste": (row.get("vrije_vereiste") or "")[:300],
+                "publicatie_datum": str(row["publicatie_datum"]) if row.get("publicatie_datum") else None,
+            }
+            companies[bid]["vacatures"].append(vacature)
+
+            summary_parts = [
+                row.get("titel"),
+                row.get("beroep"),
+                (row.get("omschrijving") or "")[:220].strip(),
+                (row.get("vrije_vereiste") or "")[:160].strip(),
+            ]
+            summary = " | ".join(str(part).strip() for part in summary_parts if str(part or "").strip())
+            if summary and len(companies[bid]["vacature_samenvattingen"]) < 4:
+                companies[bid]["vacature_samenvattingen"].append(summary)
 
         return {
             "query": payload.query,
