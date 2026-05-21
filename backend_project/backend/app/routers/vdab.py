@@ -1120,11 +1120,20 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
             except Exception as e:
                 print(f"AI service unreachable ({e}), using deterministic fallback...")
 
+        quality_filter_relaxed = False
         if ai_results is None:
             ai_results = heuristic_results
         elif isinstance(ai_results, list):
-            # Keep product-first quality rules even when the AI path is used.
-            ai_results = [item for item in ai_results if float(item.get("score") or 0) >= 4]
+            # Keep product-first quality rules when possible, but never let a
+            # hard score cutoff erase every AI-ranked candidate. Sparse profiles
+            # or niche products can produce useful low-confidence prospects that
+            # should be shown instead of returning an empty result page.
+            quality_results = [item for item in ai_results if float(item.get("score") or 0) >= 4]
+            if quality_results:
+                ai_results = quality_results
+            else:
+                ai_results = ai_results[:10]
+                quality_filter_relaxed = True
 
         results = ai_results if isinstance(ai_results, list) else [ai_results]
         return {
@@ -1139,6 +1148,7 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                 "query_expansion_used": query_expansion_used,
                 "product_first_relevance": True,
                 "location_filter_used_as_constraint_only": bool(locatie_terms or regio_terms),
+                "quality_filter_relaxed": quality_filter_relaxed,
                 "filters_applied": filter_stats,
             },
         }
