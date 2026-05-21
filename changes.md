@@ -1912,4 +1912,28 @@ Implemented changes:
 Verification:
 
 - `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py backend_project/backend/app/routers/vdab.py` passed.
+---
+
+## 2026-05-21 disable deterministic prospect fallback
+
+Problem observed:
+
+- The frontend still showed deterministic fallback explanations even though the user wanted only real Mistral ranking results.
+- The AI service could fail or return unusable output, and the backend would silently fall back to deterministic ranking.
+
+Implemented changes:
+
+- Added `PROSPECT_DISABLE_DETERMINISTIC_FALLBACK=true` in the AI engine path so normalized results no longer append deterministic candidates when Mistral returns fewer than 10 results.
+- If the AI engine gets no usable LLM output and fallback is disabled, it returns an error instead of deterministic prospects.
+- Added `AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK=true` in the backend path by default.
+- If `/generate-prospect` fails, times out, or returns unusable output, `/companies/prospect` now returns HTTP 503 instead of fake deterministic matches.
+
+Verification:
+
+- `python -m py_compile backend_project/backend/app/routers/vdab.py AI_project_ai/engine.py AI_project_ai/api.py` passed.
+
+Deployment note:
+
+- Rebuild/restart both `backend` and `ai-api-test`.
+- Expected behavior: either real Mistral-ranked results, or an explicit error; no deterministic fallback results.
 

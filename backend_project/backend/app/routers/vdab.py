@@ -18,6 +18,7 @@ router = APIRouter(tags=["vacancies"])
 
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "").rstrip("/")
 AI_SERVICE_TIMEOUT_SECONDS = float(os.getenv("AI_SERVICE_TIMEOUT_SECONDS", "360"))
+AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK = os.getenv("AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 
 class SearchRequest(BaseModel):
@@ -1117,12 +1118,22 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                             ai_results = rapport
                             used_ai = True
                     else:
-                        print(f"AI prospect service returned {res.status_code}, using deterministic fallback...")
+                        detail = f"AI prospect service returned {res.status_code}: {res.text[:500]}"
+                        print(detail)
+                        if AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK:
+                            raise HTTPException(status_code=503, detail=detail)
+            except HTTPException:
+                raise
             except Exception as e:
-                print(f"AI service unreachable ({e}), using deterministic fallback...")
+                detail = f"AI service unreachable or timed out: {e}"
+                print(detail)
+                if AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK:
+                    raise HTTPException(status_code=503, detail=detail)
 
         quality_filter_relaxed = False
         if ai_results is None:
+            if AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK and AI_SERVICE_URL and not has_active_filters:
+                raise HTTPException(status_code=503, detail="AI service did not return usable prospect results; deterministic fallback is disabled")
             ai_results = heuristic_results
         elif isinstance(ai_results, list):
             # Keep product-first quality rules when possible, but never let a

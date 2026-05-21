@@ -26,6 +26,7 @@ model = PROSPECT_RANKING_MODEL  # Backwards-compatible alias for older code/impo
 PROSPECT_LLM_CANDIDATE_LIMIT = int(os.getenv("PROSPECT_LLM_CANDIDATE_LIMIT", "50"))
 PROSPECT_LLM_BATCH_SIZE = int(os.getenv("PROSPECT_LLM_BATCH_SIZE", "10"))
 PROSPECT_LLM_CONCURRENCY = max(1, int(os.getenv("PROSPECT_LLM_CONCURRENCY", "1")))
+PROSPECT_DISABLE_DETERMINISTIC_FALLBACK = os.getenv("PROSPECT_DISABLE_DETERMINISTIC_FALLBACK", "true").strip().lower() in {"1", "true", "yes", "on"}
 PROSPECT_MAX_OUTPUT_TOKENS = int(os.getenv("PROSPECT_MAX_OUTPUT_TOKENS", "900"))
 PROSPECT_LLM_PROMPT_CHAR_LIMIT = int(os.getenv("PROSPECT_LLM_PROMPT_CHAR_LIMIT", "24000"))
 
@@ -465,8 +466,12 @@ def _deterministic_report_from_candidates(candidates: list[dict], fill_to: int =
     return rows
 
 
-def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | None = None, fill_to: int = 10):
-    """Normalize LLM output and keep ranking deterministic and schema-compatible."""
+def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | None = None, fill_to: int = 10, fill_missing: bool = True):
+    """Normalize LLM output and keep ranking schema-compatible.
+
+    When fill_missing is false, return only real LLM-ranked rows and do not append
+    deterministic fallback candidates.
+    """
     if not isinstance(result, list):
         return result
     normalized = []
@@ -520,7 +525,7 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
     # If the LLM is overly strict and returns only a few prospects, fill the ranking
     # with deterministic evidence-ranked candidates. Evals and users both benefit from
     # a complete top-10 with calibrated low/medium scores instead of hidden candidates.
-    if deterministic_by_id and len(normalized) < fill_to:
+    if fill_missing and deterministic_by_id and len(normalized) < fill_to:
         for raw_id, candidate in sorted(
             deterministic_by_id.items(),
             key=lambda pair: float(pair[1].get("deterministic_score") or 0),
@@ -769,7 +774,12 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
         try:
             parsed = _parse_prospect_json(content)
             batch_meta = {str(b.get("id")): b for b in prompt_candidates if b.get("id") is not None}
-            normalized = _normalize_ranked_results(parsed, batch_meta, fill_to=min(10, len(prompt_candidates)))
+            normalized = _normalize_ranked_results(
+                parsed,
+                batch_meta,
+                fill_to=min(10, len(prompt_candidates)),
+                fill_missing=not PROSPECT_DISABLE_DETERMINISTIC_FALLBACK,
+            )
             return normalized if isinstance(normalized, list) else []
         except Exception as e:
             print(f"[{PROSPECT_RANKING_PROVIDER.title()}] JSON parsing/normalisatie mislukt voor batch {batch_index}: {e}")
@@ -800,7 +810,17 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
     if llm_rows:
         # Merge all batch winners into one global top-10, then fill any gaps with
         # deterministic candidates from the full top-50 compact set.
-        return _normalize_ranked_results(llm_rows, deterministic_by_id, fill_to=10)
+        return _normalize_ranked_results(
+            llm_rows,
+            deterministic_by_id,
+            fill_to=10,
+            fill_missing=not PROSPECT_DISABLE_DETERMINISTIC_FALLBACK,
+        )
+
+    message = f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-output; deterministic fallback staat uit."
+    print(message)
+    if PROSPECT_DISABLE_DETERMINISTIC_FALLBACK:
+        return {"error": message}
 
     print(f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-batches; gebruik deterministic fallback over alle kandidaten.")
     return _deterministic_report_from_candidates(bedrijven_data, fill_to=10)
