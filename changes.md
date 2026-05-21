@@ -1838,4 +1838,78 @@ Deployment note:
 
 - Rebuild/restart both backend and AI API after applying this change.
 - Add `AI_SERVICE_TIMEOUT_SECONDS=360` to the backend env on the VM if you want an explicit value.
+---
+
+## 2026-05-21 Mistral latency reduction
+
+Problem observed:
+
+- Mistral ranking could take too long for manual product search because batches were executed sequentially.
+- Increasing backend timeout prevented premature fallback, but did not improve user-facing latency.
+
+Implemented changes:
+
+- Added `PROSPECT_LLM_CONCURRENCY` to `AI_project_ai/engine.py`.
+- Ranking batches now run concurrently with an asyncio semaphore instead of strictly one after another.
+- This keeps concurrency bounded while reducing wait time for interactive searches.
+- Updated local fast/manual-search settings:
+  - `PROSPECT_LLM_CANDIDATE_LIMIT=10`
+  - `PROSPECT_LLM_BATCH_SIZE=5`
+  - `PROSPECT_LLM_CONCURRENCY=2`
+  - `PROSPECT_MAX_OUTPUT_TOKENS=500`
+
+Recommended usage:
+
+- Manual/product search: 10 candidates, batch size 5, concurrency 2.
+- Eval/quality comparison: temporarily raise candidate limit to 30 after confirming latency and provider quota are acceptable.
+
+Verification:
+
+- `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py backend_project/backend/app/routers/vdab.py` passed.
+---
+
+## 2026-05-21 Mistral single-batch ranking config
+
+Requested change:
+
+- Use one Mistral request containing 30 companies instead of multiple smaller batches.
+
+Updated settings:
+
+```env
+PROSPECT_LLM_CANDIDATE_LIMIT=30
+PROSPECT_LLM_BATCH_SIZE=30
+PROSPECT_LLM_CONCURRENCY=1
+PROSPECT_MAX_OUTPUT_TOKENS=900
+PROSPECT_LLM_PROMPT_CHAR_LIMIT=30000
+```
+
+Expected behavior:
+
+- The AI service should log one ranking payload with `candidates=30`.
+- This removes multi-batch sequencing overhead, but creates one larger prompt/request.
+
+Verification:
+
+- `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py backend_project/backend/app/routers/vdab.py` passed.
+---
+
+## 2026-05-21 Mistral JSON/fallback explanation fix
+
+Problem observed:
+
+- Result explanations still said `Groq-limieten` while the active provider was Mistral.
+- This happened when the ranking engine fell back to deterministic ranking because no parseable LLM result was produced.
+
+Implemented changes:
+
+- Replaced the provider-specific fallback explanation with a generic AI-ranking fallback message.
+- Changed fallback reason from `groq_size_or_rate_limit` to `llm_unavailable_or_unparseable`.
+- Updated the Mistral request to use JSON mode: `response_format={"type":"json_object"}`.
+- Updated the prompt to ask for `{ "results": [...] }` instead of a bare array.
+- Made JSON parsing accept both bare lists and common object wrappers such as `results`, `rapport`, `companies`, `prospects`, or `matches`.
+
+Verification:
+
+- `python -m py_compile AI_project_ai/engine.py AI_project_ai/api.py backend_project/backend/app/routers/vdab.py` passed.
 

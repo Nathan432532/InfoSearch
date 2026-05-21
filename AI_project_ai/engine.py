@@ -1,5 +1,6 @@
 from groq import Groq
 from validator import valideer_llm_output
+import asyncio
 import json
 import httpx
 import re
@@ -24,6 +25,7 @@ model = PROSPECT_RANKING_MODEL  # Backwards-compatible alias for older code/impo
 # while avoiding the oversized single 120-profile Groq request.
 PROSPECT_LLM_CANDIDATE_LIMIT = int(os.getenv("PROSPECT_LLM_CANDIDATE_LIMIT", "50"))
 PROSPECT_LLM_BATCH_SIZE = int(os.getenv("PROSPECT_LLM_BATCH_SIZE", "10"))
+PROSPECT_LLM_CONCURRENCY = max(1, int(os.getenv("PROSPECT_LLM_CONCURRENCY", "1")))
 PROSPECT_MAX_OUTPUT_TOKENS = int(os.getenv("PROSPECT_MAX_OUTPUT_TOKENS", "900"))
 PROSPECT_LLM_PROMPT_CHAR_LIMIT = int(os.getenv("PROSPECT_LLM_PROMPT_CHAR_LIMIT", "24000"))
 
@@ -439,7 +441,7 @@ def _deterministic_report_from_candidates(candidates: list[dict], fill_to: int =
             "bedrijf_id": candidate.get("id"),
             "bedrijfsnaam": candidate.get("company_name", ""),
             "beschrijving": candidate.get("description", ""),
-            "waarom": "Deterministische ranking gebruikt omdat de LLM-call niet binnen de Groq-limieten paste: "
+            "waarom": "Deterministische ranking gebruikt omdat de AI-ranking geen bruikbare JSON terug gaf of tijdelijk niet beschikbaar was: "
                       + "; ".join(candidate.get("deterministic_reasons", [])[:3]),
             "evidence": candidate.get("evidence_snippets", [])[:3],
             "score_dimensions": {
@@ -456,7 +458,7 @@ def _deterministic_report_from_candidates(candidates: list[dict], fill_to: int =
             "techstack": candidate.get("required_skills_or_technologies", []),
             "locatie": candidate.get("location", ""),
             "sector": candidate.get("sector", ""),
-            "llm_fallback_reason": "groq_size_or_rate_limit",
+            "llm_fallback_reason": "llm_unavailable_or_unparseable",
         })
     _spread_tied_scores(rows)
     rows.sort(key=lambda row: float(row.get("score") or 0), reverse=True)
@@ -615,7 +617,8 @@ Gebruik deterministic_score alleen als extra signaal/tiebreaker, niet blind.
 PRODUCTPROFIEL:{json.dumps(product_profile, ensure_ascii=False, separators=(',', ':'))}
 BEDRIJFSPROFIELEN:{json.dumps(llm_candidates, ensure_ascii=False, separators=(',', ':'))}
 
-ANTWOORD UITSLUITEND GELDIGE JSON: een lijst van maximaal 10 objecten met deze velden:
+ANTWOORD UITSLUITEND GELDIGE JSON: een object met veld "results".
+"results" is een lijst van maximaal 10 objecten met deze velden:
 id, bedrijf_id, bedrijfsnaam, beschrijving, waarom, evidence, score_dimensions,
 deterministic_score, deterministic_reasons, score, contactgegevens, techstack, locatie, sector.
 Geen markdown, geen tekst buiten JSON. Professioneel Nederlands.
@@ -643,6 +646,9 @@ async def _call_mistral_prospect_llm(prompt: str, model_name: str) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0,
         "max_tokens": PROSPECT_MAX_OUTPUT_TOKENS,
+        # Mistral JSON mode may wrap arrays in an object; _parse_prospect_json
+        # accepts both a bare list and common object wrappers like {"results": []}.
+        "response_format": {"type": "json_object"},
     }
     headers = {
         "Authorization": f"Bearer {MISTRAL_API_KEY}",
@@ -714,7 +720,20 @@ def _parse_prospect_json(content: str):
     match = re.search(r"(\[.*\]|\{.*\})", content or "", re.DOTALL)
     if not match:
         raise ValueError("Geen JSON gevonden")
-    return json.loads(match.group(0))
+    parsed = json.loads(match.group(0))
+    if isinstance(parsed, dict):
+        for key in ("results", "rapport", "companies", "prospects", "matches"):
+            value = parsed.get(key)
+            if isinstance(value, list):
+                return value
+        # Some providers wrap the answer one level deeper.
+        data = parsed.get("data")
+        if isinstance(data, dict):
+            for key in ("results", "rapport", "companies", "prospects", "matches"):
+                value = data.get(key)
+                if isinstance(value, list):
+                    return value
+    return parsed
 
 
 async def genereer_prospectie_rapport(product, bedrijven_data):
@@ -731,10 +750,7 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
     llm_rows: list[dict] = []
     seen_ids: set[str] = set()
 
-    # Use compact candidates for recall, but rank them in small batches
-    # so each LLM request stays within provider token/rate limits.
-    for batch_index, start in enumerate(range(0, len(bedrijven_data), batch_size), start=1):
-        prompt_candidates = bedrijven_data[start:start + batch_size]
+    async def rank_batch(batch_index: int, prompt_candidates: list[dict]) -> list[dict]:
         prompt = _build_prospect_prompt(product_profile, prompt_candidates)
         while len(prompt) > PROSPECT_LLM_PROMPT_CHAR_LIMIT and len(prompt_candidates) > 3:
             prompt_candidates = prompt_candidates[:-1]
@@ -748,21 +764,38 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
 
         content = await _call_prospect_llm(prompt, model_candidates)
         if content is None:
-            continue
+            return []
 
         try:
             parsed = _parse_prospect_json(content)
             batch_meta = {str(b.get("id")): b for b in prompt_candidates if b.get("id") is not None}
             normalized = _normalize_ranked_results(parsed, batch_meta, fill_to=min(10, len(prompt_candidates)))
-            if isinstance(normalized, list):
-                for row in normalized:
-                    raw_id = row.get("id") or row.get("bedrijf_id")
-                    if raw_id is None or str(raw_id) in seen_ids:
-                        continue
-                    seen_ids.add(str(raw_id))
-                    llm_rows.append(row)
+            return normalized if isinstance(normalized, list) else []
         except Exception as e:
             print(f"[{PROSPECT_RANKING_PROVIDER.title()}] JSON parsing/normalisatie mislukt voor batch {batch_index}: {e}")
+            return []
+
+    # Use compact candidates for recall, but rank them in batches. A small
+    # concurrency value keeps interactive searches fast without launching an
+    # unbounded number of provider requests.
+    batches = [
+        (batch_index, bedrijven_data[start:start + batch_size])
+        for batch_index, start in enumerate(range(0, len(bedrijven_data), batch_size), start=1)
+    ]
+    semaphore = asyncio.Semaphore(PROSPECT_LLM_CONCURRENCY)
+
+    async def run_limited(batch_index: int, prompt_candidates: list[dict]) -> list[dict]:
+        async with semaphore:
+            return await rank_batch(batch_index, prompt_candidates)
+
+    batch_results = await asyncio.gather(*(run_limited(index, candidates) for index, candidates in batches))
+    for normalized in batch_results:
+        for row in normalized:
+            raw_id = row.get("id") or row.get("bedrijf_id")
+            if raw_id is None or str(raw_id) in seen_ids:
+                continue
+            seen_ids.add(str(raw_id))
+            llm_rows.append(row)
 
     if llm_rows:
         # Merge all batch winners into one global top-10, then fill any gaps with
