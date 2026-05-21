@@ -1726,4 +1726,27 @@ Verification:
 Next step:
 
 - Restart/redeploy backend and AI API with this patch, probe `/companies/search` to confirm enriched fields are present, then rerun the ranking eval.
+---
+
+## 2026-05-21 eval/manual search follow-up: avoid empty AI result pages
+
+Problem observed:
+
+- Manual product search for `automatische aardappel schiller` returned zero companies even though the AI API generated a report.
+- Live probing confirmed `/companies/prospect` returned `ai_powered: true` but `results: []`.
+- The backend was applying a hard post-AI cutoff of `score >= 4`, so niche/low-confidence AI-ranked candidates could all be removed before reaching the frontend.
+
+Implemented change:
+
+- Updated `/companies/prospect` so AI results are filtered by `score >= 4` only when that leaves at least one candidate.
+- If every AI-ranked result is below 4, the backend now returns the top low-confidence AI candidates instead of an empty list.
+- Added `quality_filter_relaxed` to the run report to make this fallback visible.
+
+Verification:
+
+- `python -m py_compile backend_project/backend/app/routers/vdab.py AI_project_ai/engine.py AI_project_ai/api.py` passed.
+
+Deployment note:
+
+- The live backend still needs to be rebuilt/restarted for this patch and the enriched `/companies/search` profile fields to take effect.
 
