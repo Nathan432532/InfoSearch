@@ -49,30 +49,47 @@ REGELS: Geen tekst om de JSON heen. Geen Markdown.
 """
 
 async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: bool = False):
-    import ollama
-    
-    for _ in range(retries + 1):
-        response = ollama.chat(
-            model="qwen2.5:0.5b",
-            messages=[
-                {"role": "system", "content": PROFIEL_EXTRACTOR_PROMPT},
-                {"role": "user", "content": vacature_tekst}
-            ],
-            options={"temperature": 0}
-        )
-        content = response["message"]["content"] or ""
+    if not MISTRAL_API_KEY:
+        print("MISTRAL_API_KEY ontbreekt, fallback naar geen profiel")
+        return None
 
-        if raw_mode:
-            return content # Stuur de rauwe string terug voor de benchmark
-        
-        # Gebruik het externe validatie script
-        profiel, error = valideer_llm_output(content)
-        
-        if profiel:
-            return profiel
-        print(f"Validatie mislukt: {error}. Opnieuw proberen...")
-        
-    return None # Of een fallback profiel
+    payload = {
+        "model": "mistral-small-latest",
+        "messages": [
+            {"role": "system", "content": PROFIEL_EXTRACTOR_PROMPT},
+            {"role": "user", "content": vacature_tekst}
+        ],
+        "temperature": 0,
+        "response_format": {"type": "json_object"},
+    }
+    headers = {
+        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    timeout = httpx.Timeout(120.0, connect=30.0)
+    
+    for attempt in range(retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as http_client:
+                response = await http_client.post(MISTRAL_API_URL, headers=headers, json=payload)
+            if response.status_code >= 400:
+                print(f"Mistral HTTP {response.status_code}: {response.text[:500]}")
+                continue
+            data = response.json()
+            content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "")
+
+            if raw_mode:
+                return content
+            
+            profiel, error = valideer_llm_output(content)
+            if profiel:
+                return profiel
+            print(f"Validatie mislukt (poging {attempt + 1}): {error}. Opnieuw proberen...")
+        except Exception as e:
+            print(f"Mistral API call mislukt (poging {attempt + 1}): {e}")
+            
+    return None
 
 # ... (Houd je PROFIEL_EXTRACTOR_PROMPT hetzelfde als in) ...
 
@@ -508,8 +525,6 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
             or deterministic_meta.get("required_skills_or_technologies"),
             8,
         )
-        if not techstack and deterministic_meta:
-            techstack = _display_tech_stack(deterministic_meta)
         item["techstack"] = techstack
         item["tech_stack"] = techstack
         machinepark = _as_clean_list(item.get("machinepark") or item.get("machine_park") or deterministic_meta.get("machines_or_tools"), 8)
@@ -617,10 +632,10 @@ Locatie mag nooit productrelevantie creëren. Penaliseer lage evidence_quality.
 Geef exact de top 10 bedrijven terug, of alle bedrijven als er minder dan 10 kandidaten zijn.
 Sorteer op matchkwaliteit. Gebruik decimale scores 0-10.
 Ook zwakke matches moeten terugkomen als ze in de top 10 zitten; geef dan lage score en lage confidence.
-Laat `techstack` nooit leeg: gebruik eerst technologies, daarna machines_or_tools, daarna roles/evidence_snippets als contextsignalen.
+Vul `techstack` uitsluitend met echte technologieën, software of machines. Gebruik NOOIT functietitels, rollen of algemene vacaturetermen. Laat het veld leeg als er geen expliciete technologieën vermeld zijn.
 
 SCORES:
-9-10 directe expliciete technologie/sector-overlap; 7-8 duidelijke fit; 5-6 beperkte concrete fit; 3-4 zwak/indirect; 0-2 zeer zwak maar toch opnemen als top-10 kandidaat.
+9-10 directe expliciete technologie/sector-overlap; 7-8 duidelijke fit; 5-6 beperkte concrete fit; 3-4 zwak/indirect; 0-2 zeer zwak maar toch opnemen als top-10 kandidaat. Bedrijven die enkel matchen op brede functietitels (zoals 'mecanicien') zonder concrete bewijzen voor het gezochte product/technologie moeten maximaal 0-3 scoren.
 Geef score_dimensions voor technical_fit, industry_fit, business_need, evidence_strength, data_confidence.
 Gebruik deterministic_score alleen als extra signaal/tiebreaker, niet blind.
 

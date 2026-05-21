@@ -992,8 +992,6 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
         beroep = (row.get("beroep") or "").strip()
         if beroep and beroep not in companies[bid]["beroepen"]:
             companies[bid]["beroepen"].append(beroep)
-        if beroep and beroep not in companies[bid]["tech_stack"]:
-            companies[bid]["tech_stack"].append(beroep)
 
         summary_parts = [
             titel,
