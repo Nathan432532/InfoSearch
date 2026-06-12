@@ -30,6 +30,47 @@ For this InfoSearch project, future requested changes should also be documented 
 - any remaining caveats or follow-up work
 
 This keeps the project history understandable even when work happens over multiple assistant sessions.
+---
+
+## Session Changes - June 12, 2026
+
+### What was requested:
+1. **Aggregated Contact Details**: Improve contact information retrieval (emails, phone numbers, website links) by aggregating data across all matching vacancies for a company instead of using only the first row processed, and resolving portal URLs to corporate domains based on the best email address.
+2. **Belgian Phone Number Formatting**: Standardize Belgian phone numbers to standard Belgian spacing rules.
+3. **B2B Engine ID Mapping Fix**: Prevent LLM response parsing hallucinations where company IDs were swapped or mismatched in the JSON results.
+4. **Zero-Match 503 Handling**: Distinguish true LLM/API errors from successful empty-set query matches to prevent zero-match runs from returning HTTP 503.
+5. **Robust Evaluation Script**: Prevent `eval_ranking.py` from crashing on individual case failures, update its default endpoint URL to the public VPS domain `https://infosearch.duckdns.org`, and add a configurable sleep delay (default 20 seconds) to avoid hitting Mistral Small's 50,000 TPM rate limits.
+6. **Detailed Error Propagation**: Propagate detailed status codes and logs (specifically HTTP 429 Too Many Requests and HTTP 413 Request Entity Too Large) from the AI engine and API wrapper to the backend and client.
+
+### Files changed:
+- **`backend_project/backend/app/routers/vdab.py`**:
+  - Aggregated emails, phone numbers, and websites across all vacancy rows for companies in `search_companies` and `_fetch_all_companies_with_vacatures`.
+  - Implemented `_format_belgian_phone_py` to format landline and mobile numbers.
+  - Resolved portal URLs using email domain extraction.
+  - Forwarded HTTP status codes from the AI service wrapper to the client.
+- **`AI_project_ai/engine.py`**:
+  - Implemented name-similarity checks (`_is_name_similar`) in `_normalize_ranked_results` to correct mixed-up company IDs.
+  - Improved `rank_batch` to return detailed error logs and distinguish failures from zero-match results.
+  - Added strict description guidelines in `_build_prospect_prompt` to avoid job vacancy titles.
+- **`AI_project_ai/api.py`**:
+  - Updated `/generate-prospect` exception handler to inspect error details for rate limit and request size indicators, raising HTTP 429 and HTTP 413 appropriately.
+- **`AI_project_ai/evals/eval_ranking.py`**:
+  - Wrapped prediction fetch in a `try-except` block inside case evaluation loop to log failures and skip cases instead of crashing.
+  - Updated default API endpoint to `https://infosearch.duckdns.org`.
+  - Added configurable sleep delay `EVAL_SLEEP_DELAY` (default 20s) between cases.
+
+### Why the changes were needed:
+- Mismatched or missing contact details caused users to see incorrect corporate information.
+- Non-standard phone formatting looked unpolished.
+- LLM ID hallucinations swapped company profiles, leading to incorrect contact routing.
+- Zero-match searches crashed the front-end with 503.
+- Rate-limiting in Mistral Small blocked entire evaluation runs.
+- Lack of HTTP status code propagation made debugging rate limits very hard.
+
+### How the changes were verified:
+- Compiled python modules checking for syntax errors.
+- Ran custom test scripts `test_phone_clean.py` and `test_error_handling.py`.
+- Successfully ran the entire evaluation suite (`eval_ranking.py`) with all 15 cases completing without failures or 429 skips, yielding a final nDCG@5 of 0.4013 and a Pairwise Order Accuracy of 80%.
 
 ---
 
