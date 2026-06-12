@@ -1442,39 +1442,51 @@ def update_vacancies(aantal: int = 500) -> dict[str, Any]:
 @router.get("/companies/unenriched")
 def get_unenriched_companies(limit: int = 50, force: bool = False) -> dict[str, Any]:
     where_clause = "" if force else "WHERE b.ai_enriched_at IS NULL"
-    query = f"""
-        SELECT
-            b.id            AS bedrijf_id,
-            b.naam          AS bedrijfsnaam,
-            b.kbo_nummer,
-            b.adres_gemeente,
-            b.adres_provincie,
-            (
-                SELECT CONCAT_WS(' | ',
-                    COALESCE(v2.titel, ''),
-                    COALESCE(v2.beroep, ''),
-                    COALESCE(LEFT(v2.omschrijving, 2000), ''),
-                    COALESCE(LEFT(v2.vrije_vereiste, 1000), '')
-                )
-                FROM tblVacatures v2
-                WHERE v2.bedrijf_id = b.id
-                ORDER BY v2.publicatie_datum DESC
-                LIMIT 1
-            ) AS vacature_tekst
-        FROM tblBedrijven b
-        {where_clause}
-        ORDER BY b.created_at DESC
-        LIMIT %s
-    """
+    
+    # 1. Fetch companies
     conn = mysql.connector.connect(**_db_config())
     try:
         with conn.cursor(dictionary=True) as cursor:
-            cursor.execute(query, (limit,))
-            rows = cursor.fetchall()
+            cursor.execute(
+                f"""
+                SELECT id, naam AS bedrijfsnaam, kbo_nummer, adres_gemeente, adres_provincie
+                FROM tblBedrijven b
+                {where_clause}
+                ORDER BY b.created_at DESC
+                LIMIT %s
+                """,
+                (limit,)
+            )
+            companies = cursor.fetchall()
+            
+            # 2. For each company, fetch the top 3 latest vacancies and concatenate their text
+            results = []
+            for b in companies:
+                cursor.execute(
+                    """
+                    SELECT titel, beroep, omschrijving, vrije_vereiste
+                    FROM tblVacatures
+                    WHERE bedrijf_id = %s
+                    ORDER BY publicatie_datum DESC
+                    LIMIT 3
+                    """,
+                    (b["id"],)
+                )
+                vacancies = cursor.fetchall()
+                
+                parts = []
+                for v in vacancies:
+                    vac_text = " - ".join(
+                        str(p) for p in [v.get("titel"), v.get("beroep"), (v.get("omschrijving") or "")[:1500], (v.get("vrije_vereiste") or "")[:800]] if p
+                    )
+                    parts.append(vac_text)
+                    
+                b["vacature_tekst"] = "\n\n=== Volgende Vacature ===\n\n".join(parts)[:6000]
+                results.append(b)
     finally:
         conn.close()
-
-    results = [row for row in rows if row.get("vacature_tekst")]
+        
+    results = [row for row in results if row.get("vacature_tekst")]
     return {"companies": results, "count": len(results)}
 
 
@@ -1483,6 +1495,26 @@ def upsert_company_profile(payload: CompanyProfile) -> dict[str, Any]:
     conn = mysql.connector.connect(**_db_config())
     try:
         with conn.cursor() as cursor:
+            # 1. Fetch existing profile items to merge list data (tech stack, machine park, keywords)
+            cursor.execute(
+                "SELECT tech_stack_json, machine_park_json, keywords_json FROM tblBedrijven WHERE id = %s",
+                (payload.bedrijf_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                existing_tech = _parse_json_list(row[0])
+                existing_machine = _parse_json_list(row[1])
+                existing_keywords = _parse_json_list(row[2])
+                
+                # Merge new items into existing lists, avoiding duplicates and maintaining clean values
+                merged_tech = list(dict.fromkeys(existing_tech + (payload.tech_stack or [])))
+                merged_machine = list(dict.fromkeys(existing_machine + (payload.machine_park or [])))
+                merged_keywords = list(dict.fromkeys(existing_keywords + (payload.keywords or [])))
+            else:
+                merged_tech = payload.tech_stack or []
+                merged_machine = payload.machine_park or []
+                merged_keywords = payload.keywords or []
+                
             cursor.execute(
                 """
                 UPDATE tblBedrijven
@@ -1499,10 +1531,10 @@ def upsert_company_profile(payload: CompanyProfile) -> dict[str, Any]:
                 (
                     payload.sector,
                     payload.ai_beschrijving,
-                    json.dumps(payload.tech_stack) if payload.tech_stack else None,
-                    json.dumps(payload.machine_park) if payload.machine_park else None,
+                    json.dumps(merged_tech) if merged_tech else None,
+                    json.dumps(merged_machine) if merged_machine else None,
                     payload.business_trigger,
-                    json.dumps(payload.keywords) if payload.keywords else None,
+                    json.dumps(merged_keywords) if merged_keywords else None,
                     payload.bedrijf_id,
                 ),
             )
