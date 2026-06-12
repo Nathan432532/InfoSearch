@@ -509,6 +509,22 @@ def _is_size_or_rate_limit_error(error: Exception) -> bool:
     )
 
 
+def _is_name_similar(name1: str, name2: str) -> bool:
+    n1 = str(name1 or "").strip().lower()
+    n2 = str(name2 or "").strip().lower()
+    if not n1 or not n2:
+        return False
+    if n1 == n2:
+        return True
+    common = {"services", "group", "belgium", "belgie", "holding", "management", "international", "europe", "solutions", "partners"}
+    words1 = [w for w in n1.split() if len(w) >= 2 and w not in common]
+    words2 = [w for w in n2.split() if len(w) >= 2 and w not in common]
+    for w in words1:
+        if w in words2:
+            return True
+    return False
+
+
 def _deterministic_report_from_candidates(candidates: list[dict], fill_to: int = 10) -> list[dict]:
     """Return a usable top-N when the LLM is unavailable or quota-limited."""
     rows = []
@@ -561,6 +577,27 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
         if not isinstance(item, dict):
             continue
         raw_id = item.get("id") or item.get("bedrijf_id")
+        llm_name = item.get("bedrijfsnaam") or ""
+        
+        # Enforce correct ID mapping by matching the company name to correct LLM hallucinations/mixups
+        resolved_id = None
+        if raw_id is not None:
+            cand = (deterministic_by_id or {}).get(str(raw_id))
+            if cand:
+                cand_name = cand.get("company_name") or cand.get("naam") or ""
+                if _is_name_similar(llm_name, cand_name):
+                    resolved_id = raw_id
+                    
+        if resolved_id is None and llm_name:
+            for cid, cand in (deterministic_by_id or {}).items():
+                cand_name = cand.get("company_name") or cand.get("naam") or ""
+                if _is_name_similar(llm_name, cand_name):
+                    resolved_id = int(cid) if cid.isdigit() else cid
+                    break
+                    
+        if resolved_id is not None:
+            raw_id = resolved_id
+
         if raw_id is None or str(raw_id) in seen_ids:
             continue
         seen_ids.add(str(raw_id))
