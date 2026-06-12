@@ -111,8 +111,18 @@ async def generate_prospect(product: str):
     if isinstance(rapport, dict) and rapport.get("error"):
         detail = str(rapport.get("error"))
         print(f"rapport generatie mislukt: {detail}")
-        if "rate_limit_exceeded" in detail or "Rate limit reached" in detail:
+        # Check for typical rate limit indicators, including HTTP 429
+        rate_limit_indicators = [
+            "429", "rate_limit", "rate limit", "rate_limit_exceeded", 
+            "rate_limit_reached", "too many requests", "tpm", "rpm", "quota"
+        ]
+        if any(indicator.lower() in detail.lower() for indicator in rate_limit_indicators):
             raise HTTPException(status_code=429, detail=detail)
+            
+        # Check for request/payload too large (HTTP 413)
+        if "413" in detail or "request too large" in detail.lower() or "too_large" in detail.lower():
+            raise HTTPException(status_code=413, detail=detail)
+            
         raise HTTPException(status_code=503, detail=detail)
 
     print("rapport gegenereerd")

@@ -1266,7 +1266,8 @@ def company_prospect(payload: SearchRequest) -> dict[str, Any]:
                         detail = f"AI prospect service returned {res.status_code}: {res.text[:500]}"
                         print(detail)
                         if AI_PROSPECT_DISABLE_DETERMINISTIC_FALLBACK:
-                            raise HTTPException(status_code=503, detail=detail)
+                            status_code = res.status_code if 100 <= res.status_code <= 599 else 503
+                            raise HTTPException(status_code=status_code, detail=detail)
             except HTTPException:
                 raise
             except Exception as e:
