@@ -10,7 +10,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY") or ""
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY") or ""
 MISTRAL_API_URL = os.getenv("MISTRAL_API_URL", "https://api.mistral.ai/v1/chat/completions").rstrip("/")
-MISTRAL_DEFAULT_RANKING_MODEL = os.getenv("MISTRAL_DEFAULT_RANKING_MODEL", "mistral-medium-2508")
+MISTRAL_DEFAULT_RANKING_MODEL = os.getenv("MISTRAL_DEFAULT_RANKING_MODEL", "mistral-small-latest")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://host.docker.internal:8999").rstrip("/")
 PROSPECT_RANKING_PROVIDER = os.getenv("PROSPECT_RANKING_PROVIDER", "groq").strip().lower()
 PROSPECT_RANKING_MODEL = os.getenv("PROSPECT_RANKING_MODEL", MISTRAL_DEFAULT_RANKING_MODEL if PROSPECT_RANKING_PROVIDER == "mistral" else "openai/gpt-oss-120b")
