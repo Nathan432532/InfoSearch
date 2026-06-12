@@ -133,6 +133,48 @@ def _normalize_email(value: Any) -> str:
     return str(value or "").strip().lower()
 
 
+def _clean_company_website(website: str, email: str) -> str:
+    portal_domains = ["oraclecloud.com", "workdayjobs.com", "myworkdayjobs.com", "successfactors.com", "taleo.net", "vdab.be", "recruitee.com", "cvwarehouse.com", "hcmui"]
+    generic_emails = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "telenet.be", "skynet.be", "live.be", "protonmail.com"]
+    
+    clean_web = (website or "").strip()
+    is_portal = any(portal in clean_web.lower() for portal in portal_domains)
+    
+    if (not clean_web or is_portal) and email:
+        match = re.search(r"@([a-z0-9.-]+\.[a-z]{2,})", email.lower())
+        if match:
+            domain = match.group(1)
+            # Make sure it's not a generic provider or an interim recruiter
+            if domain not in generic_emails and not any(rec in domain for rec in ["accent.be", "randstad.be", "adecco.be", "startpeople.be", "vtc.be"]):
+                return f"https://www.{domain}"
+                
+    if is_portal:
+        return ""
+    return clean_web
+
+
+def _format_belgian_phone_py(phone: str) -> str:
+    if not phone:
+        return ""
+    clean = re.sub(r"\D", "", phone)
+    if len(clean) == 10 and clean.startswith("04"):
+        return f"{clean[:4]} {clean[4:6]} {clean[6:8]} {clean[8:]}"
+    if len(clean) == 9:
+        if clean[:2] in ["02", "03", "04", "09"]:
+            return f"{clean[:2]} {clean[2:5]} {clean[5:7]} {clean[7:]}"
+        else:
+            return f"{clean[:3]} {clean[3:5]} {clean[5:7]} {clean[7:]}"
+    if clean.startswith("32") and len(clean) > 8:
+        rest = clean[2:]
+        if rest.startswith("4") and len(rest) == 9:
+            return f"+32 4{rest[1:3]} {rest[3:5]} {rest[5:7]} {rest[7:]}"
+        if rest[:1] in ["2", "3", "4", "9"]:
+            return f"+32 {rest[:1]} {rest[1:4]} {rest[4:6]} {rest[6:]}"
+        else:
+            return f"+32 {rest[:2]} {rest[2:4]} {rest[4:6]} {rest[6:]}"
+    return phone
+
+
 def _normalize_domain(value: Any) -> str:
     raw = str(value or "").strip().lower()
     if not raw:
@@ -610,6 +652,9 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
         for row in rows:
             bid = row["bedrijf_id"]
             if bid not in companies:
+                email = row.get("bedrijf_email") or row.get("sollicitatie_email") or ""
+                phone = _format_belgian_phone_py(row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon") or "")
+                website = _clean_company_website(row.get("website") or "", email)
                 companies[bid] = {
                     "id": bid,
                     "bedrijfsnaam": row["bedrijfsnaam"],
@@ -617,9 +662,7 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
                     "locatie": ", ".join(
                         p for p in [row.get("adres_gemeente") or row.get("gemeente"), row.get("adres_provincie") or row.get("provincie")] if p
                     ),
-                    "contactgegevens": " - ".join(
-                        p for p in [row.get("bedrijf_email") or row.get("sollicitatie_email"), row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon"), row.get("website")] if p
-                    ),
+                    "contactgegevens": " - ".join(p for p in [email, phone, website] if p),
                     "sector": row.get("bedrijf_sector") or row.get("beroep") or "Onbekend",
                     "ai_beschrijving": row.get("ai_beschrijving") or "",
                     "business_trigger": row.get("business_trigger") or "",
@@ -1012,6 +1055,9 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
     for row in rows:
         bid = row["bedrijf_id"]
         if bid not in companies:
+            email = row.get("bedrijf_email") or row.get("sollicitatie_email") or ""
+            phone = _format_belgian_phone_py(row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon") or "")
+            website = _clean_company_website(row.get("website") or "", email)
             companies[bid] = {
                 "id": bid,
                 "naam": row["bedrijfsnaam"],
@@ -1019,9 +1065,7 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
                 "locatie": ", ".join(
                     p for p in [row.get("adres_gemeente") or row.get("gemeente"), row.get("adres_provincie") or row.get("provincie")] if p
                 ),
-                "contactgegevens": " - ".join(
-                    p for p in [row.get("bedrijf_email") or row.get("sollicitatie_email"), row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon"), row.get("website")] if p
-                ),
+                "contactgegevens": " - ".join(p for p in [email, phone, website] if p),
                 "source_urls": [url for url in [row.get("website")] if url],
                 "ai_beschrijving": row.get("ai_beschrijving") or "",
                 "business_trigger": row.get("business_trigger") or "",
