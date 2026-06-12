@@ -87,7 +87,7 @@ async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: 
                 return profiel
             print(f"Validatie mislukt (poging {attempt + 1}): {error}. Opnieuw proberen...")
         except Exception as e:
-            print(f"Mistral API call mislukt (poging {attempt + 1}): {e}")
+            print(f"Mistral API call mislukt (poging {attempt + 1}): {type(e).__name__} - {e}")
             
     return None
 
@@ -734,7 +734,7 @@ async def _call_prospect_llm(prompt: str, model_candidates: list[str]) -> str | 
                 return await _call_mistral_prospect_llm(prompt, model_name)
             return await _call_groq_prospect_llm(prompt, model_name)
         except Exception as e:
-            print(f"[{provider.title()}] LLM call mislukt met model {model_name}: {e}")
+            print(f"[{provider.title()}] LLM call mislukt met model {model_name}: {type(e).__name__} - {e}")
             if _is_size_or_rate_limit_error(e):
                 print(f"[{provider.title()}] Size/rate limit geraakt; geen fallback retry met dezelfde payload.")
                 return None
@@ -802,7 +802,7 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             )
             return normalized if isinstance(normalized, list) else []
         except Exception as e:
-            print(f"[{PROSPECT_RANKING_PROVIDER.title()}] JSON parsing/normalisatie mislukt voor batch {batch_index}: {e}")
+            print(f"[{PROSPECT_RANKING_PROVIDER.title()}] JSON parsing/normalisatie mislukt voor batch {batch_index}: {type(e).__name__} - {e}")
             return []
 
     # Use compact candidates for recall, but rank them in batches. A small
