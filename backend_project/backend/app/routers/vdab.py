@@ -1449,7 +1449,7 @@ def get_unenriched_companies(limit: int = 50, force: bool = False) -> dict[str, 
         with conn.cursor(dictionary=True) as cursor:
             cursor.execute(
                 f"""
-                SELECT id, naam AS bedrijfsnaam, kbo_nummer, adres_gemeente, adres_provincie
+                SELECT id, id AS bedrijf_id, naam AS bedrijfsnaam, kbo_nummer, adres_gemeente, adres_provincie
                 FROM tblBedrijven b
                 {where_clause}
                 ORDER BY b.created_at DESC
