@@ -1393,8 +1393,9 @@ def update_vacancies(aantal: int = 500) -> dict[str, Any]:
 
 
 @router.get("/companies/unenriched")
-def get_unenriched_companies(limit: int = 50) -> dict[str, Any]:
-    query = """
+def get_unenriched_companies(limit: int = 50, force: bool = False) -> dict[str, Any]:
+    where_clause = "" if force else "WHERE b.ai_enriched_at IS NULL"
+    query = f"""
         SELECT
             b.id            AS bedrijf_id,
             b.naam          AS bedrijfsnaam,
@@ -1414,7 +1415,7 @@ def get_unenriched_companies(limit: int = 50) -> dict[str, Any]:
                 LIMIT 1
             ) AS vacature_tekst
         FROM tblBedrijven b
-        WHERE b.ai_enriched_at IS NULL
+        {where_clause}
         ORDER BY b.created_at DESC
         LIMIT %s
     """

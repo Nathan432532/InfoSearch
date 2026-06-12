@@ -113,7 +113,7 @@ def _is_invalid_tech_or_machine(text: str) -> bool:
     return any(kw in lower for kw in invalid_keywords)
 
 
-def _as_clean_list(value, limit: int | None = None) -> list[str]:
+def _as_clean_list(value, limit: int | None = None, filter_invalid: bool = False) -> list[str]:
     """Normalize loose API fields into short comparable string lists."""
     if value is None:
         items: list[str] = []
@@ -136,7 +136,7 @@ def _as_clean_list(value, limit: int | None = None) -> list[str]:
         seen.add(key)
         
         # Filter out common soft skills, language requirements and driver's licenses
-        if _is_invalid_tech_or_machine(text):
+        if filter_invalid and _is_invalid_tech_or_machine(text):
             continue
             
         cleaned.append(text[:220])
@@ -154,8 +154,8 @@ def _extract_evidence_snippets(company: dict, limit: int = 6) -> list[str]:
         company.get("ai_beschrijving"),
         *_as_clean_list(company.get("vacature_titels") or company.get("vacatures"), 4),
         *_as_clean_list(company.get("vacature_samenvattingen"), 3),
-        *_as_clean_list(company.get("tech_stack") or company.get("techstack"), 6),
-        *_as_clean_list(company.get("machine_park") or company.get("machinepark"), 6),
+        *_as_clean_list(company.get("tech_stack") or company.get("techstack"), 6, filter_invalid=True),
+        *_as_clean_list(company.get("machine_park") or company.get("machinepark"), 6, filter_invalid=True),
         *_as_clean_list(company.get("keywords"), 8),
     ]
     seen: set[str] = set()
@@ -345,8 +345,8 @@ def _compact_bedrijven_data(bedrijven_data, product_profile: dict | None = None)
     for b in bedrijven_data:
         vacature_titels = _as_clean_list(b.get("vacature_titels") or b.get("vacatures"), 5)
         beroepen = _as_clean_list(b.get("beroepen"), 5)
-        tech_stack = _as_clean_list(b.get("tech_stack") or b.get("techstack"), 8)
-        machine_park = _as_clean_list(b.get("machine_park") or b.get("machinepark"), 8)
+        tech_stack = _as_clean_list(b.get("tech_stack") or b.get("techstack"), 8, filter_invalid=True)
+        machine_park = _as_clean_list(b.get("machine_park") or b.get("machinepark"), 8, filter_invalid=True)
         keywords = _as_clean_list(b.get("keywords"), 10)
         vacature_samenvattingen = _as_clean_list(b.get("vacature_samenvattingen"), 4)
         completeness = _data_completeness({**b, "vacature_titels": vacature_titels, "tech_stack": tech_stack, "keywords": keywords})
@@ -548,10 +548,11 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
             item.get("techstack") or item.get("tech_stack") or item.get("technologies")
             or deterministic_meta.get("required_skills_or_technologies"),
             8,
+            filter_invalid=True,
         )
         item["techstack"] = techstack
         item["tech_stack"] = techstack
-        machinepark = _as_clean_list(item.get("machinepark") or item.get("machine_park") or deterministic_meta.get("machines_or_tools"), 8)
+        machinepark = _as_clean_list(item.get("machinepark") or item.get("machine_park") or deterministic_meta.get("machines_or_tools"), 8, filter_invalid=True)
         if machinepark:
             item["machinepark"] = machinepark
             item["machine_park"] = machinepark
@@ -634,8 +635,8 @@ def _llm_candidate_view(candidate: dict) -> dict:
         "description": (candidate.get("description") or "")[:180],
         "vacancy_titles": _as_clean_list(candidate.get("vacancy_titles"), 3),
         "roles": _as_clean_list(candidate.get("roles"), 3),
-        "technologies": _as_clean_list(candidate.get("required_skills_or_technologies"), 5),
-        "machines_or_tools": _as_clean_list(candidate.get("machines_or_tools"), 4),
+        "technologies": _as_clean_list(candidate.get("required_skills_or_technologies"), 5, filter_invalid=True),
+        "machines_or_tools": _as_clean_list(candidate.get("machines_or_tools"), 4, filter_invalid=True),
         "business_triggers": _as_clean_list(candidate.get("business_triggers"), 1),
         "keywords": _as_clean_list(candidate.get("keywords"), 5),
         "evidence_snippets": _as_clean_list(candidate.get("evidence_snippets"), 4),
