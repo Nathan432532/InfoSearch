@@ -150,11 +150,46 @@ def _normalize_address(value: Any) -> str:
     return " ".join(text.split())
 
 
+_COMMON_NAME_WORDS = {"services", "group", "belgium", "belgie", "holding", "management", "international", "europe", "solutions", "partners"}
+
+def _names_are_similar(name1: str, name2: str) -> bool:
+    n1 = name1.strip().lower()
+    n2 = name2.strip().lower()
+    if not n1 or not n2:
+        return False
+    if n1 == n2:
+        return True
+    
+    # Split into words and filter out common/short words
+    words1 = [w for w in n1.split() if len(w) >= 2 and w not in _COMMON_NAME_WORDS]
+    words2 = [w for w in n2.split() if len(w) >= 2 and w not in _COMMON_NAME_WORDS]
+    
+    # If they share at least one significant word, we treat them as similar
+    for w in words1:
+        if w in words2:
+            return True
+            
+    return False
+
+
 def _business_dedupe_keys(payload: dict[str, Any]) -> dict[str, str]:
     contact = str(payload.get("contactgegevens") or "")
     email_match = re.search(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", contact, re.I)
-    phone_value = payload.get("telefoon") or payload.get("phone") or contact
-    website_value = payload.get("website") or payload.get("url") or payload.get("source_url") or contact
+    
+    # Extract phone from contact only if it matches a phone pattern, do not default to contact unconditionally
+    phone_value = payload.get("telefoon") or payload.get("phone") or ""
+    if not phone_value and contact:
+        phone_match = re.search(r"(?:\+32|0)[0-9\s\/\.\-]{7,15}", contact)
+        if phone_match:
+            phone_value = phone_match.group(0)
+            
+    # Extract website from contact only if it matches a URL pattern, do not default to contact unconditionally
+    website_value = payload.get("website") or payload.get("url") or payload.get("source_url") or ""
+    if not website_value and contact:
+        url_match = re.search(r"(https?://[^\s]+|www\.[^\s]+)", contact, re.I)
+        if url_match:
+            website_value = url_match.group(0)
+            
     address = payload.get("adres") or payload.get("address") or payload.get("locatie") or ""
     vat = payload.get("kbo_nummer") or payload.get("kbo") or payload.get("vat") or payload.get("btw_nummer") or ""
     return {
@@ -170,14 +205,26 @@ def _business_dedupe_keys(payload: dict[str, Any]) -> dict[str, str]:
 def _is_duplicate_business(left: dict[str, Any], right: dict[str, Any]) -> bool:
     left_keys = _business_dedupe_keys(left)
     right_keys = _business_dedupe_keys(right)
-    for key in ["vat", "domain", "email", "phone"]:
-        if left_keys[key] and left_keys[key] == right_keys[key]:
-            return True
-    if left_keys["name"] and left_keys["name"] == right_keys["name"]:
+    
+    # 1. KBO/VAT match is 100% authoritative and unique (no name check required)
+    if left_keys["vat"] and left_keys["vat"] == right_keys["vat"]:
+        return True
+        
+    # 2. For domain, email, phone or address, we require some name similarity to prevent merging completely different companies (e.g. Safran vs Carterre)
+    names_match = _names_are_similar(left_keys["name"], right_keys["name"])
+    
+    if names_match:
+        # Check domain, email, or phone
+        for key in ["domain", "email", "phone"]:
+            if left_keys[key] and left_keys[key] == right_keys[key]:
+                return True
+                
+        # Check address
         if left_keys["address"] and right_keys["address"] and left_keys["address"] == right_keys["address"]:
             return True
         if not left_keys["address"] or not right_keys["address"]:
             return True
+            
     return False
 
 
