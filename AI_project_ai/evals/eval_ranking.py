@@ -331,8 +331,12 @@ async def main() -> None:
     case_results = []
 
     for case in cases:
-        predictions = await fetch_predictions(api_url, case.product)
-        case_results.append(evaluate_case(case, predictions))
+        try:
+            print(f"Evaluating case {case.case_id}...")
+            predictions = await fetch_predictions(api_url, case.product)
+            case_results.append(evaluate_case(case, predictions))
+        except Exception as e:
+            print(f"WARNING: Skipping case {case.case_id} due to fetch error: {e}")
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
