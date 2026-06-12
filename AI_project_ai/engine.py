@@ -34,6 +34,13 @@ PROFIEL_EXTRACTOR_PROMPT = """
 JE BENT EEN ENTITY RESOLUTION AGENT.
 Extraheer de bedrijfsidentiteit uit de vacaturetekst. 
 Maak de naam uniform (bijv. 'NV Industri-Build' ipv 'Industri Build').
+
+RICHTLIJNEN VOOR DETAILS:
+- "tech_stack": Uitsluitend concrete technologieën, programmeertalen, frameworks, specifieke software (bijv. SAP, Python, PLC-sturingen, CAD-ontwerp, SCADA).
+  * REGEL: Neem GEEN talenkennis (Engels, Nederlands), soft skills (communicatie, teamplayer, flexibel), rijbewijzen, of algemene handmatige taken (visuele controle, administratie) op. Laat leeg [] als er geen concrete software/technologie vermeld is.
+- "machine_park": Uitsluitend fysieke machines, gereedschappen, of industriële installaties (bijv. CNC-frezen, LEAP-straalmotoren, heftrucks, verpakkingslijnen).
+  * REGEL: Neem GEEN algemene termen zoals "onderdelen", "apparatuur", of "gereedschap" op tenzij ze specifiek zijn. Laat leeg [] als er geen specifieke machines vermeld zijn.
+
 OUTPUT IN STRIKT JSON:
 {
   "naam": "Bedrijfsnaam",
@@ -94,6 +101,18 @@ async def extraheer_en_verrijk(vacature_tekst: str, retries: int = 2, raw_mode: 
 # ... (Houd je PROFIEL_EXTRACTOR_PROMPT hetzelfde als in) ...
 
 
+def _is_invalid_tech_or_machine(text: str) -> bool:
+    lower = text.lower()
+    invalid_keywords = [
+        "engels", "nederlands", "frans", "duits", "rijbewijs", "communicatie", "talenkennis",
+        "flexibel", "flexibiliteit", "teamplayer", "stressbestendig", "zelfstandig", "nauwkeurig",
+        "veiligheid", "resultaatgericht", "leergierig", "motivatie", "hands-on", "enthousiast",
+        "klantgericht", "proactief", "collega", "teamwerker", "bereid om", "verantwoordelijk",
+        "communicatief", "flexibele"
+    ]
+    return any(kw in lower for kw in invalid_keywords)
+
+
 def _as_clean_list(value, limit: int | None = None) -> list[str]:
     """Normalize loose API fields into short comparable string lists."""
     if value is None:
@@ -115,6 +134,11 @@ def _as_clean_list(value, limit: int | None = None) -> list[str]:
         if key in seen:
             continue
         seen.add(key)
+        
+        # Filter out common soft skills, language requirements and driver's licenses
+        if _is_invalid_tech_or_machine(text):
+            continue
+            
         cleaned.append(text[:220])
         if limit and len(cleaned) >= limit:
             break
