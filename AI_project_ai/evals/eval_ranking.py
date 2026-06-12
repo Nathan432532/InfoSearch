@@ -330,13 +330,16 @@ async def main() -> None:
     cases = load_cases(gold_path)
     case_results = []
 
-    for case in cases:
+    for idx, case in enumerate(cases):
         try:
             print(f"Evaluating case {case.case_id}...")
             predictions = await fetch_predictions(api_url, case.product)
             case_results.append(evaluate_case(case, predictions))
         except Exception as e:
             print(f"WARNING: Skipping case {case.case_id} due to fetch error: {e}")
+        
+        if idx < len(cases) - 1:
+            await asyncio.sleep(8)
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
