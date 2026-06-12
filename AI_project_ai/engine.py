@@ -356,7 +356,7 @@ def _compact_bedrijven_data(bedrijven_data, product_profile: dict | None = None)
             "company_name": b.get("naam") or b.get("bedrijfsnaam") or "",
             "sector": b.get("sector") or "Onbekend",
             "location": b.get("locatie") or "",
-            "contactgegevens": (b.get("contactgegevens") or "")[:220],
+            "contactgegevens": b.get("contactgegevens") or "",
             "description": (b.get("ai_beschrijving") or "")[:320],
             "vacancy_titles": vacature_titels,
             "roles": beroepen,
@@ -560,8 +560,11 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
             item["sector"] = deterministic_meta.get("sector", "")
         if not item.get("locatie"):
             item["locatie"] = deterministic_meta.get("location", "")
-        if not item.get("contactgegevens"):
-            item["contactgegevens"] = deterministic_meta.get("contactgegevens", "")
+        db_contact = deterministic_meta.get("contactgegevens")
+        if db_contact:
+            item["contactgegevens"] = db_contact
+        elif not item.get("contactgegevens"):
+            item["contactgegevens"] = ""
         item["score"] = _recalibrated_score(score, item, deterministic_score, original_rank)
         normalized.append(item)
     # If the LLM is overly strict and returns only a few prospects, fill the ranking
@@ -593,7 +596,7 @@ def _normalize_ranked_results(result, deterministic_by_id: dict[str, dict] | Non
                 "deterministic_score": det_score,
                 "deterministic_reasons": candidate.get("deterministic_reasons", []),
                 "score": round(det_score + min(0.4, len(candidate.get("evidence_snippets", [])) * 0.05), 2),
-                "contactgegevens": "",
+                "contactgegevens": candidate.get("contactgegevens", ""),
                 "techstack": candidate.get("required_skills_or_technologies", []),
                 "locatie": candidate.get("location", ""),
                 "sector": candidate.get("sector", ""),

@@ -4,7 +4,7 @@ import { FaThumbsDown, FaThumbsUp } from 'react-icons/fa';
 import gsap from 'gsap';
 import styles from './CompanyResultPage.module.css';
 import { downloadAsExcel } from '../../../scripts/downloadxl';
-import { Building, Pin } from 'lucide-react';
+import { Building, Pin, Mail, Globe, Phone } from 'lucide-react';
 import { API_BASE_URL } from '../../../api/client';
 
 export interface CompanyResult {
@@ -78,6 +78,100 @@ async function saveSingleResult(query: string, filters: Record<string, string>, 
   }
 }
 
+interface ContactItem {
+  type: 'email' | 'phone' | 'url' | 'text';
+  value: string;
+  label: string;
+}
+
+function parseContactgegevens(str: string): ContactItem[] {
+  if (!str || str.toLowerCase() === 'niet beschikbaar' || str.trim() === '-') {
+    return [];
+  }
+
+  const parts = str.split(/\s+-\s+/);
+  const contactItems: ContactItem[] = [];
+
+  const interimAgencies = [
+    { name: 'VTC', pattern: /vtc\.be/i },
+    { name: 'Accent', pattern: /accent\.be/i },
+    { name: 'Randstad', pattern: /randstad\.be/i },
+    { name: 'Adecco', pattern: /adecco\.be/i },
+    { name: 'Start People', pattern: /startpeople\.be/i },
+    { name: 'Manpower', pattern: /manpower\.be/i },
+    { name: 'ASAP', pattern: /asap\.be/i },
+    { name: 'Jobmatch', pattern: /jobmatch\.be/i },
+    { name: 'Synergie', pattern: /synergiejobs\.be/i },
+    { name: 'Actief', pattern: /actief\.be/i },
+    { name: 'Ago', pattern: /ago\.jobs/i },
+    { name: 'Select HR', pattern: /selecthr\.be/i },
+    { name: 'Team Power', pattern: /teampower\.be/i },
+    { name: 'Forum Jobs', pattern: /forumjobs\.be/i },
+    { name: 'Tempo-Team', pattern: /tempo-team\.be/i },
+    { name: 'Let\'s Work', pattern: /letswork\.be/i },
+    { name: 'Unique', pattern: /unique\.be/i },
+    { name: 'SD Worx', pattern: /sdworx\.be/i },
+    { name: 'Liantis', pattern: /liantis\.be/i }
+  ];
+
+  const portalPatterns = [
+    /oraclecloud\.com/i, /workday/i, /successfactors/i, /taleo\.net/i,
+    /recruitee\.com/i, /cvwarehouse\.com/i, /jobtoolz\.be/i, /vacancy/i,
+    /sollicitatie/i, /jobs\./i, /careers/i, /hcmUI/i
+  ];
+
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.includes('@') && !trimmed.includes(' ') && !trimmed.includes('/')) {
+      let agencyName = '';
+      for (const agency of interimAgencies) {
+        if (agency.pattern.test(trimmed)) {
+          agencyName = agency.name;
+          break;
+        }
+      }
+      const label = agencyName ? `${trimmed} (via recruiter: ${agencyName})` : trimmed;
+      contactItems.push({ type: 'email', value: trimmed, label });
+    }
+    else if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('www.') || trimmed.includes('.com/') || trimmed.includes('.be/')) {
+      let isPortal = false;
+      for (const pat of portalPatterns) {
+        if (pat.test(trimmed)) {
+          isPortal = true;
+          break;
+        }
+      }
+
+      let label = 'Website';
+      if (isPortal) {
+        label = 'Online sollicitatieportaal';
+      } else {
+        try {
+          let cleanUrl = trimmed;
+          if (!cleanUrl.startsWith('http')) {
+            cleanUrl = 'https://' + cleanUrl;
+          }
+          const urlObj = new URL(cleanUrl);
+          label = urlObj.hostname.replace('www.', '');
+        } catch {
+          label = 'Website';
+        }
+      }
+      contactItems.push({ type: 'url', value: trimmed.startsWith('www.') ? 'https://' + trimmed : trimmed, label });
+    }
+    else if (/^[+\d\s\/\.\-]+$/.test(trimmed) && trimmed.replace(/\D/g, '').length >= 6) {
+      contactItems.push({ type: 'phone', value: trimmed, label: trimmed });
+    }
+    else {
+      contactItems.push({ type: 'text', value: trimmed, label: trimmed });
+    }
+  }
+
+  return contactItems;
+}
+
 function CompanyCard({
   result,
   searchQuery,
@@ -92,6 +186,30 @@ function CompanyCard({
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const handleContactClick = () => {
+    const contactItems = parseContactgegevens(result.contactgegevens);
+    if (contactItems.length === 0) {
+      alert('Geen contactgegevens beschikbaar.');
+      return;
+    }
+    const emailItem = contactItems.find(i => i.type === 'email');
+    if (emailItem) {
+      window.location.href = `mailto:${emailItem.value}`;
+      return;
+    }
+    const urlItem = contactItems.find(i => i.type === 'url');
+    if (urlItem) {
+      window.open(urlItem.value, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    const phoneItem = contactItems.find(i => i.type === 'phone');
+    if (phoneItem) {
+      window.location.href = `tel:${phoneItem.value}`;
+      return;
+    }
+    alert(`Contact: ${result.contactgegevens}`);
+  };
 
   const handleSave = async () => {
     try {
@@ -172,8 +290,66 @@ function CompanyCard({
             </div>
           )}
 
-          <div className={styles.infoRow}>
-            <strong>Contact:</strong> {result.contactgegevens}
+          <div className={styles.infoRow} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <strong>Contactgegevens:</strong>
+            {(() => {
+              const contactItems = parseContactgegevens(result.contactgegevens);
+              if (contactItems.length === 0) {
+                return <span style={{ color: '#888', fontStyle: 'italic' }}>Niet beschikbaar</span>;
+              }
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                  {contactItems.map((item, idx) => {
+                    if (item.type === 'email') {
+                      return (
+                        <a
+                          key={idx}
+                          href={`mailto:${item.value}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgb(16, 191, 124)', textDecoration: 'none', fontWeight: 600 }}
+                          title="Stuur een e-mail"
+                        >
+                          <Mail size={16} />
+                          {item.label}
+                        </a>
+                      );
+                    }
+                    if (item.type === 'url') {
+                      return (
+                        <a
+                          key={idx}
+                          href={item.value}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgb(16, 191, 124)', textDecoration: 'none', fontWeight: 600 }}
+                          title="Bezoek website"
+                        >
+                          <Globe size={16} />
+                          {item.label}
+                        </a>
+                      );
+                    }
+                    if (item.type === 'phone') {
+                      return (
+                        <a
+                          key={idx}
+                          href={`tel:${item.value}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'rgb(16, 191, 124)', textDecoration: 'none', fontWeight: 600 }}
+                          title="Bellen"
+                        >
+                          <Phone size={16} />
+                          {item.label}
+                        </a>
+                      );
+                    }
+                    return (
+                      <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#555' }}>
+                        {item.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -189,7 +365,7 @@ function CompanyCard({
           {expanded && (
             <button
               className={styles.btnContact}
-              onClick={() => alert(`Contact: ${result.contactgegevens}`)}
+              onClick={handleContactClick}
             >
               ✉ Contacteer
             </button>
