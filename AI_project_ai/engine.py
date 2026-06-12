@@ -283,40 +283,80 @@ def _deterministic_match(company: dict, product_profile: dict) -> dict:
     score = 0.0
     reasons: list[str] = []
 
-    for term in product_profile.get("required_technologies", []):
-        if term and term in company_text:
-            score += 2.2
-            reasons.append(f"technologie-overlap: {term}")
-    for term in product_profile.get("target_industries", []):
-        if term and term in company_text:
-            score += 1.4
-            reasons.append(f"sector-overlap: {term}")
-    for term in product_profile.get("pain_points_solved", []):
-        if term and term in company_text:
-            score += 1.2
-            reasons.append(f"pijnpunt-overlap: {term}")
+    # Upgrade: Replicate smart token-based match from backend to align scores and handle Dutch synonyms.
+    product_tokens = _tokenize_for_matching(product_text)
+    
+    synonyms_map = {
+        "agv": ["autonomous guided vehicle", "guided vehicles", "fleet orchestration", "warehouse robotics"],
+        "warehouse": ["logistiek", "magazijn", "intralogistics"],
+        "robot": ["robotica", "robotics", "autonome"],
+        "robots": ["robotica", "robotics", "autonome"],
+        "scada": ["wonderware", "intouch", "hmi", "supervisory"],
+        "plc": ["s7", "s7-1500", "codesys", "safety plc"],
+        "siemens": ["s7", "s7-1500", "sinamics"],
+        "schneider": ["ecostruxure", "modicon"],
+        "drives": ["drive", "sinamics", "frequentieregelaars", "high power"],
+        "battery": ["batterij", "battery-management", "bms"],
+        "vision": ["camera", "computer vision", "inspectie", "inspection", "defect detection"],
+        "maintenance": ["onderhoud", "storingen", "predictive maintenance", "preventive maintenance"],
+        "field": ["buitendienst", "field service"],
+        "service": ["buitendienst", "service engineer", "field service"],
+        "recruitment": ["recruitment", "staffing", "hiring", "vacature", "engineers"],
+        "staffing": ["recruitment", "hiring", "vacature", "engineers"],
+        "food": ["brewery", "brouwerij", "voeding", "beverage", "packaging", "food processing", "horeca"],
+        "voeding": ["food", "food processing", "horeca", "commercial kitchen"],
+        "horeca": ["professionele keuken", "catering", "commercial kitchen"],
+        "cnc": ["bewerkingscentra", "metal forming", "walsinstallaties"],
+    }
 
-    synonym_groups = [
-        (["predictive maintenance", "preventive maintenance", "condition monitoring", "remote diagnostics"], ["onderhoud", "maintenance", "preventief", "curatief", "storing", "diagnose", "technieker", "mecanicien"]),
-        (["siemens", "s7", "s7-1500", "profinet", "plc", "scada", "schneider", "retrofit", "modernization"], ["siemens", "s7", "s7-1500", "profinet", "plc", "scada", "schneider", "automatisatie", "sturing", "elektricien"]),
-        (["machine vision", "computer vision", "quality inspection", "defect detection"], ["inspectie", "inspection", "kwaliteit", "quality", "defect", "cnc", "laser", "operator", "controle"]),
-        (["warehouse", "agv", "autonomous guided", "fleet orchestration", "robotics"], ["magazijn", "warehouse", "logistiek", "logistics", "heftruck", "transport", "robot", "automatisatie"]),
-        (["recruitment", "staffing", "crm", "field-operations", "lead scoring"], ["vacature", "aanwerving", "rekrutering", "personeel", "technieker", "service", "planning", "sales", "account"]),
-        (["field service", "industrial machines", "service engineers"], ["buitendienst", "field", "service", "installatie", "montage", "technieker", "onderhoud", "machine"]),
-        (["food", "beverage", "production equipment", "packaging"], ["voeding", "food", "drank", "beverage", "productie", "verpakking", "packaging", "afvul"]),
-        (["metal", "heavy manufacturing", "cnc", "production lines"], ["metaal", "metal", "staal", "steel", "cnc", "productie", "lijn", "wals", "industrieel"]),
-        (["battery", "bms", "electric vehicle", "ev"], ["batterij", "battery", "bms", "elektrisch", "ev", "automotive", "voertuig"]),
-        (["cybersecurity", "audit", "ot networks"], ["security", "cyber", "netwerk", "network", "ot", "plc", "scada", "audit"]),
+    exact_phrases = [
+        "siemens s7-1500", "profinet", "sinamics", "scada", "schneider", "ecostruxure",
+        "field service", "service engineer", "battery-management", "autonomous", "robot",
+        "robotics", "warehouse", "agv", "machine vision", "computer vision", "cnc",
+        "metal forming", "food", "beverage", "predictive maintenance", "preventive maintenance",
+        "food processing machinery", "commercial kitchen", "professionele keuken",
     ]
-    for product_terms, company_terms in synonym_groups:
-        if _contains_any(product_text, product_terms) and _contains_any(company_text, company_terms):
-            score += 1.5
-            reasons.append("domein-synoniemen matchen")
+    for phrase in exact_phrases:
+        if phrase in product_text and phrase in company_text:
+            score += 4.0
+            reasons.append(f"exact-phrase: {phrase}")
 
-    overlap = sorted(_tokenize_for_matching(product) & _tokenize_for_matching(company_text))
-    if overlap:
-        score += min(2.0, len(overlap) * 0.35)
-        reasons.append("term-overlap: " + ", ".join(overlap[:5]))
+    overlap_count = 0
+    product_evidence = 0
+    
+    # 1. Match tokens and compound words
+    for token in product_tokens:
+        if token in company_text:
+            score += 1.4
+            overlap_count += 1
+            product_evidence += 1
+            reasons.append(f"token: {token}")
+        
+        # Dutch compound word roots check
+        dutch_roots = ["onderhoud", "productie", "techniek", "machine", "storing", "elektro", "automati", "lijn", "sturing", "installatie"]
+        for root in dutch_roots:
+            if root in token and root in company_text and f"root: {root}" not in reasons:
+                score += 1.2
+                overlap_count += 1
+                product_evidence += 1
+                reasons.append(f"root: {root}")
+                break
+
+        # Check synonyms of the token
+        for syn_key, syn_list in synonyms_map.items():
+            if syn_key in token or any(syn in token for syn in syn_list) or token in syn_key or any(token in syn for syn in syn_list):
+                for synonym in syn_list + [syn_key]:
+                    if synonym in company_text and f"synoniem: {synonym}" not in reasons:
+                        score += 1.0
+                        overlap_count += 1
+                        product_evidence += 1
+                        reasons.append(f"synoniem: {synonym}")
+                        break
+
+    score += min(3.0, overlap_count * 0.35)
+
+    if any(term in company_text for term in ["plc", "scada", "robot", "robotica", "cnc", "maintenance", "onderhoud", "field service"]):
+        score += 0.5
 
     completeness = company.get("data_completeness") or {}
     completeness_count = sum(1 for value in completeness.values() if value)
@@ -406,9 +446,9 @@ def _score_dimension_average(dimensions: dict) -> float | None:
 def _recalibrated_score(raw_score: float, item: dict, deterministic_score: float, original_rank: int) -> float:
     """Turn coarse LLM scores into a granular 0-10 ranking score.
 
-    Groq/Llama sometimes returns flat scores like 1.0 for every candidate. This function
-    makes the final score depend mostly on evidence, dimensions and deterministic fit,
-    with only a small stable rank tie-breaker.
+    We use a balanced blend of LLM dimensional fit, raw LLM score, and deterministic
+    lexical match evidence. We lower the deterministic score's weight to 0.25 to prevent
+    it from crushing semantic fits, and always include it to avoid the zero-evidence boost anomaly.
     """
     dimensions = item.get("score_dimensions") or {}
     dimension_avg = _score_dimension_average(dimensions)
@@ -416,13 +456,13 @@ def _recalibrated_score(raw_score: float, item: dict, deterministic_score: float
     evidence_bonus = min(0.5, evidence_count * 0.1)
 
     parts: list[tuple[float, float]] = []
-    if deterministic_score > 0:
-        parts.append((0.65, deterministic_score))
+    if deterministic_score >= 0:
+        parts.append((0.25, deterministic_score))
     if dimension_avg is not None:
-        parts.append((0.25, dimension_avg))
+        parts.append((0.50, dimension_avg))
 
     # Raw LLM score is useful when it is calibrated, but it should not dominate flat 1/2 scores.
-    raw_weight = 0.10 if deterministic_score > 0 or dimension_avg is not None else 1.0
+    raw_weight = 0.25 if deterministic_score >= 0 or dimension_avg is not None else 1.0
     parts.append((raw_weight, raw_score))
 
     total_weight = sum(weight for weight, _ in parts) or 1.0
