@@ -12,7 +12,7 @@ import httpx
 ROOT = Path(__file__).resolve().parent
 DEFAULT_GOLD_PATH = ROOT / "prospect_ranking_live_gold.jsonl"
 DEFAULT_RESULTS_DIR = ROOT / "results"
-DEFAULT_API_URL = os.getenv("EVAL_API_URL") or os.getenv("BACKEND_URL") or "http://localhost:8000"
+DEFAULT_API_URL = os.getenv("EVAL_API_URL") or os.getenv("BACKEND_URL") or "https://infosearch.duckdns.org"
 SEARCH_ENDPOINT = "/companies/prospect"
 EVAL_SSL_VERIFY = os.getenv("EVAL_SSL_VERIFY", "true").lower() not in {"0", "false", "no"}
 
