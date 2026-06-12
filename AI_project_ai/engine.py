@@ -888,6 +888,12 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             prompt_candidates = prompt_candidates[:-1]
             prompt = _build_prospect_prompt(product_profile, prompt_candidates)
 
+    async def rank_batch(batch_index: int, prompt_candidates: list[dict]) -> tuple[list[dict], bool]:
+        prompt = _build_prospect_prompt(product_profile, prompt_candidates)
+        while len(prompt) > PROSPECT_LLM_PROMPT_CHAR_LIMIT and len(prompt_candidates) > 3:
+            prompt_candidates = prompt_candidates[:-1]
+            prompt = _build_prospect_prompt(product_profile, prompt_candidates)
+
         print(
             f"[{PROSPECT_RANKING_PROVIDER.title()}] Prospect ranking payload: "
             f"batch={batch_index}, candidates={len(prompt_candidates)}, chars={len(prompt)}, "
@@ -896,7 +902,7 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
 
         content = await _call_prospect_llm(prompt, model_candidates)
         if content is None:
-            return []
+            return [], True
 
         try:
             parsed = _parse_prospect_json(content)
@@ -907,10 +913,10 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
                 fill_to=min(10, len(prompt_candidates)),
                 fill_missing=not PROSPECT_DISABLE_DETERMINISTIC_FALLBACK,
             )
-            return normalized if isinstance(normalized, list) else []
+            return (normalized if isinstance(normalized, list) else []), False
         except Exception as e:
             print(f"[{PROSPECT_RANKING_PROVIDER.title()}] JSON parsing/normalisatie mislukt voor batch {batch_index}: {type(e).__name__} - {e}")
-            return []
+            return [], True
 
     # Use compact candidates for recall, but rank them in batches. A small
     # concurrency value keeps interactive searches fast without launching an
@@ -921,12 +927,15 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
     ]
     semaphore = asyncio.Semaphore(PROSPECT_LLM_CONCURRENCY)
 
-    async def run_limited(batch_index: int, prompt_candidates: list[dict]) -> list[dict]:
+    async def run_limited(batch_index: int, prompt_candidates: list[dict]) -> tuple[list[dict], bool]:
         async with semaphore:
             return await rank_batch(batch_index, prompt_candidates)
 
     batch_results = await asyncio.gather(*(run_limited(index, candidates) for index, candidates in batches))
-    for normalized in batch_results:
+    any_failed = False
+    for normalized, failed in batch_results:
+        if failed:
+            any_failed = True
         for row in normalized:
             raw_id = row.get("id") or row.get("bedrijf_id")
             if raw_id is None or str(raw_id) in seen_ids:
@@ -944,13 +953,17 @@ async def genereer_prospectie_rapport(product, bedrijven_data):
             fill_missing=not PROSPECT_DISABLE_DETERMINISTIC_FALLBACK,
         )
 
-    message = f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-output; deterministic fallback staat uit."
-    print(message)
-    if PROSPECT_DISABLE_DETERMINISTIC_FALLBACK:
-        return {"error": message}
+    if any_failed:
+        message = f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-output; deterministic fallback staat uit."
+        print(message)
+        if PROSPECT_DISABLE_DETERMINISTIC_FALLBACK:
+            return {"error": message}
 
-    print(f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-batches; gebruik deterministic fallback over alle kandidaten.")
-    return _deterministic_report_from_candidates(bedrijven_data, fill_to=10)
+        print(f"[{PROSPECT_RANKING_PROVIDER.title()}] Geen bruikbare LLM-batches; gebruik deterministic fallback over alle kandidaten.")
+        return _deterministic_report_from_candidates(bedrijven_data, fill_to=10)
+
+    print(f"[{PROSPECT_RANKING_PROVIDER.title()}] Ranking succesvol uitgevoerd maar geen prospecten voldeden aan het productprofiel.")
+    return []
 
 
 async def haal_vacatures():
