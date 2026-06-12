@@ -1,3 +1,4 @@
+import asyncio
 import json
 import math
 import os
@@ -15,6 +16,7 @@ DEFAULT_RESULTS_DIR = ROOT / "results"
 DEFAULT_API_URL = os.getenv("EVAL_API_URL") or os.getenv("BACKEND_URL") or "https://infosearch.duckdns.org"
 SEARCH_ENDPOINT = "/companies/prospect"
 EVAL_SSL_VERIFY = os.getenv("EVAL_SSL_VERIFY", "true").lower() not in {"0", "false", "no"}
+EVAL_SLEEP_DELAY = int(os.getenv("EVAL_SLEEP_DELAY", "20"))
 
 
 @dataclass
@@ -339,7 +341,7 @@ async def main() -> None:
             print(f"WARNING: Skipping case {case.case_id} due to fetch error: {e}")
         
         if idx < len(cases) - 1:
-            await asyncio.sleep(8)
+            await asyncio.sleep(EVAL_SLEEP_DELAY)
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -355,6 +357,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())
