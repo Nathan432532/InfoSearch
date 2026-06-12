@@ -701,6 +701,8 @@ Geef exact de top 10 bedrijven terug, of alle bedrijven als er minder dan 10 kan
 Sorteer op matchkwaliteit. Gebruik decimale scores 0-10.
 Ook zwakke matches moeten terugkomen als ze in de top 10 zitten; geef dan lage score en lage confidence.
 Vul `techstack` uitsluitend met echte technologieën, software of machines. Gebruik NOOIT functietitels, rollen of algemene vacaturetermen. Laat het veld leeg als er geen expliciete technologieën vermeld zijn.
+De `beschrijving` is een korte, professionele samenvatting van het bedrijf zelf (wat ze doen, hun kernactiviteiten of hun sector). Formuleer dit als een beschrijving van het bedrijf, NIET van een specifieke vacature (schrijf dus NOOIT zinnen die beginnen met 'Vacature voor...').
+
 
 SCORES:
 9-10 directe expliciete technologie/sector-overlap; 7-8 duidelijke fit; 5-6 beperkte concrete fit; 3-4 zwak/indirect; 0-2 zeer zwak maar toch opnemen als top-10 kandidaat. Bedrijven die enkel matchen op brede functietitels (zoals 'mecanicien') zonder concrete bewijzen voor het gezochte product/technologie moeten maximaal 0-3 scoren.

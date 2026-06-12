@@ -652,9 +652,6 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
         for row in rows:
             bid = row["bedrijf_id"]
             if bid not in companies:
-                email = row.get("bedrijf_email") or row.get("sollicitatie_email") or ""
-                phone = _format_belgian_phone_py(row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon") or "")
-                website = _clean_company_website(row.get("website") or "", email)
                 companies[bid] = {
                     "id": bid,
                     "bedrijfsnaam": row["bedrijfsnaam"],
@@ -662,7 +659,7 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
                     "locatie": ", ".join(
                         p for p in [row.get("adres_gemeente") or row.get("gemeente"), row.get("adres_provincie") or row.get("provincie")] if p
                     ),
-                    "contactgegevens": " - ".join(p for p in [email, phone, website] if p),
+                    "contactgegevens": "",
                     "sector": row.get("bedrijf_sector") or row.get("beroep") or "Onbekend",
                     "ai_beschrijving": row.get("ai_beschrijving") or "",
                     "business_trigger": row.get("business_trigger") or "",
@@ -671,7 +668,20 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
                     "keywords": _parse_json_list(row.get("keywords_json")),
                     "vacature_samenvattingen": [],
                     "vacatures": [],
+                    "_emails": set(),
+                    "_phones": set(),
+                    "_websites": set(),
                 }
+
+            for em in [row.get("bedrijf_email"), row.get("sollicitatie_email")]:
+                if em and str(em).strip():
+                    companies[bid]["_emails"].add(str(em).strip().lower())
+            for ph in [row.get("bedrijf_telefoon"), row.get("sollicitatie_telefoon")]:
+                if ph and str(ph).strip():
+                    companies[bid]["_phones"].add(str(ph).strip())
+            if row.get("website") and str(row["website"]).strip():
+                companies[bid]["_websites"].add(str(row["website"]).strip())
+
             vacature = {
                 "referentie": row["interne_referentie"],
                 "titel": row["titel"],
@@ -694,6 +704,23 @@ def search_companies(payload: SearchRequest) -> dict[str, Any]:
             summary = " | ".join(str(part).strip() for part in summary_parts if str(part or "").strip())
             if summary and len(companies[bid]["vacature_samenvattingen"]) < 4:
                 companies[bid]["vacature_samenvattingen"].append(summary)
+
+        for comp in companies.values():
+            email_list = list(comp.pop("_emails"))
+            best_email = ""
+            if email_list:
+                generic_emails = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "telenet.be", "skynet.be", "live.be", "protonmail.com"]
+                corp_emails = [e for e in email_list if not any(gen in e for gen in generic_emails)]
+                best_email = corp_emails[0] if corp_emails else email_list[0]
+            
+            phone_list = list(comp.pop("_phones"))
+            best_phone = _format_belgian_phone_py(phone_list[0]) if phone_list else ""
+            
+            website_list = list(comp.pop("_websites"))
+            raw_website = website_list[0] if website_list else ""
+            best_website = _clean_company_website(raw_website, best_email)
+            
+            comp["contactgegevens"] = " - ".join(p for p in [best_email, best_phone, best_website] if p)
 
         return {
             "query": payload.query,
@@ -1055,9 +1082,6 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
     for row in rows:
         bid = row["bedrijf_id"]
         if bid not in companies:
-            email = row.get("bedrijf_email") or row.get("sollicitatie_email") or ""
-            phone = _format_belgian_phone_py(row.get("bedrijf_telefoon") or row.get("sollicitatie_telefoon") or "")
-            website = _clean_company_website(row.get("website") or "", email)
             companies[bid] = {
                 "id": bid,
                 "naam": row["bedrijfsnaam"],
@@ -1065,8 +1089,8 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
                 "locatie": ", ".join(
                     p for p in [row.get("adres_gemeente") or row.get("gemeente"), row.get("adres_provincie") or row.get("provincie")] if p
                 ),
-                "contactgegevens": " - ".join(p for p in [email, phone, website] if p),
-                "source_urls": [url for url in [row.get("website")] if url],
+                "contactgegevens": "",
+                "source_urls": [],
                 "ai_beschrijving": row.get("ai_beschrijving") or "",
                 "business_trigger": row.get("business_trigger") or "",
                 "tech_stack": _parse_json_list(row.get("tech_stack_json")),
@@ -1075,7 +1099,20 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
                 "vacatures": [],
                 "beroepen": [],
                 "vacature_samenvattingen": [],
+                "_emails": set(),
+                "_phones": set(),
+                "_websites": set(),
             }
+
+        for em in [row.get("bedrijf_email"), row.get("sollicitatie_email")]:
+            if em and str(em).strip():
+                companies[bid]["_emails"].add(str(em).strip().lower())
+        for ph in [row.get("bedrijf_telefoon"), row.get("sollicitatie_telefoon")]:
+            if ph and str(ph).strip():
+                companies[bid]["_phones"].add(str(ph).strip())
+        if row.get("website") and str(row["website"]).strip():
+            companies[bid]["_websites"].add(str(row["website"]).strip())
+
         titel = (row.get("titel") or "").strip()
         if titel:
             companies[bid]["vacatures"].append(titel)
@@ -1093,6 +1130,25 @@ def _fetch_all_companies_with_vacatures() -> list[dict[str, Any]]:
         summary = " | ".join(part for part in summary_parts if part)
         if summary and len(companies[bid]["vacature_samenvattingen"]) < 3:
             companies[bid]["vacature_samenvattingen"].append(summary)
+
+    for comp in companies.values():
+        email_list = list(comp.pop("_emails"))
+        best_email = ""
+        if email_list:
+            generic_emails = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "telenet.be", "skynet.be", "live.be", "protonmail.com"]
+            corp_emails = [e for e in email_list if not any(gen in e for gen in generic_emails)]
+            best_email = corp_emails[0] if corp_emails else email_list[0]
+        
+        phone_list = list(comp.pop("_phones"))
+        best_phone = _format_belgian_phone_py(phone_list[0]) if phone_list else ""
+        
+        website_list = list(comp.pop("_websites"))
+        raw_website = website_list[0] if website_list else ""
+        best_website = _clean_company_website(raw_website, best_email)
+        
+        comp["contactgegevens"] = " - ".join(p for p in [best_email, best_phone, best_website] if p)
+        comp["source_urls"] = [url for url in [best_website] if url]
+
     return list(companies.values())
 
 
