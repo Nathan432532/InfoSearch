@@ -155,7 +155,7 @@
                 <h3 style="color: #11caa0; margin-bottom: 20px;">In Scope (Gerealiseerd)</h3>
                 <ul class="bullet-list">
                     <li><strong>Full-Stack Applicatie:</strong> React SPA frontend met FastAPI backend.</li>
-                    <li><strong>AI Pipeline:</strong> Matching en ranking via Groq/Llama-3.3.</li>
+                    <li><strong>AI Pipeline:</strong> Matching en ranking via Mistral Small Latest.</li>
                     <li><strong>Gebruikersbeheer:</strong> Veilige authenticatie en opgeslagen filters.</li>
                 </ul>
             </div>
@@ -189,25 +189,6 @@
     </div>
 </div>
 
-<div class="slide-container" id="slide4b">
-    <h2 class="slide-title">Demo: AI-Resultaten & Tech Stack</h2>
-    <div class="content-area">
-        <div class="two-column">
-            <div class="image-wrapper" style="border: 2px solid #11caa0;">
-                <img src="./img/app_results.png" alt="Search Results" style="object-fit: contain; background: white;">
-            </div>
-            <div style="display: flex; flex-direction: column; justify-content: center;">
-                <h3 style="margin-bottom: 25px;">Stap 2: Ranking & Tech Stack</h3>
-                <ul class="bullet-list">
-                    <li><strong>Tech Stack Extractie:</strong> Automatische identificatie van software en hardware van de prospect.</li>
-                    <li><strong>AI Match-Verklaring:</strong> Transparante toelichting en scores bij elke match.</li>
-                    <li><strong>Lead Management:</strong> Direct opslaan en organiseren van relevante leads.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="slide-container" id="slide5">
     <h2 class="slide-title">De Technische Deep-Dive Stack</h2>
     <div class="content-area">
@@ -231,8 +212,7 @@
             <div class="tile" style="padding: 25px; text-align: left;">
                 <h3 style="text-align: center; margin-bottom: 20px; color: #11caa0;">AI Pipeline</h3>
                 <ul class="bullet-list" style="font-size: 15px;">
-                    <li><strong>Ollama Lokaal:</strong> Qwen2.5:0.5B voor entiteitextractie.</li>
-                    <li><strong>Groq Cloud:</strong> Llama-3.3-70B voor pairwise ranking.</li>
+                    <li><strong>Mistral Small Latest:</strong> Voor entiteitextractie én ranking.</li>
                     <li><strong>Evaluatie:</strong> nDCG en Pairwise Accuracy metrics.</li>
                 </ul>
             </div>
@@ -363,23 +343,31 @@
     </div>
 </div>
 <div class="slide-container" id="slide10">
-    <h2 class="slide-title">Modellenevaluatie: Qwen vs. Llama</h2>
+    <h2 class="slide-title">Modellenevaluatie: Gekozen Model</h2>
     <div class="content-area">
-        <div class="two-column">
-            <div class="tiled" style="border-top: 6px solid #11caa0; display: flex; flex-direction: column; justify-content: center;">
-                <h3 style="color: #005088; margin-bottom: 10px;">Qwen2.5 (0.5B Lokaal)</h3>
-                <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;"><em>Rol: Snelle verwerking en data-extractie.</em></p>
+        <div class="tile-grid">
+            <div class="tiled" style="border: 3px solid #e11d48; display: flex; flex-direction: column; justify-content: center; padding: 25px; border-radius: 12px; background: #fff5f5;">
+                <h3 style="color: #e11d48; margin-bottom: 10px; text-decoration: line-through;">Qwen2.5 (0.5B Lokaal)</h3>
+                <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;"><em>Niet gebruikt in finale pipeline</em></p>
                 <ul class="bullet-list" style="font-size: 15px;">
                     <li><strong>Voordelen:</strong> Zeer snel, 100% lokaal (privacy) en betrouwbare JSON-extractie.</li>
                     <li><strong>Beperkingen:</strong> Lichte architectuur mist diepgaande redeneerkracht voor ranking.</li>
                 </ul>
             </div>
-            <div class="tiled" style="border-top: 6px solid #005088; display: flex; flex-direction: column; justify-content: center;">
-                <h3 style="color: #005088; margin-bottom: 10px;">Llama-3.3 (70B Cloud)</h3>
-                <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;"><em>Rol: Kwalitatieve ranking en motivatie.</em></p>
+            <div class="tiled" style="border: 3px solid #e11d48; display: flex; flex-direction: column; justify-content: center; padding: 25px; border-radius: 12px; background: #fff5f5;">
+                <h3 style="color: #e11d48; margin-bottom: 10px; text-decoration: line-through;">Llama-3.3 (70B Cloud)</h3>
+                <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;"><em>Niet gebruikt in finale pipeline</em></p>
                 <ul class="bullet-list" style="font-size: 15px;">
                     <li><strong>Voordelen:</strong> Hoge redeneerkracht, 97,9% pairwise accuracy en heldere motivering.</li>
                     <li><strong>Beperkingen:</strong> Cloud-afhankelijk, rate limits en terugkerende API-kosten.</li>
+                </ul>
+            </div>
+            <div class="tiled" style="border: 3px solid #11caa0; display: flex; flex-direction: column; justify-content: center; padding: 25px; border-radius: 12px; background: #f0fff4;">
+                <h3 style="color: #005088; margin-bottom: 10px;">Mistral Small Latest</h3>
+                <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;"><em>Gekozen model voor de pipeline</em></p>
+                <ul class="bullet-list" style="font-size: 15px;">
+                    <li><strong>Waarom Mistral:</strong> Uitstekende balans tussen snelheid, nauwkeurigheid en kostenefficiëntie.</li>
+                    <li><strong>Inzet:</strong> Zowel entiteitextractie als pairwise ranking in één model.</li>
                 </ul>
             </div>
         </div>
